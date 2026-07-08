@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/readme-banner.svg" alt="MiniTrainSys banner" width="100%" />
+<img src="https://raw.githubusercontent.com/Zhaibin-Cui/mini-train-sys/main/assets/readme-banner.svg" alt="MiniTrainSys banner" width="100%" />
 
 <br />
 
