@@ -1,0 +1,8 @@
+model:
+  vocab_size: 16384
+  seq_len: 1024
+  n_layers: 12
+  n_heads: 8
+  hidden_size: 512
+  intermediate_size: 1408
+  dropout: 0.0

@@ -1,0 +1,22 @@
+run:
+  name: single_torch_baseline
+  seed: 1337
+backend:
+  ops: torch
+  parallel: single
+train:
+  batch_size: 8
+  lr: 0.0003
+  weight_decay: 0.1
+  max_steps: 1000
+  log_interval: 10
+  use_fused_loss: false
+data:
+  source: random
+  num_tokens: 100000
+  shuffle: true
+logging:
+  console: true
+  tensorboard: true
+  log_dir: runs
+  flush_secs: 10
