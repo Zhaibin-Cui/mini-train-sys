@@ -1,0 +1,66 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MiniTrainSys</title>
+  <desc id="desc">A cute rounded banner for a tiny benchmark-first LLM pretraining system.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FBFF"/>
+      <stop offset="0.48" stop-color="#F6F2FF"/>
+      <stop offset="1" stop-color="#EFFDF7"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="270" y1="80" x2="910" y2="225" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="0.52" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#64748B" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="360" rx="34" fill="url(#bg)"/>
+
+  <g opacity="0.9">
+    <circle cx="114" cy="76" r="22" fill="#BFDBFE"/>
+    <circle cx="1010" cy="64" r="30" fill="#DDD6FE"/>
+    <circle cx="1080" cy="280" r="44" fill="#BBF7D0"/>
+    <circle cx="142" cy="286" r="36" fill="#FDE68A"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <rect x="110" y="58" width="980" height="244" rx="30" fill="white" fill-opacity="0.82"/>
+    <rect x="110.5" y="58.5" width="979" height="243" rx="29.5" stroke="#E2E8F0"/>
+  </g>
+
+  <text x="600" y="145" text-anchor="middle"
+        font-family="Quicksand, Nunito, 'Comic Neue', 'Segoe UI Rounded', 'Arial Rounded MT Bold', system-ui, sans-serif"
+        font-size="78" font-weight="800" letter-spacing="1.5" fill="url(#titleGrad)">
+    MiniTrainSys
+  </text>
+
+  <text x="600" y="198" text-anchor="middle"
+        font-family="Nunito, Quicksand, 'Segoe UI Rounded', system-ui, sans-serif"
+        font-size="27" font-weight="700" fill="#334155">
+    tiny, readable, benchmark-first LLM pretraining
+  </text>
+
+  <g font-family="Nunito, Quicksand, 'Segoe UI Rounded', system-ui, sans-serif" font-size="20" font-weight="800">
+    <rect x="305" y="230" width="130" height="42" rx="21" fill="#DBEAFE"/>
+    <text x="370" y="258" text-anchor="middle" fill="#1D4ED8">PyTorch</text>
+
+    <rect x="455" y="230" width="120" height="42" rx="21" fill="#EDE9FE"/>
+    <text x="515" y="258" text-anchor="middle" fill="#6D28D9">Triton</text>
+
+    <rect x="595" y="230" width="132" height="42" rx="21" fill="#DCFCE7"/>
+    <text x="661" y="258" text-anchor="middle" fill="#047857">DDP/FSDP</text>
+
+    <rect x="747" y="230" width="148" height="42" rx="21" fill="#FEF3C7"/>
+    <text x="821" y="258" text-anchor="middle" fill="#B45309">Benchmarks</text>
+  </g>
+
+  <g stroke="#CBD5E1" stroke-width="3" stroke-linecap="round" opacity="0.85">
+    <path d="M224 116C240 96 264 96 280 116"/>
+    <path d="M916 114C936 92 966 92 986 114"/>
+    <path d="M224 130C240 150 264 150 280 130"/>
+    <path d="M916 128C936 150 966 150 986 128"/>
+  </g>
+</svg>

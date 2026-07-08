@@ -1,6 +1,8 @@
 <div align="center">
 
-# MiniTrainSys ✨
+<img src="assets/readme-banner.svg" alt="MiniTrainSys banner" width="100%" />
+
+<br />
 
 **A tiny, readable, benchmark-first LLM pretraining system.**
 
@@ -9,11 +11,13 @@ the inside out: start with a PyTorch baseline, then progressively explore
 Triton kernels, fused operators, DDP/FSDP, communication experiments, and
 performance reports.
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-Training-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![Triton](https://img.shields.io/badge/Triton-Kernels-7C3AED?style=flat-square)](https://triton-lang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Learning%20System-22C55E?style=flat-square)](#current-status)
+<br />
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Training-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Triton](https://img.shields.io/badge/Triton-Kernels-7C3AED?style=for-the-badge)](https://triton-lang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-FACC15?style=for-the-badge)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Learning%20System-22C55E?style=for-the-badge)](#current-status)
 
 </div>
 
@@ -22,21 +26,25 @@ performance reports.
 ## 🌱 What is MiniTrainSys?
 
 MiniTrainSys is a compact training framework for learning and experimenting
-with **LLM pretraining systems**.
+with **LLM pretraining systems**. It does not try to train the largest possible
+model. Instead, it breaks the pretraining stack into small, inspectable pieces
+that can be read, replaced, tested, and benchmarked independently.
 
-It does not try to train the largest model possible. Instead, it breaks the
-pretraining stack into small, inspectable pieces:
+<table>
+  <tr>
+    <td align="center"><b>🧠 Model</b><br />LLaMA-style mini Transformer</td>
+    <td align="center"><b>⚙️ Ops</b><br />PyTorch, Triton, future CUDA</td>
+    <td align="center"><b>🚂 Training</b><br />small loop, clear metrics</td>
+  </tr>
+  <tr>
+    <td align="center"><b>📦 Data</b><br />random and token files</td>
+    <td align="center"><b>🌐 Distributed</b><br />single, DDP, FSDP</td>
+    <td align="center"><b>📊 Reports</b><br />latency, memory, scaling</td>
+  </tr>
+</table>
 
-- 🧠 model architecture
-- ⚙️ operator backend
-- 🚂 training loop
-- 📦 data pipeline
-- 📊 logging and benchmarking
-- 🌐 distributed strategy
-
-Each piece is designed to be read, replaced, tested, and benchmarked
-independently. The goal is to make modern pretraining systems easier to reason
-about without hiding the engineering details that matter.
+The project is meant to be a **cute but serious pretraining systems guide**:
+small enough to understand, structured enough to measure real tradeoffs.
 
 ---
 
@@ -129,7 +137,7 @@ Python 3.10+ is recommended. CPU is enough for smoke tests. Triton and
 distributed GPU experiments are best run in a CUDA-enabled Linux environment.
 
 ```bash
-git clone https://github.com/<your-github-username>/mini-train-sys.git
+git clone https://github.com/Zhaibin-Cui/mini-train-sys.git
 cd mini-train-sys
 
 python -m venv .venv
@@ -312,6 +320,10 @@ MiniTrainSys is released under the [MIT License](LICENSE).
 ---
 
 <div align="center">
+
+<sub>Font note: the banner prefers Quicksand, Nunito, Comic Neue, and rounded UI fonts when available.</sub>
+
+<br />
 
 **Small code. Clear measurements. Real pretraining systems intuition.**
 
