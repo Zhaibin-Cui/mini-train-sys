@@ -271,6 +271,7 @@ Reports live under `reports/`:
 ## 🗺️ Roadmap
 
 - [ ] Add Triton RoPE, SwiGLU, CrossEntropy, and FusedLinearCrossEntropy replacements
+- [ ] Add a pretraining-only Triton FlashAttention-style causal attention kernel
 - [ ] Add CUDA C++ extension examples for teaching-oriented kernels
 - [ ] Expand benchmark reports with reproducible GPU results
 - [ ] Improve DDP/FSDP benchmark scripts and scaling summaries

@@ -1,5 +1,7 @@
 from minitrain.kernels.torch_ops import TorchOpsBackend
 from minitrain.kernels.triton.cache import configure_triton_cache
+from minitrain.kernels.triton.flash_attention import flash_attention as triton_flash_attention
+from minitrain.kernels.triton.flash_attention import is_flash_attention_supported
 from minitrain.kernels.triton.rmsnorm import is_rmsnorm_supported
 from minitrain.kernels.triton.rmsnorm import rmsnorm as triton_rmsnorm
 from minitrain.kernels.triton.rope import is_rope_supported
@@ -48,3 +50,10 @@ class TritonOpsBackend(TorchOpsBackend):
         if is_rope_supported(q, k, cos, sin):
             return triton_rope(q, k, cos, sin)
         return super().rope(q, k, cos, sin)
+
+    def attention(self, q, k, v, *, is_causal, dropout_p):
+        """Run local Triton FlashAttention when available for the current tensors."""
+
+        if is_flash_attention_supported(q, k, v, dropout_p=dropout_p):
+            return triton_flash_attention(q, k, v, is_causal=is_causal, dropout_p=dropout_p)
+        return super().attention(q, k, v, is_causal=is_causal, dropout_p=dropout_p)

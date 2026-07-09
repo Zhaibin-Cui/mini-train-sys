@@ -40,7 +40,7 @@ References:
 - `../Liger-Kernel/src/liger_kernel/ops/rms_norm.py`
 - `../Liger-Kernel/src/liger_kernel/ops/fused_linear_cross_entropy.py` -->
 
-## Session 3: Triton Kernel 1 - RMSNorm
+<!-- ## Session 3: Triton Kernel 1 - RMSNorm
 
 Files:
 - `minitrain/kernels/triton/rmsnorm.py`
@@ -70,9 +70,39 @@ Deliverables:
 
 References:
 - `../Liger-Kernel/src/liger_kernel/ops/rope.py`
-- `../Liger-Kernel/src/liger_kernel/ops/swiglu.py`
+- `../Liger-Kernel/src/liger_kernel/ops/swiglu.py` -->
 
-## Session 5: Fused Linear Cross Entropy
+## Session 5: Triton FlashAttention For Pretraining
+
+Files:
+- `docs/flash_attention_pretraining_plan.md`
+- `minitrain/kernels/triton/flash_attention.py`
+- `minitrain/kernels/triton_ops.py`
+- `tests/test_triton_flash_attention.py`
+- `tests/operator_bench_utils.py`
+- `reports/operator_bench.md`
+
+Deliverables:
+- pretraining-only FlashAttention-style Triton forward and backward;
+- causal bf16/fp16 support for `[B, H, S, D]`, starting with `D in {64, 128}`;
+- fallback to PyTorch SDPA for unsupported shapes;
+- correctness tests against SDPA for output and `dq/dk/dv`;
+- benchmark latency, memory, and selected SDPA backend.
+
+References:
+- Triton official fused attention tutorial:
+  `https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html`
+- `../DeepSpeed/deepspeed/ops/transformer/inference/triton/attention.py`
+- `../nanochat/nanochat/flash_attention.py`
+
+Notes:
+- This session is for pretraining only. Do not implement KV cache, paged
+  attention, decode kernels, or serving-specific features here.
+- Do not use `../Liger-Kernel/src/liger_kernel/ops/fused_neighborhood_attention.py`
+  as the algorithmic base because it materializes `[seq, seq]` intermediates.
+  It is useful only for Triton project structure and benchmark style.
+
+## Session 6: Fused Linear Cross Entropy
 
 Files:
 - `minitrain/kernels/triton/fused_linear_ce.py`
@@ -88,7 +118,7 @@ References:
 - `../Liger-Kernel/src/liger_kernel/ops/fused_linear_cross_entropy.py`
 - `../Liger-Kernel/src/liger_kernel/chunked_loss/`
 
-## Session 6: DDP Benchmark
+## Session 7: DDP Benchmark
 
 Files:
 - `minitrain/distributed/ddp.py`
@@ -103,7 +133,7 @@ References:
 - `../torchtitan/torchtitan/distributed/`
 - `../nanochat/nanochat/execution.py`
 
-## Session 7: FSDP and ZeRO-Style Memory Story
+## Session 8: FSDP and ZeRO-Style Memory Story
 
 Files:
 - `minitrain/distributed/fsdp.py`
@@ -119,7 +149,7 @@ References:
 - `../torchtitan/torchtitan/distributed/fsdp.py`
 - `../DeepSpeed/deepspeed/runtime/zero/`
 
-## Session 8: Custom AllReduce
+## Session 9: Custom AllReduce
 
 Files:
 - `minitrain/distributed/custom_allreduce.py`
@@ -134,7 +164,7 @@ References:
 - `../Megatron-LM/megatron/core/parallel_state.py`
 - `../DeepSpeed/deepspeed/comm/`
 
-## Session 9: CUDA C++ Extension Candidate
+## Session 10: CUDA C++ Extension Candidate
 
 Files:
 - `minitrain/kernels/cuda_ext/`

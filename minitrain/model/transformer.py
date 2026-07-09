@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import torch
 from torch import nn
 
@@ -12,6 +14,7 @@ class MiniTransformer(nn.Module):
         self.cfg = cfg
         self.ops = ops
         self.embed = nn.Embedding(cfg.vocab_size, cfg.hidden_size)
+        self.dropout = nn.Dropout(cfg.dropout)
         self.blocks = nn.ModuleList([TransformerBlock(cfg) for _ in range(cfg.n_layers)])
         self.norm = RMSNorm(cfg.hidden_size, cfg.norm_eps)
         self.lm_head = nn.Linear(cfg.hidden_size, cfg.vocab_size, bias=False)
@@ -31,7 +34,7 @@ class MiniTransformer(nn.Module):
         targets: torch.Tensor | None = None,
         use_fused_loss: bool = False,
     ) -> tuple[torch.Tensor | None, torch.Tensor]:
-        x = self.embed(input_ids)
+        x = self.dropout(self.embed(input_ids))
         for block in self.blocks:
             x = block(x, self.ops)
         x = self.norm(x, self.ops)

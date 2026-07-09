@@ -23,6 +23,7 @@ class CausalSelfAttention(nn.Module):
         self.cfg = cfg
         self.qkv = nn.Linear(cfg.hidden_size, 3 * cfg.hidden_size, bias=False)
         self.out = nn.Linear(cfg.hidden_size, cfg.hidden_size, bias=False)
+        self.resid_dropout = nn.Dropout(cfg.dropout)
         self._init_weights()
         inv_freq = 1.0 / (
             cfg.rope_theta ** (torch.arange(0, cfg.head_dim, 2, dtype=torch.float32) / cfg.head_dim)
@@ -54,7 +55,7 @@ class CausalSelfAttention(nn.Module):
         dropout_p = self.cfg.dropout if self.training else 0.0
         y = ops.attention(q, k, v, is_causal=True, dropout_p=dropout_p)
         y = y.transpose(1, 2).contiguous().view(bsz, seq_len, hidden)
-        return self.out(y)
+        return self.resid_dropout(self.out(y))
 
 
 class SwiGLUMLP(nn.Module):
@@ -63,6 +64,7 @@ class SwiGLUMLP(nn.Module):
         self.gate = nn.Linear(cfg.hidden_size, cfg.intermediate_size, bias=False)
         self.up = nn.Linear(cfg.hidden_size, cfg.intermediate_size, bias=False)
         self.down = nn.Linear(cfg.intermediate_size, cfg.hidden_size, bias=False)
+        self.dropout = nn.Dropout(cfg.dropout)
         self._init_weights(cfg)
 
     def _init_weights(self, cfg: ModelConfig) -> None:
@@ -73,7 +75,7 @@ class SwiGLUMLP(nn.Module):
         nn.init.normal_(self.down.weight, mean=0.0, std=residual_std)
 
     def forward(self, x: torch.Tensor, ops: OpsBackend) -> torch.Tensor:
-        return self.down(ops.swiglu(self.gate(x), self.up(x)))
+        return self.dropout(self.down(ops.swiglu(self.gate(x), self.up(x))))
 
 
 class TransformerBlock(nn.Module):
