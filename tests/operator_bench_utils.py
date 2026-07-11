@@ -12,6 +12,7 @@ import torch
 TensorMap = dict[str, torch.Tensor]
 ForwardFn = Callable[[str, TensorMap], Any]
 MakeCaseFn = Callable[[int], "BenchCase"]
+AutotuneKernels = dict[str, Any]
 METRIC_NAMES = (
     "fwd_p50_ms",
     "fwd_p95_ms",
@@ -35,6 +36,65 @@ def release_cache() -> None:
     if torch.cuda.is_available():
         torch.cuda.synchronize()
         torch.cuda.empty_cache()
+
+
+def triton_best_config(kernel: Any) -> dict[str, Any] | None:
+    """Return the last configuration selected by a Triton autotuner."""
+
+    config = getattr(kernel, "best_config", None)
+    if config is None:
+        return None
+    values = dict(getattr(config, "kwargs", {}))
+    for name in ("num_warps", "num_stages", "num_ctas"):
+        value = getattr(config, name, None)
+        if value is not None:
+            values[name] = value
+    return values
+
+
+def collect_triton_best_configs(kernels: AutotuneKernels) -> dict[str, dict[str, Any]]:
+    """Collect the selected config of each registered Triton autotuner."""
+
+    return {
+        name: config
+        for name, kernel in kernels.items()
+        if (config := triton_best_config(kernel)) is not None
+    }
+
+
+def triton_config_records(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Flatten per-case autotune results into one record per Triton kernel."""
+
+    records = []
+    for row in rows:
+        for triton_kernel, config in row.get("triton_best_configs", {}).items():
+            records.append(
+                {
+                    "benchmark": row["kernel"],
+                    "provider": row["provider"],
+                    "size": row["size"],
+                    "size_label": row["size_label"],
+                    "triton_kernel": triton_kernel,
+                    **config,
+                }
+            )
+    return records
+
+
+def display_triton_config_summary(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Display one consolidated table of all selected Triton configurations."""
+
+    records = triton_config_records(rows)
+    if not records:
+        return []
+    try:
+        import pandas as pd
+        from IPython.display import display
+
+        display(pd.DataFrame(records))
+    except ImportError:
+        print(records)
+    return records
 
 
 def free_case(case: BenchCase) -> None:
@@ -326,6 +386,7 @@ def bench_provider(
     rtol: float,
     warmup_ms: int,
     rep_ms: int,
+    autotune_kernels: AutotuneKernels | None = None,
 ) -> dict[str, Any]:
     row = {
         "kernel": kernel,
@@ -364,6 +425,8 @@ def bench_provider(
         row["bwd_speedup"] = (
             1.0 if torch_bwd_p50_ms in (None, 0.0) else torch_bwd_p50_ms / row["bwd_p50_ms"]
         )
+        if autotune_kernels and provider == "triton":
+            row["triton_best_configs"] = collect_triton_best_configs(autotune_kernels)
     except Exception as exc:
         row.update(
             {
@@ -391,6 +454,7 @@ def bench_sweep(
     rep_ms: int = 100,
     atol: float = 2e-2,
     rtol: float = 2e-2,
+    autotune_kernels: AutotuneKernels | None = None,
 ) -> list[dict[str, Any]]:
     if isinstance(providers, str):
         providers = (providers,)
@@ -413,6 +477,7 @@ def bench_sweep(
                 rtol=rtol,
                 warmup_ms=warmup_ms,
                 rep_ms=rep_ms,
+                autotune_kernels=autotune_kernels,
             )
             if provider == "torch" and row["status"] == "ok":
                 torch_fwd_p50 = row["fwd_p50_ms"]
@@ -421,6 +486,8 @@ def bench_sweep(
                 row["bwd_speedup"] = 1.0
             rows.append(row)
         release_cache()
+    if autotune_kernels:
+        display_triton_config_summary(rows)
     return rows
 
 
