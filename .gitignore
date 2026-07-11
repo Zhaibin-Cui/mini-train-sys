@@ -70,3 +70,5 @@ tests/**/__pycache__/
 tests/**/*.py[cod]
 reports/**/__pycache__/
 reports/**/*.py[cod]
+# reports/nsight/
+# reports/*.profile.pkl
