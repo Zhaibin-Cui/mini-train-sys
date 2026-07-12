@@ -64,7 +64,10 @@ _BWD_NUM_STAGES = (1, 2, 3, 4)
 # higher-warp, lower-stage candidates that limit register pressure while still
 # allowing enough pipelining to hide memory latency.
 _DROPOUT_BWD_NUM_WARPS = (8,)
-_DROPOUT_BWD_NUM_STAGES = (1, 2, 3)
+# Triton 3.1 can miscompile the loop-carried dQ/dK/dV accumulators when the
+# dropout RNG path is software-pipelined. Stage 1 is both deterministic and
+# spill-free; the no-dropout autotune space remains unchanged.
+_DROPOUT_BWD_NUM_STAGES = (1,)
 _BWD_DKDV_BLOCK_M_STEP = 32
 _BWD_DQ_BLOCK_N_STEP = 32
 _BWD_CAUSAL_DIAGONAL_DIVISOR = 2
