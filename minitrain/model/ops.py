@@ -73,5 +73,7 @@ def get_ops_backend(name: str) -> OpsBackend:
 
         return TritonOpsBackend()
     if name == "cuda":
-        raise NotImplementedError("CUDA C++ backend scaffold exists under kernels/cuda_ext.")
+        from minitrain.kernels.cuda_ext import CudaOpsBackend
+
+        return CudaOpsBackend()
     raise ValueError(f"Unknown ops backend: {name}")

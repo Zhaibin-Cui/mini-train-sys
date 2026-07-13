@@ -31,9 +31,17 @@ dev = [
 triton = [
   "triton",
 ]
+cuda = [
+  "ninja",
+]
 
 [tool.setuptools.packages.find]
 include = ["minitrain*"]
+
+[tool.setuptools.package-data]
+# CUDA kernels compile lazily after installation, so wheels and sdists must
+# carry generated sources, upstream headers, CUTLASS/CUTE, and license texts.
+"minitrain.kernels.cuda_ext" = ["csrc/**/*"]
 
 [tool.ruff]
 line-length = 100
