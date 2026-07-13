@@ -1,60 +1,51 @@
-# CUDA FlashAttention Build And Run Commands
+# CUDA FlashAttention 编译与运行手册
 
-本文档提供 MiniTrain CUDA FlashAttention 扩展在 Windows PowerShell 和 Linux Bash 下的完整运行示例。
+所有命令都从 `mini-train-sys` 仓库根目录执行。代码结构与设计说明见
+[`cuda_flash_attention_code_reading_guide.md`](cuda_flash_attention_code_reading_guide.md)。
 
-所有命令都应在 `mini-train-sys` 项目根目录执行。首次构建建议先使用 `minimal` 配置验证编译工具链，再根据机器条件切换到 `workstation` 或 `full`。
+安装包携带 CUDA JIT 源码而不是预编译 `.pyd`。可使用：
 
-## Windows PowerShell
-
-### 1. 进入项目并激活 Python 环境
-
-```powershell
-cd "C:\Users\Zhai-Bin Cui\Desktop\GPTScratch\mini-train-sys"
-
-# 根据实际虚拟环境路径调整。
-.\.venv\Scripts\Activate.ps1
+```bash
+pip install ".[cuda]"
 ```
 
-### 2. 检查 PyTorch、CUDA Toolkit 和编译工具
+构建出的 wheel 标记为 `py3-none-any`，这里只表示 Python 包本身没有绑定某个预编译
+平台二进制；首次调用 CUDA attention 时仍会在目标机器上用本节工具链编译对应
+profile。已验证 wheel 中 875 个 `csrc` 文件与源码目录逐路径完全一致，并且没有
+打包本机 build cache。
+
+源码 checkout 默认使用 `minitrain/kernels/cuda_ext/build`。Wheel 安装默认使用
+`TORCH_EXTENSIONS_DIR` 或 PyTorch 用户 cache，避免向可能只读的 `site-packages`
+写入，并附加 Python/PyTorch/CUDA/platform ABI tag。需要把编译放到高速本地盘时：
+
+```bash
+export MINITRAIN_CUDA_BUILD_ROOT=/local_nvme/minitrain_cuda_build
+```
+
+Windows 使用 `$env:MINITRAIN_CUDA_BUILD_ROOT="D:\minitrain_cuda_build"`。
+
+## 1. 检查工具链
+
+Windows PowerShell：
 
 ```powershell
-python -c "import torch; print('PyTorch:', torch.__version__); print('PyTorch CUDA:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available()); print('GPU:', torch.cuda.get_device_name(0))"
+python -c "import torch; print(torch.__version__, torch.version.cuda); print(torch.cuda.get_device_name(0))"
 nvcc --version
 where.exe cl
 where.exe ninja
 ```
 
-如果 `nvcc` 不在 `PATH` 中，根据实际安装版本设置 CUDA Toolkit：
+Linux：
 
-```powershell
-$env:CUDA_HOME="C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4"
-$env:PATH="$env:CUDA_HOME\bin;$env:PATH"
+```bash
+python -c "import torch; print(torch.__version__, torch.version.cuda); print(torch.cuda.get_device_name(0))"
+nvcc --version
+which c++
+which ninja
 ```
 
-### 3. 生成并检查 CUDA 模板实例化文件
-
-```powershell
-# 根据 dtype、head-dim、forward/backward 和 causal 配置生成 .cu 文件。
-python minitrain/kernels/cuda_ext/generate_kernels.py
-
-# 只检查仓库中的生成文件是否为最新版本，不修改文件。
-python minitrain/kernels/cuda_ext/generate_kernels.py --check
-```
-
-### 4. 使用 minimal 配置验证编译工具链
-
-以下配置面向当前 SM86 Windows 工作站，只编译 fp16、head-dim 32 的四个前向/反向实例化文件。
-
-```powershell
-$env:MINITRAIN_CUDA_BUILD_PROFILE="minimal"
-$env:MINITRAIN_CUDA_ARCHS="86"
-$env:MINITRAIN_CUDA_MAX_JOBS="1"
-$env:MINITRAIN_CUDA_VERBOSE="1"
-
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; ext = load_cuda_extension(); print('Loaded:', ext)"
-```
-
-Windows 构建会自动使用以下兼容参数，无需在命令行重复设置：
+PyTorch 的 CUDA runtime、CUDA Toolkit 和 host compiler 必须彼此兼容。Windows
+构建已在 `build.py` 中固定加入：
 
 ```text
 --ptxas-options=-v
@@ -62,22 +53,83 @@ Windows 构建会自动使用以下兼容参数，无需在命令行重复设置
 -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH
 ```
 
-### 5. 编译工作站常用配置
+## 2. 检查生成矩阵
 
-`workstation` 包含 fp16/bf16、head-dim 32/64/128、forward/backward 和 causal/non-causal。
+仓库提交了 48 个薄 `.cu` 实例化文件。日常只检查，不应每次重写：
+
+```powershell
+python minitrain/kernels/cuda_ext/generate_kernels.py --check
+```
+
+只有修改 dtype/head-dim/causal 实例化矩阵后才运行：
+
+```powershell
+python minitrain/kernels/cuda_ext/generate_kernels.py
+```
+
+## 3. 本机 sm86 构建
+
+先用 fp16/D32 验证工具链：
+
+```powershell
+$env:MINITRAIN_CUDA_BUILD_PROFILE="minimal"
+$env:MINITRAIN_CUDA_ARCHS="86"
+$env:MINITRAIN_CUDA_MAX_JOBS="1"
+$env:MINITRAIN_CUDA_VERBOSE="1"
+python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
+```
+
+再编译本机常用矩阵（fp16/bf16，D32/D64/D128）：
 
 ```powershell
 $env:MINITRAIN_CUDA_BUILD_PROFILE="workstation"
 $env:MINITRAIN_CUDA_ARCHS="86"
 $env:MINITRAIN_CUDA_MAX_JOBS="1"
-$env:MINITRAIN_CUDA_VERBOSE="1"
-
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; ext = load_cuda_extension(); print('Loaded:', ext)"
+python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
 ```
 
-### 6. 编译自定义矩阵
+16 GB 内存机器不要并行编译多个 D256 backward translation unit。编译被中断后，
+保持完全相同的 profile、arch、dtype 和 head dims 再执行一次，ninja 会继续使用
+已完成的 object。
 
-下面的例子只编译 fp16 的 head-dim 64 和 128：
+需要保存 ptxas 日志时：
+
+```powershell
+python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())" 2>&1 | Tee-Object -FilePath ".\minitrain\kernels\cuda_ext\build\cuda_build_sm86.log"
+```
+
+## 4. 服务器完整构建
+
+以下示例生成 sm80/sm86/sm89/sm90 cubin，并为最后一个架构保留 PTX：
+
+```bash
+export MINITRAIN_CUDA_BUILD_PROFILE=full
+export MINITRAIN_CUDA_ARCHS="80;86;89;90"
+export MINITRAIN_CUDA_MAX_JOBS=8
+export MINITRAIN_CUDA_VERBOSE=1
+python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
+```
+
+`MINITRAIN_CUDA_ARCHS` 是架构的唯一配置入口。构建器会在加载前据此覆盖并生成
+`TORCH_CUDA_ARCH_LIST`，从而保证扩展 cache key 与实际 cubin/PTX 目标一致；不要再
+手工设置后者。
+
+`MAX_JOBS=8` 只是大内存服务器示例。先观察一个 D256 backward nvcc 进程的峰值
+宿主内存，再决定并行度。当前移植的是 FlashAttention 2.8.4 的 Ampere 风格
+kernel；编译为 sm90 并不等于使用 Hopper 专用 WGMMA/TMA kernel。
+
+只部署单一架构时应缩小 arch 列表，例如：
+
+```bash
+export MINITRAIN_CUDA_BUILD_PROFILE=full
+export MINITRAIN_CUDA_ARCHS=90
+export MINITRAIN_CUDA_MAX_JOBS=8
+python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
+```
+
+## 5. 自定义构建矩阵
+
+环境变量会覆盖 profile 的 dtype 和 head-dim 默认值：
 
 ```powershell
 $env:MINITRAIN_CUDA_BUILD_PROFILE="minimal"
@@ -85,160 +137,56 @@ $env:MINITRAIN_CUDA_HEAD_DIMS="64;128"
 $env:MINITRAIN_CUDA_DTYPES="fp16"
 $env:MINITRAIN_CUDA_ARCHS="86"
 $env:MINITRAIN_CUDA_MAX_JOBS="1"
-$env:MINITRAIN_CUDA_VERBOSE="1"
-
 python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
 ```
 
-显式的 `MINITRAIN_CUDA_HEAD_DIMS` 和 `MINITRAIN_CUDA_DTYPES` 会覆盖 profile 中的默认矩阵。
+允许的 bucket 是 `32;64;96;128;192;256`，dtype 是 `fp16;bf16`。配置矩阵进入
+JIT 扩展 cache key，因此切换配置不会误加载旧 DLL。
 
-保存编译日志
-```powershell
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())" 2>&1 | Tee-Object -FilePath ".\minitrain\kernels\cuda_ext\build\cuda_build_sm86.log"
-```
+## 6. Notebook 全量验证
 
-查看编译错误
-```powershell
-Select-String -Path ".\minitrain\kernels\cuda_ext\build\cuda_build_sm86.log" -Pattern "Used .* registers|stack frame|spill stores|spill loads"
-```
-
-### 7. 运行测试
+先编译 notebook 需要的 profile，再启动：
 
 ```powershell
-pytest tests/test_cuda_build_config.py -v
-pytest tests/test_cuda_flash_attention.py -v
-pytest tests/test_cuda_backend_fallback.py -v
+jupyter lab tests/operator_bench.ipynb
 ```
 
-### 8. 清理当前 PowerShell 会话中的配置
+attention 区域完成四类 fp16 验证：
 
-```powershell
-Remove-Item Env:MINITRAIN_CUDA_BUILD_PROFILE -ErrorAction SilentlyContinue
-Remove-Item Env:MINITRAIN_CUDA_HEAD_DIMS -ErrorAction SilentlyContinue
-Remove-Item Env:MINITRAIN_CUDA_DTYPES -ErrorAction SilentlyContinue
-Remove-Item Env:MINITRAIN_CUDA_ARCHS -ErrorAction SilentlyContinue
-Remove-Item Env:MINITRAIN_CUDA_MAX_JOBS -ErrorAction SilentlyContinue
-Remove-Item Env:MINITRAIN_CUDA_VERBOSE -ErrorAction SilentlyContinue
+1. correctness 遍历六个 head bucket 与 D40/D80/D160/D200 masked-tail 维度，再
+   组合 causal/non-causal、dropout/no-dropout，使用 CUDA helper 导出的真实
+   Philox keep mask 构造 fp32 PyTorch 参考；
+2. layout/stream correctness 使用外层非连续、最后一维连续的输入，在显式非默认
+   CUDA stream 上检查 forward、backward、dropout mask 与 stride 透传；
+3. capability matrix 验证无效 shape、dtype、dropout、head dim 和 stride 会在
+   extension JIT 加载前返回 unsupported，并检查 dropout 转换为 float32 后的
+   上溢/下溢边界；
+4. performance 使用统一 `benchmark_step` 封装比较 Torch、Triton、CUDA 的
+   forward/backward 延迟、峰值显存和 speedup。
+
+前三组 correctness 检查带有硬断言。执行 `Run All` 时，只要受支持分支出现数值
+错误、布局/stream 回归或 capability 判断不符，notebook 就会在性能测试前停止。
+标记为 `unsupported` 的已知 build/hardware 边界不会被当作失败。
+
+notebook 会打印当前 build config。未编译的 bucket 和硬件不支持的
+sm86/sm89 `D > 192 + dropout` 显示为 `unsupported`，不会把 fallback 耗时当作 CUDA
+kernel 结果。D128 sequence sweep 也执行相同检查；profile 缺少 D128 时 CUDA 行
+显示 `unavailable`，而不是静默测量 Triton。Triton 行也执行自身支持检查，例如
+D192/D256 会显示 `unsupported`，不会静默测量 PyTorch。
+
+这个特殊 backward 分支按设备的 opt-in shared-memory 容量判断，而不是只看型号。
+PyTorch 未暴露真实字节数时使用已审计架构表；未知架构在完成验证前显示
+`unsupported`，直接 pybind 调用仍由 C++ 的 CUDA runtime 属性检查保护。
+
+## 7. 训练运行
+
+配置 MiniTrain：
+
+```yaml
+backend:
+  ops: cuda
 ```
 
-## Linux Bash
-
-### 1. 进入项目并激活 Python 环境
-
-```bash
-cd ~/GPTScratch/mini-train-sys
-
-# 根据实际虚拟环境路径调整。
-source .venv/bin/activate
-```
-
-### 2. 检查 PyTorch、CUDA Toolkit 和编译工具
-
-```bash
-python -c "import torch; print('PyTorch:', torch.__version__); print('PyTorch CUDA:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available()); print('GPU:', torch.cuda.get_device_name(0))"
-nvcc --version
-which c++
-which ninja
-```
-
-如果 CUDA Toolkit 不在默认搜索路径中：
-
-```bash
-export CUDA_HOME=/usr/local/cuda
-export PATH="$CUDA_HOME/bin:$PATH"
-export LD_LIBRARY_PATH="$CUDA_HOME/lib64:${LD_LIBRARY_PATH:-}"
-```
-
-### 3. 生成并检查 CUDA 模板实例化文件
-
-```bash
-python minitrain/kernels/cuda_ext/generate_kernels.py
-python minitrain/kernels/cuda_ext/generate_kernels.py --check
-```
-
-### 4. 使用 minimal 配置验证 A100/SM80 工具链
-
-```bash
-export MINITRAIN_CUDA_BUILD_PROFILE=minimal
-export MINITRAIN_CUDA_ARCHS=80
-export MINITRAIN_CUDA_MAX_JOBS=2
-export MINITRAIN_CUDA_VERBOSE=1
-
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; ext = load_cuda_extension(); print('Loaded:', ext)"
-```
-
-如果 Linux 机器使用 SM86、SM89 或 SM90 GPU，将 `MINITRAIN_CUDA_ARCHS` 改为对应值即可。
-
-### 5. 编译服务器完整配置
-
-下面的配置会编译全部 dtype 和 head-dim，并生成 SM80、SM86、SM89 和 SM90 目标代码：
-
-```bash
-export MINITRAIN_CUDA_BUILD_PROFILE=full
-export MINITRAIN_CUDA_ARCHS="80;86;89;90"
-export MINITRAIN_CUDA_MAX_JOBS=8
-export MINITRAIN_CUDA_VERBOSE=1
-
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; ext = load_cuda_extension(); print('Loaded:', ext)"
-```
-
-完整配置的模板编译会占用较多内存。出现内存压力时降低并行任务数：
-
-```bash
-export MINITRAIN_CUDA_MAX_JOBS=2
-```
-
-如果扩展只部署在一台 H100/SM90 服务器上，可以只生成 SM90 目标代码：
-
-```bash
-export MINITRAIN_CUDA_BUILD_PROFILE=full
-export MINITRAIN_CUDA_ARCHS=90
-export MINITRAIN_CUDA_MAX_JOBS=8
-export MINITRAIN_CUDA_VERBOSE=1
-
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
-```
-
-当前移植仍使用 SM80 风格的 FlashAttention kernel。将它编译为 SM90 机器码并不等于使用了 Hopper 专用的 WGMMA/TMA kernel。
-
-### 6. 编译自定义矩阵
-
-下面的例子只编译 bf16 的 head-dim 64 和 128：
-
-```bash
-export MINITRAIN_CUDA_BUILD_PROFILE=minimal
-export MINITRAIN_CUDA_HEAD_DIMS="64;128"
-export MINITRAIN_CUDA_DTYPES=bf16
-export MINITRAIN_CUDA_ARCHS=80
-export MINITRAIN_CUDA_MAX_JOBS=4
-export MINITRAIN_CUDA_VERBOSE=1
-
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
-```
-
-### 7. 运行测试
-
-```bash
-pytest tests/test_cuda_build_config.py -v
-pytest tests/test_cuda_flash_attention.py -v
-pytest tests/test_cuda_backend_fallback.py -v
-```
-
-### 8. 清理当前 Bash 会话中的配置
-
-```bash
-unset MINITRAIN_CUDA_BUILD_PROFILE
-unset MINITRAIN_CUDA_HEAD_DIMS
-unset MINITRAIN_CUDA_DTYPES
-unset MINITRAIN_CUDA_ARCHS
-unset MINITRAIN_CUDA_MAX_JOBS
-unset MINITRAIN_CUDA_VERBOSE
-```
-
-## 推荐构建顺序
-
-1. 用 `generate_kernels.py --check` 检查生成文件。
-2. 用 `minimal` 验证 CUDA、宿主编译器、Ninja 和 PyTorch ABI。
-3. 在本机使用 `workstation`，在内存充足的构建服务器上使用 `full`。
-4. `MINITRAIN_CUDA_ARCHS` 只填写实际需要部署的 GPU 架构，避免无意义地增加编译时间和扩展体积。
-5. 编译成功后运行 CUDA 正确性、反向传播和 fallback 测试。
+第一次遇到受支持的 attention 输入时加载 JIT extension。不支持的能力组合按
+`CUDA -> Triton -> PyTorch` 处理；没有基于 sequence length 或实测速度的性能
+fallback。

@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import hashlib
 import os
+import platform
+import sys
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -34,9 +36,17 @@ import torch
 # Change these values when this repository normally runs on a different class
 # of machine. Environment variables still take precedence, which lets a build
 # server override the local defaults without editing this file.
-_DEFAULT_BUILD_PROFILE = "full"
+# The repository is developed on a 16-GB Windows workstation.  Compiling all
+# 48 template translation units by default is both surprising and unnecessary
+# for the model sizes normally exercised there.  Build servers still select
+# ``full`` explicitly through MINITRAIN_CUDA_BUILD_PROFILE.
+_DEFAULT_BUILD_PROFILE = "workstation"
 _DEFAULT_CUDA_ARCHS = "86"  # Semicolon-separated values, for example "80;90".
-_DEFAULT_MAX_JOBS = 2
+# A single D=256 backward nvcc process can consume most of the workstation's
+# host RAM.  Two such processes failed with cudafe "out of memory" in the full
+# sm86 build, so the conservative local default is one worker.  Large servers
+# should override this after measuring their per-process peak memory.
+_DEFAULT_MAX_JOBS = 1
 _DEFAULT_VERBOSE = True  # Print nvcc command lines and verbose ninja output.
 
 # Each profile selects the dtype/head-dimension kernel matrix. Modify these
@@ -137,11 +147,67 @@ def _extension_name(config: CudaBuildConfig) -> str:
     return f"minitrain_cuda_flash_{config.cache_key}"
 
 
-def _build_dir(config: CudaBuildConfig) -> Path:
-    """Return a repo-local ninja cache isolated by build configuration."""
+def _runtime_cache_tag() -> str:
+    """Identify the Python/PyTorch/CUDA ABI sharing one native build cache."""
 
-    path = _package_dir() / "build" / _extension_name(config)
-    path.mkdir(parents=True, exist_ok=True)
+    raw = "|".join(
+        (
+            sys.implementation.cache_tag or "python",
+            torch.__version__,
+            torch.version.cuda or "no-cuda-runtime",
+            platform.system(),
+            platform.machine(),
+        )
+    )
+    return f"{sys.implementation.cache_tag or 'python'}_{hashlib.sha256(raw.encode('utf-8')).hexdigest()[:12]}"
+
+
+def _source_checkout_root() -> Path | None:
+    """Return the repository root when this package is imported from source."""
+
+    # cuda_ext -> kernels -> minitrain -> repository root. Wheels do not carry
+    # pyproject.toml, so an installed package cannot be mistaken for a checkout.
+    candidate = _package_dir().parents[2]
+    return candidate if (candidate / "pyproject.toml").is_file() else None
+
+
+def _build_root() -> Path:
+    """Choose a writable root without giving up checkout-local build logs.
+
+    Source development keeps the historical package-local ``build`` directory,
+    which makes ptxas logs and interrupted ninja builds easy to inspect. A wheel
+    may live in read-only system site-packages, so installed builds use the user
+    Torch cache and an ABI-specific subdirectory instead.
+    """
+
+    explicit_root = os.getenv("MINITRAIN_CUDA_BUILD_ROOT")
+    if explicit_root:
+        return Path(explicit_root).expanduser() / _runtime_cache_tag()
+
+    if _source_checkout_root() is not None:
+        return _package_dir() / "build"
+
+    torch_root = os.getenv("TORCH_EXTENSIONS_DIR")
+    if torch_root:
+        root = Path(torch_root).expanduser()
+    else:
+        from torch.utils.cpp_extension import get_default_build_root
+
+        root = Path(get_default_build_root())
+    return root / "minitrain_cuda_ext" / _runtime_cache_tag()
+
+
+def _build_dir(config: CudaBuildConfig) -> Path:
+    """Return a writable ninja cache isolated by ABI and build configuration."""
+
+    path = _build_root() / _extension_name(config)
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise RuntimeError(
+            f"Cannot create CUDA extension build directory {path}. Set "
+            "MINITRAIN_CUDA_BUILD_ROOT to a writable location."
+        ) from error
     return path
 
 
@@ -251,7 +317,14 @@ def load_cuda_extension():
 
     config = get_build_config()
     os.environ.setdefault("MAX_JOBS", os.getenv("MINITRAIN_CUDA_MAX_JOBS", str(_DEFAULT_MAX_JOBS)))
-    os.environ.setdefault("TORCH_CUDA_ARCH_LIST", _torch_arch_list(config))
+
+    # The architecture tuple is part of our extension cache key, so it must be
+    # the single source of truth for PyTorch's nvcc flag generation. Using
+    # setdefault here would let a stale shell-level TORCH_CUDA_ARCH_LIST compile
+    # a different fat binary under the same MiniTrain cache name. Users select
+    # architectures through MINITRAIN_CUDA_ARCHS; the translated PyTorch value
+    # is intentionally overwritten immediately before JIT compilation.
+    os.environ["TORCH_CUDA_ARCH_LIST"] = _torch_arch_list(config)
 
     src = _source_dir()
     third_party = _third_party_dir()

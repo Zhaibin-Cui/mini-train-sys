@@ -1,299 +1,222 @@
-# MiniTrain CUDA FlashAttention Learning Report
+# MiniTrain CUDA FlashAttention 学习报告
 
-## 1. Goal And Scope
+## 1. 这次迁移做了什么
 
-MiniTrain needs one production-oriented dense attention operator, not the full
-feature surface of upstream FlashAttention. The retained contract is:
+MiniTrain 新增了一个 CUDA-only FlashAttention 后端。核心 forward/backward
+算法直接采用 FlashAttention 2.8.4 的 Ampere 实现，MiniTrain 负责以下工程层：
 
-- CUDA only;
-- fixed-length `(B, H, S, D)` Q/K/V with equal head counts;
-- fp16 and bf16;
-- causal and non-causal attention;
-- dropout and no-dropout;
-- native CUDA forward and backward;
-- architecture and tensor specialization without branches in model code.
+- 接入现有 OpsBackend，并保持 `CUDA -> Triton -> PyTorch` 能力 fallback；
+- 把 `(B,H,S,D)` PyTorch tensor 映射到上游参数结构；
+- 按 dtype、head bucket、causal 和 forward/backward 生成显式 `.cu`；
+- 提供适合本机与服务器的编译 profile、架构选择和 JIT cache；
+- 在 notebook 中统一做 fp16 correctness 与性能验证。
 
-GQA/MQA, variable length, paged KV cache, local attention, ALiBi, softcap, fp8,
-and split-KV are deliberately outside this implementation. This removes API
-complexity while leaving upstream's proven tiled kernel mathematics intact.
+迁移没有重新设计 CUDA kernel，也没有为了 sm86 的 spill 改写上游 tile。当前
+vendored 的 19 个 FlashAttention kernel、launcher 与 helper header 已逐个和源仓库
+比较，19/19 的 SHA256 完全一致。MiniTrain 的改动集中在外围适配层，这使以后升级
+上游版本时仍然可以直接比较差异。
 
-## 2. Why The First Correctness Kernel Was Replaced
+## 2. 为什么使用显式实例化矩阵
 
-The initial local kernel assigned one CTA to one query row and made three passes:
-row maximum, softmax denominator, then output. It avoided an `S x S` allocation,
-but recomputed every QK dot product in multiple passes and had no CUDA backward
-or dropout. It was useful to validate pybind and Windows compilation, but it was
-not an industrial FlashAttention kernel.
-
-The current implementation vendors the FlashAttention 2.8.4 Ampere kernel
-headers and CUTLASS/CUTE headers. MiniTrain changes the API and build matrix,
-not the core tile implementation. This is both faster and lower risk than
-reimplementing tensor-core MMA, shared-memory swizzles, online softmax, masking,
-Philox dropout, and gradient accumulation from scratch.
-
-## 3. Layered Architecture
-
-The runtime call path is:
+FlashAttention 的性能依赖大量编译期条件。把所有条件塞进一个运行时 kernel 会
+失去上游针对 tile、warp、causal 和 dropout 的专门化。因此迁移沿用源仓库思路，
+生成以下矩阵：
 
 ```text
-Transformer
-  -> OpsBackend.attention
-  -> CudaOpsBackend
-       supported -> MiniTrainCudaFlashAttentionFunction
-                    -> pybind C++ adapter
-                    -> dtype/head-dim/causal dispatch
-                    -> generated CUDA specialization
-                    -> upstream launch template and tiled kernel
-       unsupported -> TritonOpsBackend
-                       unsupported -> TorchOpsBackend / PyTorch SDPA
+direction = forward, backward
+dtype     = fp16, bf16
+head dim  = 32, 64, 96, 128, 192, 256
+causal    = false, true
 ```
 
-This hierarchy is intentional. Model code has no CUDA shape switches, and each
-lower backend remains a valid correctness fallback.
+总数是 `2 x 2 x 6 x 2 = 48` 个 `.cu`。这些文件只包含模板参数和显式实例化，
+真正的设备端算法仍在 vendored FlashAttention header 中。
 
-The source ownership boundary is:
+dropout 没有把文件数再乘二，因为上游 `DROPOUT_SWITCH` 在每个 translation unit
+内部生成 dropout/no-dropout 两棵独立模板。`dropout_p=0` 会进入编译期
+`Is_dropout=false` 路径，不读取 Philox state，也不生成随机数或保留 dropout
+mask。
 
-- MiniTrain owns `__init__.py`, `flash_attention.py`, `build.py`,
-  `generate_kernels.py`, and `flash_api_upstream.cpp`.
-- FlashAttention owns the common kernel headers under
-  `csrc/third_party/flash_attn/src`.
-- NVIDIA CUTLASS owns headers under `csrc/third_party/cutlass/include`.
-- Generated `.cu` files are mechanically derived from MiniTrain's matrix and
-  preserve upstream's explicit-specialization structure.
+这一点还做了二进制级核对。对 D128 fp16、相同 tile/even 条件的成对 kernel 导出
+SASS：forward no-dropout 为 2568 条指令，Philox4x32 的四个固定常量出现 0 次；
+dropout 为 2944 条，常量共出现 54 次。Backward 对应为 1752/1960 条，no-dropout
+仍是 0 次，dropout 为 18 次。因此随机数路径确实被编译消除，而不是运行时跳过。
+两类 kernel 的 ptxas `REG` 都可能达到 255，因为主体 QK/softmax/PV 计算本身仍有
+很高寄存器压力；不能把“没有 dropout 专属寄存器状态”误读成总寄存器数必然下降。
 
-## 4. Tensor Layout Mapping
+## 3. 一次调用如何运行
 
-MiniTrain tensors use `(batch, heads, sequence, head_dim)`. Upstream's public API
-usually presents `(batch, sequence, heads, head_dim)`, but the CUDA parameter
-structure does not require that physical order. It receives element strides:
-
-| Upstream parameter | MiniTrain tensor stride |
-| --- | --- |
-| `*_batch_stride` | `stride(0)` |
-| `*_head_stride` | `stride(1)` |
-| `*_row_stride` | `stride(2)` |
-| contiguous D | `stride(3) == 1` |
-
-Therefore the C++ adapter maps strides directly. There is no Q/K/V transpose,
-contiguous copy, or layout conversion on the normal model path.
-
-## 5. Forward Kernel Logic
-
-Upstream processes query and key/value tiles rather than individual rows. The
-important algorithmic ideas are:
-
-1. Load a Q tile and a K tile through coalesced global-memory transactions.
-2. Use tensor-core MMA to compute a score tile in fp32 accumulators.
-3. Apply causal/non-causal masks at compile time.
-4. Update running row maxima and sums using online softmax.
-5. Rescale the previous output accumulator when the running maximum changes.
-6. Multiply probabilities by a V tile and accumulate output without writing the
-   score matrix to global memory.
-7. Store output and one fp32 log-sum-exp value per query row.
-
-Memory is linear in Q/K/V/output plus LSE instead of quadratic in sequence
-length. The tiled implementation also reuses Q/K/V data in shared memory and
-register fragments, unlike the removed correctness kernel's repeated scalar
-dot products.
-
-## 6. Causal Specialization
-
-Causal mode is represented by the compile-time `Is_causal` template argument.
-Generated files bind both public symbols separately:
-
-```cpp
-run_mha_fwd_<cutlass::half_t, 64, false>(...)
-run_mha_fwd_<cutlass::half_t, 64, true>(...)
-```
-
-The launcher chooses one symbol once. The hot kernel does not branch between
-causal and non-causal behavior at runtime. Causal tiles beyond the diagonal are
-skipped or masked according to the upstream block rules.
-
-## 7. Dropout And The No-Dropout Fast Path
-
-Dropout is intentionally not encoded in filenames. Upstream's launch template
-uses `DROPOUT_SWITCH` to instantiate `Is_dropout=true` and `false` kernel trees
-inside each dtype/head/causal translation unit.
-
-For dropout:
-
-- C++ obtains a Philox seed and counter offset from PyTorch's CUDA generator.
-- Forward writes two int64 values `(seed, offset)` to a tiny CUDA tensor.
-- A tile's logical coordinates deterministically select Philox counters.
-- The mask is applied while probabilities are consumed; no full mask is stored.
-- Backward receives the saved seed/offset and regenerates the same mask online.
-
-For `dropout_p == 0`:
-
-- Python saves an empty RNG tensor.
-- C++ does not reserve generator state.
-- `if constexpr (Is_dropout)` removes RNG unpacking, random generation, mask
-  predicates, dropout scaling, and return-softmax state from the kernel.
-
-This is stronger than a runtime `if (dropout_p != 0)`: the no-dropout binary
-does not carry the random-number work or its live registers.
-
-## 8. Backward Logic And Saved State
-
-Autograd saves Q, K, V, output, LSE, and optional RNG state. It does not save an
-attention matrix. Backward recomputes probability tiles from Q/K and LSE, then
-forms dV, dP, dS, dQ, and dK using tiled MMA operations.
-
-The adapter allocates:
-
-- final `dq`, `dk`, and `dv` in the input dtype;
-- a rounded fp32 `dq_accum` workspace;
-- a rounded fp32 softmax-delta workspace.
-
-The current adapter selects upstream's non-deterministic accumulation path.
-This is the normal high-throughput mode; a deterministic multi-split dQ mode can
-be exposed later if MiniTrain adds that API requirement.
-
-## 9. Why There Are 48 `.cu` Files
-
-The generated matrix is:
+训练侧选择 `backend.ops=cuda` 后，调用依次经过：
 
 ```text
-2 directions
-x 2 dtypes
-x 6 head-dimension buckets
-x 2 causal modes
-= 48 translation units
+CudaOpsBackend.attention
+  -> Python 支持检查
+  -> autograd Function
+  -> PyTorch C++/CUDA extension
+  -> dtype/head bucket dispatch
+  -> upstream launch template
+  -> CUDA kernel
 ```
 
-The head buckets are 32, 64, 96, 128, 192, and 256. A head dimension below a
-compiled bucket uses masked tail loads/stores. For example, D=80 dispatches to
-the 96 bucket if that bucket is linked.
+Python 层先判断 device、shape、dtype、head dim、当前编译矩阵和硬件能力。条件不
+满足时不会加载 CUDA extension，而是继续调用继承的 Triton/PyTorch 实现。这里
+只做能力 fallback，不按 sequence length 或 benchmark 结果做性能 fallback。
 
-Splitting files has two benefits:
+C++ 适配层利用上游参数结构的显式 stride 支持，直接描述 MiniTrain 的
+`(B,H,S,D)` 布局，不需要 transpose 或 Q/K/V 数据复制。head dim 可以是 8 的
+倍数，运行时映射到不小于它的最小已编译 bucket。
 
-- ninja can compile independent configurations in parallel on a build server;
-- one nvcc process does not retain all template trees in RAM simultaneously.
+## 4. Forward、dropout 与 backward
 
-`generate_kernels.py --check` proves checked-in files match the matrix and
-detects both missing and orphaned `.cu` files.
+Forward 按 tile 读取 Q/K/V，计算分块 `QK^T`，通过 online softmax 维护每行 max
+与归一化和，再计算 probability 与 V 的乘积。causal mask 和越界 tail 都在上游
+模板中专门化，最终只写 output 与每行 softmax LSE，不物化完整 attention matrix。
 
-## 10. Build Profiles And Architectures
+dropout 开启时，C++ 从当前 CUDA generator 获取 Philox seed/offset。Forward 和
+backward 保存/复用同一 RNG state，backward 在 kernel 内重新生成 mask。生产
+路径因此不保存 `S x S` mask。
 
-Profiles select linked sources, not runtime behavior:
+Backward 使用 Q/K/V、forward output、LSE、dout 和 RNG state 分块重算概率，
+然后累计 dQ、dK、dV。这是 FlashAttention 以有限重计算换取线性显存占用的核心。
 
-- `minimal`: 4 files, fp16 + hdim32, compiler and CI smoke tests.
-- `workstation`: 24 files, fp16/bf16 + hdim32/64/128.
-- `full`: 48 files, all dtypes and buckets.
+测试 helper 会临时打开上游 `return_softmax` 调试分支，通过返回矩阵符号位提取
+真实 keep mask。它只用于小 shape correctness，不进入训练路径。
 
-`MINITRAIN_CUDA_ARCHS` selects cubins. The local default is `86`; a server build
-can select `80;86;89;90`. The newest target retains PTX. The current kernel
-family is the upstream sm80/Ampere implementation and runs on sm80+; Hopper has
-separate upstream kernels and should eventually receive a dedicated sm90 path
-for peak H100 performance rather than relying on the Ampere-family kernel.
+## 5. 硬件与 size 分支
 
-The config is hashed into the Python module and build directory. Changing a
-profile, dtype matrix, head matrix, or architecture list cannot load a stale
-binary with missing symbols.
+运行时没有手写一串 shape 特判。head dim 首先映射到已编译 bucket，再由上游
+launch template 根据架构资源和模板布尔值选择 tile、warp、shared memory、
+even-tail、causal 和 dropout 实例。
 
-## 11. Compiler Flags
+需要单独保护的边界是 D256 dropout backward。上游该路径至少需要 144 KiB
+opt-in shared memory；sm86/sm89 的低共享内存分支只提供 no-dropout kernel。
+MiniTrain 在 Python 支持检查和 C++ pybind 边界各检查一次，防止直接调用得到未
+初始化梯度。Python 优先使用 PyTorch 提供的 opt-in shared-memory 字节数；当前
+PyTorch 2.5.1 未暴露该字段时，回退到已审计的 sm80/sm86/sm87/sm89/sm90 表，
+未知架构保守返回 unsupported。C++ 始终通过 CUDA runtime 查询真实属性。D256
+no-dropout 在 sm86 仍然可用。
 
-Important nvcc flags are centralized in `build.py`:
+当前 source 可以为 sm80/sm86/sm89/sm90 编译，但仍属于 Ampere 风格 kernel。
+sm90 cubin 不是 FlashAttention-3 的 Hopper WGMMA/TMA 专用实现。
 
-- `-O3`, C++17, relaxed constexpr, extended lambda;
-- fast math, matching upstream's approximate exponential path;
-- CUDA half/bfloat macro undefinitions required by CUTLASS;
-- `--ptxas-options=-v` for registers, stack, and spill diagnostics;
-- `-allow-unsupported-compiler` and
-  `_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH` on Windows.
+## 6. 编译系统
 
-Host flags use `/O2 /std:c++17` for MSVC and `-O3 -std=c++17` for GCC/Clang.
-MSVC definitions use `/D`; nvcc definitions use `-D` even on Windows.
+三个 profile 对应不同机器：
 
-## 12. Verified Local Evidence
+| Profile | 内容 | 用途 |
+| --- | --- | --- |
+| `minimal` | fp16, D32 | 工具链 smoke build |
+| `workstation` | fp16/bf16, D32/D64/D128 | 16 GB 本机日常开发 |
+| `full` | 两种 dtype、六个 bucket | 大内存服务器 |
 
-Environment:
+profile、架构、dtype、head bucket 和上游版本共同组成扩展 cache key。不同矩阵的
+DLL 和 build 目录彼此隔离。最后一个目标架构同时保留 PTX，给兼容的新架构提供
+forward JIT 余地。`MINITRAIN_CUDA_ARCHS` 是唯一架构入口，loader 会用它覆盖生成
+`TORCH_CUDA_ARCH_LIST`，防止外部残留环境变量让 cache key 与实际 fatbin 不一致。
 
-- PyTorch 2.5.1+cu121;
-- CUDA toolkit 12.1;
-- RTX 3050 Laptop GPU, compute capability 8.6;
-- Visual C++ 19.44;
-- minimal profile, one nvcc worker.
+Windows sm86 full build 的实际瓶颈是宿主编译内存。两个 D256 backward nvcc
+进程重叠时，16 GB 主机出现 cudafe out-of-memory；改为一个 worker 后可以复用
+已有 object 继续编译。该错误与 GPU runtime register spill 无关。
 
-Observed results:
+安装交付采用 source-in-wheel + target JIT，而不是发布本机 `.pyd`。实际构建 wheel
+后，将其中 `csrc` 文件集合与仓库逐路径比较：875/875 完全一致，包含 48 个 `.cu`、
+19 个 FlashAttention header、CUTLASS/CUTE 和第三方 license，且没有 `.obj/.pyd`
+或 build cache。隔离安装后，full profile 能从安装目录重新发现全部 48 个实例化
+源文件。
 
-- fp16 buckets D=32, D=64, and D=128 each compiled as an independent four-file
-  forward/backward + causal/non-causal shard on sm86.
-- bf16 D=128 compiled and linked successfully on the same sm86 toolchain.
-- A four-file shard took roughly five to eight minutes with one nvcc worker,
-  depending on head dimension.
-- causal and non-causal fp16 forward matched PyTorch SDPA exactly for the tested
-  `(2, 3, 32, 32)` shape.
-- maximum backward absolute error was approximately `1.95e-3`.
-- dropout=0.25 reproduced output and Q/K/V gradients exactly when the CUDA seed
-  was reset, changed output for a different seed, and remained finite.
-- Every verified shard passed the five profile-aware CUDA tests, including an
-  explicit fp32 dropout reference built from the exact CUDA keep mask.
-- backend fallback tests: 2 passed.
+安装态不能假定 `site-packages` 可写，因此 build root 按运行形态分流：源码
+checkout 保留仓库内 cache；wheel 使用 `TORCH_EXTENSIONS_DIR` 或 PyTorch 用户
+cache，并附加 Python/PyTorch/CUDA/platform ABI hash。隔离 wheel 实测确认 build
+root 位于用户 cache，而不是安装包目录；`MINITRAIN_CUDA_BUILD_ROOT` 可显式覆盖。
 
-One D=128 fp16 benchmark at `(B=1, H=4, S=1024, D=128)`, causal, no dropout,
-reported:
+完整命令见 [`cuda_ext_run_commands.md`](cuda_ext_run_commands.md)。
 
-| Provider | Forward p50 | Backward p50 | Backward peak memory |
-| --- | ---: | ---: | ---: |
-| PyTorch | 0.282 ms | 1.277 ms | 11.02 MB |
-| Triton | 0.246 ms | 1.276 ms | 11.02 MB |
-| CUDA | 0.244 ms | 0.458 ms | 6.02 MB |
+## 7. Correctness 与 benchmark
 
-At this one shape CUDA was about 1.16x faster than PyTorch forward and 2.79x
-faster backward. This is integration evidence, not a general performance claim;
-the notebook sequence sweep is still required.
+所有 CUDA 主验证都集中在 `tests/operator_bench.ipynb`。CUDA correctness 固定为
+fp16，遍历：
 
-ptxas showed several hdim32 backward variants at 253-255 registers. Some
-causal/dropout combinations spilled roughly 24-72 bytes. This is valuable
-evidence, not a harmless warning: the upstream generic Ampere tuning is not
-automatically optimal for a small sm86 laptop GPU. Benchmark and Nsight data
-must guide any trait changes; core headers should not be edited speculatively.
+```text
+10 head dims x 2 causal modes x 2 dropout modes = 40 branches
+```
 
-## 13. Benchmark Workflow
+10 个维度由 6 个 bucket 边界和 D40/D80/D160/D200 四个 masked-tail case 组成；
+后者验证向上选择模板 bucket 后的 uneven-K load/store。
 
-`tests/operator_bench.ipynb` now includes `torch`, `triton`, and `cuda` in both
-attention sections. It reports the active CUDA build config before running.
+每个硬件支持的分支都与显式 fp32 PyTorch attention 公式比较 forward、dq、dk、
+dv。dropout 参考使用 CUDA helper 提取的真实 keep mask，避免假设 PyTorch SDPA
+与上游 kernel 以相同顺序消耗随机数。测试还比较调用前后的 CUDA RNG state：
+no-dropout 必须保持完全不变，dropout 必须推进 generator。
+每个分支还执行 `output.sum().backward()`，用 fp32 参考检查 expanded/stride-0
+`dout` 经 C++ adapter 连续化后的 dq/dk/dv。
 
-No-dropout benchmark correctness compares forward and backward with PyTorch.
-Dropout has two validation paths:
+另有一组 D128 布局与 stream 测试：先创建物理布局 `(B,S,H,D)`，再通过
+`transpose(1, 2)` 得到外层非连续但 `stride(-1)==1` 的 `(B,H,S,D)` 输入；随后把
+forward、backward 和 dropout mask helper 全部放到显式非默认 CUDA stream 上。
+该测试覆盖 causal/non-causal 与 dropout/no-dropout，并继续比较 forward、dq、dk、
+dv，确认 adapter 传递的是实际 stride，launcher 使用的是 PyTorch 当前 stream。
 
-- Triton materializes its debug mask and compares with an explicit reference.
-- CUDA uses upstream's sign-bit debug output to recover the exact keep mask,
-  then compares output and Q/K/V gradients with an explicit fp32 reference. It
-  also checks Philox replay and changed-seed behavior before timing.
+capability 表只调用 Python predicate，不触发 JIT。它覆盖有效 D128 control、空
+B/H/S、fp32、shape 不匹配、非法 dropout、非 8 倍数或超过 256 的 D、最后一维
+stride=2、dropout 的 float32 上溢/下溢，以及硬件相关的 D200 dropout control。
+13 个本机 case 全部符合预期；额外模拟 sm75 时，有效 tensor 也会在加载 extension
+前被拒绝。C++ 边界保留同样的 sm80 与正维度检查，防止直接 pybind 调用绕过
+Python。
 
-Compile a profile containing the notebook's D=128 bucket before execution. If
-the bucket is absent, `CudaOpsBackend` intentionally measures the Triton
-fallback rather than the CUDA kernel, so always inspect the printed build config.
+直接 pybind 审计进一步证明 float32 语义一致：`dropout_p=1e-50` 下溢为 0，返回
+空 RNG state，forward/backward 与显式 dropout=0 bitwise 相同且 CUDA RNG state
+不变；`1-1e-12` 舍入为 float32 `1.0`，在 forward 参数构造前明确报错。
 
-## 14. Recommended Reading Order
+性能验证分为两层：原 D128 sequence sweep 观察长度扩展；完整矩阵固定 S=1024，
+比较 Torch、Triton、CUDA 的 forward/backward p50/p95、峰值显存和 speedup。
+所有显式标记为 CUDA 或 Triton 的 benchmark 都在计时前再次做对应 native
+kernel 的支持判断。未编译或硬件不支持的组合显示 unsupported/unavailable，
+不会把生产路径的下一级 fallback 时间误记为当前 provider 的 kernel 时间。
 
-1. `minitrain/model/ops.py`: backend factory.
-2. `minitrain/kernels/cuda_ext/__init__.py`: fallback inheritance.
-3. `flash_attention.py`: support and autograd contract.
-4. `build.py`: source/architecture matrix and compilation.
-5. `generate_kernels.py`: why each `.cu` exists.
-6. one file under `csrc/instantiations`: thin explicit specialization.
-7. `flash_api_upstream.cpp`: tensor strides, workspaces, and RNG state.
-8. `flash_fwd_launch_template.h` and `flash_bwd_launch_template.h`: trait and
-   compile-time feature dispatch.
-9. `flash_fwd_kernel.h`, `flash_bwd_kernel.h`, `softmax.h`, and `dropout.h`:
-   tiled device implementation.
+## 8. 当前证据与限制
 
-## 15. Remaining Industrialization Work
+本机已分别编译并运行过 fp16 D32/D64/D128 与 bf16 D32/D64/D128 shard，覆盖
+causal/non-causal、forward/backward 和 dropout RNG replay。D128 fp16 的一个
+`(B=1,H=4,S=1024,D=128)` 样例中，CUDA backward 比 PyTorch SDPA 更快且峰值
+显存更低；该结果只代表本机单 shape，不是跨 GPU 性能结论。
 
-The implementation is operational, but the following evidence is still needed
-before calling the complete matrix production-qualified:
+随后使用 full cache 中已经完成的 24 个 fp16 object 与最新 C++ adapter 做了一次
+只链接、不重编译 CUDA 的本机审计，并直接执行 notebook 中的 correctness
+函数。sm86 可运行的 36 个分支全部通过 forward、dq/dk/dv、Philox RNG 行为和
+expanded `dout` 检查；D200/D256 dropout 的 4 个分支按设计报告 unsupported。
 
-- compile bf16 D=32 and D=64, then link/test the combined workstation profile;
-- compile the full profile on a high-memory build server;
-- verify bf16 and every head bucket, including uneven D values;
-- run benchmark sweeps over representative sequence lengths and both masks;
-- profile spills, occupancy, tensor-core utilization, and memory throughput;
-- stress non-default streams, repeated multithreaded loads, and long training;
-- add Linux CI/build evidence and dedicated sm90/Hopper tuning.
+同一批 fp16 对象还执行了 notebook 的布局与 stream 函数。4 个
+`causal x dropout` 组合全部通过；kernel 输入 stride 保持
+`(9472, 128, 256, 1)`，每次记录的 stream ID 都不是默认 stream 0，forward 与三组
+梯度均通过 fp32 参考比较。
 
-These are validation and tuning tasks around a real upstream FlashAttention
-kernel, not placeholders for missing CUDA forward or backward functionality.
+同一个临时链接还实际执行了 notebook 的性能函数。审计 shape 为
+`(B=1,H=4,S=1024)`、causal，使用缩短的 5 ms warmup/20 ms forward repetition，
+因此下表只证明计时流程与 provider 标记正确，不替代 notebook 正式 sweep：
+
+| D | Dropout | Torch fwd/bwd | Triton fwd/bwd | CUDA fwd/bwd |
+| ---: | ---: | ---: | ---: | ---: |
+| 32 | 0 | 0.108 / 0.477 ms | 0.038 / 0.435 ms | 0.050 / 0.255 ms |
+| 32 | 0.25 | 0.137 / 0.540 ms | 0.151 / 0.567 ms | 0.058 / 0.267 ms |
+| 128 | 0 | 0.179 / 1.300 ms | 0.143 / 0.667 ms | 0.124 / 0.455 ms |
+| 128 | 0.25 | 0.222 / 1.330 ms | 0.228 / 0.933 ms | 0.173 / 0.417 ms |
+| 192 | 0 | 0.390 / 3.641 ms | unsupported | 0.215 / 0.720 ms |
+| 192 | 0.25 | 0.382 / 3.694 ms | unsupported | 0.220 / 0.741 ms |
+| 256 | 0 | 0.406 / 4.608 ms | unsupported | 0.231 / 0.748 ms |
+| 256 | 0.25 | 0.412 / 4.659 ms | unsupported | unsupported |
+
+Triton 当前只支持 head dim 不超过 128；sm86 CUDA 不支持 D256 dropout backward。
+Notebook 在计时前检查这两种 native 能力，所以上述 unsupported 行没有执行下一级
+fallback。
+
+full sm86 日志已有 46/48 个 CUDA object，最新 C++ adapter 也已成功编译；本机
+没有继续等待最后两个重型 D256 bf16 backward object，也没有把未链接的 full
+mixed-dtype profile 声称为完整验证。服务器仍需完成 bf16 D256 object、链接 full
+extension，并执行服务器目标架构上的 notebook。
+
+ptxas 与 Nsight 证明部分生产 kernel 有真实 local-memory spill。项目接受上游
+tile/spill 权衡，不添加 `--maxrregcount`、短序列阈值或性能 fallback。详细数据见
+[`cuda_flash_attention_sm86_spill_analysis.md`](cuda_flash_attention_sm86_spill_analysis.md)。
+
+逐文件阅读顺序见
+[`cuda_flash_attention_code_reading_guide.md`](cuda_flash_attention_code_reading_guide.md)。
