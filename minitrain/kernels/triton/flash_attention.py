@@ -22,6 +22,7 @@ import os
 
 import torch
 
+from minitrain.kernels.amp import cast_cuda_autocast_activations
 from minitrain.kernels.triton.cache import configure_triton_cache
 
 
@@ -1072,6 +1073,12 @@ def flash_attention_backward(
 ):
     """Launch the local Triton FlashAttention backward kernels."""
 
+    if do.shape != q.shape:
+        raise ValueError(f"do shape {tuple(do.shape)} must match q shape {tuple(q.shape)}.")
+    if do.device != q.device:
+        raise ValueError("do must be on the same device as q.")
+    if do.dtype != q.dtype:
+        raise TypeError(f"do dtype {do.dtype} must match q dtype {q.dtype}.")
     if do.stride(-1) != 1:
         do = do.contiguous()
     batch, nheads, seqlen_q, head_dim = q.shape
@@ -1229,6 +1236,7 @@ class MiniTrainFlashAttentionFunction(torch.autograd.Function):
     """Autograd bridge around the local Triton FlashAttention launchers."""
 
     @staticmethod
+    @torch.amp.custom_fwd(device_type="cuda")
     def forward(ctx, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, is_causal: bool, dropout_p: float):
         q, k, v = [x if x.stride(-1) == 1 else x.contiguous() for x in (q, k, v)]
         out, lse, dropout_seed, softmax_scale = flash_attention_forward(
@@ -1246,6 +1254,7 @@ class MiniTrainFlashAttentionFunction(torch.autograd.Function):
         return out
 
     @staticmethod
+    @torch.amp.custom_bwd(device_type="cuda")
     def backward(ctx, do: torch.Tensor):
         q, k, v, out, lse = ctx.saved_tensors
         # Triton launches may mutate tensor version counters during autotune/JIT
@@ -1283,6 +1292,7 @@ def flash_attention(
             stateless Triton RNG mask that is regenerated in backward.
     """
 
+    q, k, v = cast_cuda_autocast_activations(q, k, v)
     if not is_flash_attention_supported(q, k, v, dropout_p=dropout_p):
         raise RuntimeError(
             "Local Triton FlashAttention requires CUDA fp16/bf16/fp32 Q/K/V tensors, "

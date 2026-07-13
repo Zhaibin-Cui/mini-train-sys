@@ -1,3 +1,4 @@
+from minitrain.kernels.amp import cast_cuda_autocast_activations
 from minitrain.kernels.torch_ops import TorchOpsBackend
 from minitrain.kernels.triton.cache import configure_triton_cache
 from minitrain.kernels.triton.flash_attention import flash_attention as triton_flash_attention
@@ -33,13 +34,15 @@ class TritonOpsBackend(TorchOpsBackend):
         time.
         """
 
-        if is_rmsnorm_supported(x):
+        (x,) = cast_cuda_autocast_activations(x)
+        if is_rmsnorm_supported(x, weight):
             return triton_rmsnorm(x, weight, eps)
         return super().rmsnorm(x, weight, eps)
 
     def swiglu(self, gate, up):
         """Run the Triton SwiGLU when the current device supports it."""
 
+        gate, up = cast_cuda_autocast_activations(gate, up)
         if is_swiglu_supported(gate, up):
             return triton_swiglu(gate, up)
         return super().swiglu(gate, up)
@@ -47,6 +50,9 @@ class TritonOpsBackend(TorchOpsBackend):
     def rope(self, q, k, cos, sin):
         """Run the Triton RoPE when the current device supports it."""
 
+        q, k, cos, sin = cast_cuda_autocast_activations(q, k, cos, sin)
+        cos = cos.to(dtype=q.dtype)
+        sin = sin.to(dtype=q.dtype)
         if is_rope_supported(q, k, cos, sin):
             return triton_rope(q, k, cos, sin)
         return super().rope(q, k, cos, sin)
@@ -54,6 +60,7 @@ class TritonOpsBackend(TorchOpsBackend):
     def attention(self, q, k, v, *, is_causal, dropout_p):
         """Run local Triton FlashAttention when available for the current tensors."""
 
+        q, k, v = cast_cuda_autocast_activations(q, k, v)
         if is_flash_attention_supported(q, k, v, dropout_p=dropout_p):
             return triton_flash_attention(q, k, v, is_causal=is_causal, dropout_p=dropout_p)
         return super().attention(q, k, v, is_causal=is_causal, dropout_p=dropout_p)

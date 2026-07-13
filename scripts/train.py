@@ -18,6 +18,7 @@ from minitrain.runtime.device import get_default_device
 from minitrain.runtime.factory import build_ops_backend, build_parallel_strategy
 from minitrain.runtime.logger import build_event_logger, get_tensorboard_log_dir
 from minitrain.train.optim import build_optimizer
+from minitrain.train.precision import resolve_precision_policy
 from minitrain.train.trainer import Trainer
 from minitrain.utils.seed import seed_everything
 
@@ -116,9 +117,14 @@ def main() -> None:
     device = resolve_device(args.device)
     if device.type == "cuda":
         torch.cuda.set_device(device)
+    precision = resolve_precision_policy(cfg.train.precision, device)
     ops = build_ops_backend(cfg.backend)
     model_cfg = ModelConfig(**cfg.model)
-    model = MiniTransformer(model_cfg, ops).to(device)
+    model = MiniTransformer(
+        model_cfg,
+        ops,
+        activation_dtype=precision.activation_dtype,
+    ).to(device)
     dataloader = build_training_dataloader(
         cfg.data,
         seq_len=model_cfg.seq_len,
@@ -148,6 +154,9 @@ def main() -> None:
             "data_source": cfg.data.source,
             "batch_size": cfg.train.batch_size,
             "seq_len": model_cfg.seq_len,
+            "precision": precision.name,
+            "activation_dtype": str(precision.activation_dtype),
+            "grad_scaler": precision.grad_scaling_enabled,
             "tensorboard_dir": str(tensorboard_dir) if tensorboard_dir is not None else "disabled",
         }
     )
@@ -161,6 +170,8 @@ def main() -> None:
             optimizer,
             device=device,
             use_fused_loss=cfg.train.use_fused_loss,
+            precision=precision.name,
+            grad_clip_norm=cfg.train.grad_clip_norm,
         )
 
         max_steps = args.smoke_steps if args.smoke_steps > 0 else cfg.train.max_steps

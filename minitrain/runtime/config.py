@@ -23,6 +23,14 @@ class TrainConfig:
     max_steps: int = 1000
     log_interval: int = 10
     use_fused_loss: bool = False
+    precision: str = "fp32"
+    grad_clip_norm: float | None = 1.0
+
+    def __post_init__(self) -> None:
+        if self.precision not in {"fp32", "bf16", "fp16"}:
+            raise ValueError("train.precision must be one of: fp32, bf16, fp16")
+        if self.grad_clip_norm is not None and self.grad_clip_norm <= 0:
+            raise ValueError("train.grad_clip_norm must be positive or null")
 
 
 @dataclass(frozen=True)

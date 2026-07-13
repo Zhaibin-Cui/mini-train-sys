@@ -1,36 +1,58 @@
-# Mixed Precision Plan
+# Mixed Precision Architecture
 
-This note captures the current dtype state and the target design for making
-MiniTrainSys run the same configurable precision policy across PyTorch, Triton,
-and future CUDA backends. A future session should be able to read this file and
-continue the implementation without rediscovering the dtype contract.
+This note records the implemented precision architecture and the remaining
+backend work needed to keep PyTorch, Triton, and CUDA on one dtype contract.
 
-## Current State
+## Implemented State
 
-The project currently trains in fp32 by default.
+The runtime now has a single explicit `fp32 | bf16 | fp16` policy.
 
-- `scripts/train.py` builds `MiniTransformer(model_cfg, ops).to(device)` without
-  autocast, `GradScaler`, `.half()`, or `.to(torch.bfloat16)`.
-- `TrainConfig` has no precision field.
-- `Trainer.train_step()` directly calls forward, `loss.backward()`, and
-  `optimizer.step()`.
-- RoPE caches are initialized as fp32 buffers in `CausalSelfAttention`.
+- shipped GPU training configs select bf16;
+- parameters and AdamW state remain fp32 in the single-device/DDP AMP path;
+- embedding output is explicitly cast, making the residual stream bf16/fp16
+  from the first block onward;
+- eligible forward operators run under autocast;
+- bf16 runs without a scaler, while fp16 uses `torch.amp.GradScaler`;
+- clipping happens after fp16 gradients are unscaled;
+- FSDP uses low-precision compute parameters but fp32 gradient reduction and
+  fp32 optimizer-facing gradients;
+- one model-level `RotaryEmbedding` computes RoPE in fp32, casts its
+  non-persistent cache once to activation dtype, then returns allocation-free
+  slice views to all layers;
+- checkpoint helpers can save and restore GradScaler state.
+
+Custom Triton/CUDA operators also own an explicit AMP boundary:
+
+- backend and public operator entry points cast floating-point activations to
+  the active CUDA autocast dtype before capability dispatch;
+- RMSNorm weights are intentionally excluded from that activation cast;
+- every custom `autograd.Function` uses `torch.amp.custom_fwd/custom_bwd` so
+  backward observes the same autocast state as forward;
+- RoPE requires Q/K/cos/sin to share one activation dtype;
+- attention outputs and activation gradients use the activation dtype, while
+  softmax/LSE and gradient accumulators remain fp32;
+- ordinary and fused-linear cross entropy are contract-tested to return an
+  fp32 loss under mixed precision without materializing fp32 logits.
+
+The optimized backend coverage is still incremental:
+
 - The default configs use `backend.ops: torch`.
 - The Triton backend overrides only RMSNorm, SwiGLU, and RoPE. Attention,
   cross entropy, and fused linear cross entropy still use PyTorch fallback.
 - `minitrain/kernels/triton/cross_entropy.py` and
   `minitrain/kernels/triton/fused_linear_ce.py` are stubs.
 
-The default runtime dtypes are therefore:
+The bf16 runtime contract is:
 
 | Tensor | Current dtype |
 | --- | --- |
 | `input_ids`, `targets` | `torch.long` |
 | model parameters | `torch.float32` |
-| activations | `torch.float32` |
-| attention Q/K/V | `torch.float32` |
-| RoPE cos/sin buffers | `torch.float32` |
-| logits | `torch.float32` |
+| residual activations | `torch.bfloat16` |
+| attention Q/K/V | `torch.bfloat16` |
+| RoPE construction math | `torch.float32` |
+| RoPE cos/sin buffers and views | activation dtype |
+| logits | activation dtype |
 | loss | `torch.float32` |
 
 ## AMP Rule To Preserve
@@ -71,13 +93,14 @@ In standard AMP, `weight.dtype` is fp32, so the gradient is fp32. If a future
 mode explicitly casts the model to bf16/fp16, then `weight.dtype` is bf16/fp16
 and returning that dtype is consistent with that mode.
 
-## Target Precision Config
+## Precision Config
 
-Add one explicit precision policy to the runtime config:
+The training config owns the policy:
 
 ```yaml
 train:
-  precision: fp32   # fp32 | bf16 | fp16
+  precision: bf16   # fp32 | bf16 | fp16
+  grad_clip_norm: 1.0
 ```
 
 Suggested semantics:
@@ -156,29 +179,24 @@ Current status:
 Inputs:
 
 - `q`, `k`: activation dtype.
-- `cos`, `sin`: should be cast to the same dtype as `q` before calling the
-  backend.
+- `cos`, `sin`: precomputed cache in the same dtype as `q`.
 
 Forward/backward:
 
 - output Q/K dtype equals input Q/K dtype.
 
-Current mismatch to fix:
+Implemented flow:
 
-- PyTorch backend casts cos/sin to `q.dtype`.
-- Triton RoPE currently loads q/k and casts them to `cos_row.dtype`. Because
-  the model creates fp32 cos/sin buffers, a bf16/fp16 activation path can make
-  Triton RoPE compute closer to fp32 while PyTorch computes at activation dtype.
-
-Preferred fix:
-
-```python
-cos = self.rope_cos[:seq_len].to(device=q.device, dtype=q.dtype)
-sin = self.rope_sin[:seq_len].to(device=q.device, dtype=q.dtype)
-q, k = ops.rope(q, k, cos, sin)
+```text
+fp32 angle/trigonometric construction
+    -> one initialization-time cast to activation dtype
+    -> non-persistent model buffer
+    -> allocation-free sequence slice each forward
+    -> one shared view for every transformer layer
 ```
 
-Then both torch and Triton see the same cos/sin dtype.
+The model raises if the cache ever differs from the residual device or dtype,
+preventing a hidden per-forward conversion from being reintroduced.
 
 ### Attention
 
@@ -213,40 +231,30 @@ Target behavior:
 
 Implement these after the global precision policy and dtype tests are in place.
 
-## FSDP Target
+## FSDP Policy
 
-The current FSDP strategy does not configure mixed precision. Add config fields
-later under `distributed`, for example:
-
-```yaml
-distributed:
-  mixed_precision:
-    param_dtype: bf16
-    reduce_dtype: bf16
-    buffer_dtype: bf16
-```
-
-For FSDP mixed precision, use PyTorch `MixedPrecision` rather than wrapping the
-entire trainer in the same way as single-GPU AMP. The exact integration should
-live in `minitrain/distributed/fsdp.py` so the trainer stays strategy-agnostic.
-
-Single-GPU/DDP can start with autocast in the trainer. FSDP should own its own
-precision policy once the strategy grows beyond the current scaffold.
+FSDP constructs PyTorch `MixedPrecision` inside its strategy implementation.
+For bf16/fp16, compute parameters use the activation dtype, while gradient
+reduction and optimizer-facing gradients stay fp32. This is a conservative
+numerical baseline; communication dtype can later become a benchmark knob.
+The only current buffers are the shared RoPE cache. It is constructed using
+fp32 trigonometric math, stored in activation dtype, and kept in that dtype by
+FSDP so each forward needs only storage-sharing slices.
 
 ## Implementation Checklist
 
-1. Add `precision: str = "fp32"` to `TrainConfig`.
-2. Update YAML configs with `train.precision: fp32` for current behavior.
-3. Add a helper that maps precision strings to AMP settings:
+1. **Done:** add precision and gradient clipping to `TrainConfig`.
+2. **Done:** select bf16 in GPU-oriented YAML configs.
+3. **Done:** map precision strings to AMP settings:
    - `fp32`: autocast disabled, scaler disabled;
    - `bf16`: autocast dtype `torch.bfloat16`, scaler disabled;
    - `fp16`: autocast dtype `torch.float16`, scaler enabled.
-4. Update `Trainer` to run forward/loss under autocast when enabled.
-5. Update `Trainer` to use `torch.amp.GradScaler("cuda")` for fp16 only.
-6. Keep backward outside the autocast region.
-7. Update `scripts/train.py` to pass the precision policy into `Trainer`.
-8. Log `precision`, AMP dtype, and scaler enabled state in the init event.
-9. Cast RoPE cos/sin to `q.dtype` before `ops.rope(...)`.
+4. **Done:** run forward/loss under autocast when enabled.
+5. **Done:** use `torch.amp.GradScaler` for fp16 only.
+6. **Done:** keep backward outside the autocast region.
+7. **Done:** pass one resolved policy into model and trainer.
+8. **Done:** log precision, activation dtype, and scaler state.
+9. **Done:** centralize RoPE and produce dtype-matched views once per forward.
 10. Decide and document the exact RMSNorm weight multiply policy; then align
     PyTorch and Triton implementations.
 11. Add dtype sweep tests for `torch` and `triton` providers:
@@ -256,7 +264,7 @@ precision policy once the strategy grows beyond the current scaffold.
 12. Add benchmark dtype as a dimension in `operator_bench_utils.py` and related
     notebooks/reports.
 13. Add an SDPA backend probe to training benchmark metadata.
-14. Add FSDP mixed precision config after single-GPU/DDP AMP is stable.
+14. **Done:** add conservative FSDP mixed precision with fp32 reductions.
 15. Implement Triton cross entropy and fused linear CE after the dtype contract
     is covered by tests.
 

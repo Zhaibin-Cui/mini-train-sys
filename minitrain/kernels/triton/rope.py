@@ -15,6 +15,7 @@ backend: split the head into two halves and rotate `[x1, x2]`.
 
 import torch
 
+from minitrain.kernels.amp import cast_cuda_autocast_activations
 from minitrain.kernels.triton.cache import configure_triton_cache
 
 
@@ -52,8 +53,8 @@ def is_rope_supported(
         and q.shape[-1] % 2 == 0
         and q.dtype in (torch.float32, torch.float16, torch.bfloat16)
         and k.dtype == q.dtype
-        and cos.dtype in (torch.float32, torch.float16, torch.bfloat16)
-        and sin.dtype == cos.dtype
+        and cos.dtype == q.dtype
+        and sin.dtype == q.dtype
     )
 
 
@@ -514,12 +515,14 @@ class MiniTrainRoPEFunction(torch.autograd.Function):
     """Autograd bridge around the Triton RoPE launchers."""
 
     @staticmethod
+    @torch.amp.custom_fwd(device_type="cuda")
     def forward(ctx, q: torch.Tensor, k: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor):
         q_out, k_out, cos, sin = rope_forward(q, k, cos, sin)
         ctx.save_for_backward(cos, sin)
         return q_out, k_out
 
     @staticmethod
+    @torch.amp.custom_bwd(device_type="cuda")
     def backward(ctx, dq: torch.Tensor, dk: torch.Tensor):
         cos, sin = ctx.saved_tensors
         dq, dk = rope_backward(dq.contiguous(), dk.contiguous(), cos, sin)
@@ -534,6 +537,9 @@ def rope(
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Public Triton RoPE entry point used by `TritonOpsBackend`."""
 
+    q, k, cos, sin = cast_cuda_autocast_activations(q, k, cos, sin)
+    cos = cos.to(dtype=q.dtype)
+    sin = sin.to(dtype=q.dtype)
     return MiniTrainRoPEFunction.apply(q, k, cos, sin)
 
 
@@ -541,12 +547,14 @@ class MiniTrainStridedRoPEFunction(torch.autograd.Function):
     """Autograd bridge around the out-of-place, stride-aware RoPE launchers."""
 
     @staticmethod
+    @torch.amp.custom_fwd(device_type="cuda")
     def forward(ctx, q: torch.Tensor, k: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor):
         q_out, k_out, cos, sin = rope_strided_forward(q, k, cos, sin)
         ctx.save_for_backward(cos, sin)
         return q_out, k_out
 
     @staticmethod
+    @torch.amp.custom_bwd(device_type="cuda")
     def backward(ctx, dq: torch.Tensor, dk: torch.Tensor):
         cos, sin = ctx.saved_tensors
         dq, dk = rope_strided_backward(dq, dk, cos, sin)
@@ -566,4 +574,7 @@ def rope_strided(
     for notebook benchmarking before replacing the default backend path.
     """
 
+    q, k, cos, sin = cast_cuda_autocast_activations(q, k, cos, sin)
+    cos = cos.to(dtype=q.dtype)
+    sin = sin.to(dtype=q.dtype)
     return MiniTrainStridedRoPEFunction.apply(q, k, cos, sin)
