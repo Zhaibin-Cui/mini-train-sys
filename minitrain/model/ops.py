@@ -14,7 +14,7 @@ class OpsBackend(Protocol):
     name: str
 
     def rmsnorm(self, x: torch.Tensor, weight: torch.Tensor, eps: float) -> torch.Tensor:
-        """Normalize the last dimension and apply a learned scale."""
+        """Reduce in fp32 and return a tensor with ``x.dtype``."""
         ...
 
     def rope(
@@ -24,11 +24,11 @@ class OpsBackend(Protocol):
         cos: torch.Tensor,
         sin: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Apply rotary position embeddings to query and key tensors."""
+        """Apply RoPE and return rotated Q/K in the shared activation dtype."""
         ...
 
     def swiglu(self, gate: torch.Tensor, up: torch.Tensor) -> torch.Tensor:
-        """Return the elementwise SwiGLU activation `silu(gate) * up`."""
+        """Return ``silu(gate) * up`` in the shared activation dtype."""
         ...
 
     def attention(
@@ -40,11 +40,11 @@ class OpsBackend(Protocol):
         is_causal: bool,
         dropout_p: float,
     ) -> torch.Tensor:
-        """Compute scaled dot-product attention for projected Q/K/V tensors."""
+        """Accumulate attention statistics in fp32 and return ``q.dtype``."""
         ...
 
     def cross_entropy(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        """Compute language-model cross entropy from materialized logits."""
+        """Compute cross entropy with an fp32 scalar loss under mixed precision."""
         ...
 
     def fused_linear_cross_entropy(
@@ -53,7 +53,7 @@ class OpsBackend(Protocol):
         weight: torch.Tensor,
         targets: torch.Tensor,
     ) -> torch.Tensor:
-        """Compute `linear(x, weight)` and cross entropy as one logical op."""
+        """Compute linear plus cross entropy and return an fp32 mixed-precision loss."""
         ...
 
 

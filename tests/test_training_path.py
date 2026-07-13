@@ -1,7 +1,12 @@
 import torch
 
 from minitrain.data.dataloader import build_training_dataloader
-from minitrain.runtime.config import DataConfig, LoggingConfig, experiment_config_from_dict
+from minitrain.runtime.config import (
+    DataConfig,
+    LoggingConfig,
+    TrainConfig,
+    experiment_config_from_dict,
+)
 from minitrain.runtime.logger import (
     NullLogger,
     TensorBoardLogger,
@@ -43,6 +48,19 @@ def test_experiment_config_loads_data_section() -> None:
 
     assert cfg.data == DataConfig(source="random", path=None, num_tokens=32, shuffle=False)
     assert cfg.logging == LoggingConfig(console=False, tensorboard=False)
+
+
+def test_experiment_config_loads_precision_policy() -> None:
+    cfg = experiment_config_from_dict(
+        {
+            "train": {
+                "precision": "bf16",
+                "grad_clip_norm": 0.5,
+            }
+        }
+    )
+
+    assert cfg.train == TrainConfig(precision="bf16", grad_clip_norm=0.5)
 
 
 def test_random_training_dataloader_shapes() -> None:

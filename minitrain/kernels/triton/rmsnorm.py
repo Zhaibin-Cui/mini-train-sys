@@ -20,6 +20,7 @@ import math
 
 import torch
 
+from minitrain.kernels.amp import cast_cuda_autocast_activations
 from minitrain.kernels.triton.cache import configure_triton_cache
 
 
@@ -78,13 +79,21 @@ def _use_row_kernel(n_rows: int, block_size: int, row_mode: bool | None = None) 
     return block_size > 256 or n_rows < _BLOCK_ROW_SWITCH_N_ROWS or bool(row_mode)
 
 
-def is_rmsnorm_supported(x: torch.Tensor) -> bool:
+def is_rmsnorm_supported(x: torch.Tensor, weight: torch.Tensor | None = None) -> bool:
     """Return whether this tensor should use the Triton RMSNorm path."""
 
-    return (
+    supported = (
         triton is not None
         and x.is_cuda
         and x.dtype in (torch.float32, torch.float16, torch.bfloat16)
+    )
+    if weight is None:
+        return supported
+    return (
+        supported
+        and weight.is_cuda
+        and weight.device == x.device
+        and weight.dtype in (torch.float32, torch.float16, torch.bfloat16)
     )
 
 
@@ -296,7 +305,7 @@ if triton is not None:
 def rmsnorm_forward(x: torch.Tensor, weight: torch.Tensor, eps: float, row_mode: bool | None = None):
     """Flatten `x`, choose kernel settings, launch forward, and save metadata."""
 
-    if not is_rmsnorm_supported(x):
+    if not is_rmsnorm_supported(x, weight):
         raise RuntimeError("Triton RMSNorm only supports CUDA fp32/fp16/bf16 tensors.")
     if weight.ndim != 1:
         raise ValueError(f"RMSNorm weight must be 1-D, got shape {tuple(weight.shape)}.")
@@ -416,6 +425,7 @@ class MiniTrainRMSNormFunction(torch.autograd.Function):
     """Autograd bridge around the Triton RMSNorm launchers."""
 
     @staticmethod
+    @torch.amp.custom_fwd(device_type="cuda")
     def forward(ctx, x: torch.Tensor, weight: torch.Tensor, eps: float):
         # Triton kernels assume compact last-dimension rows. Making tensors
         # contiguous here preserves the model/backend contract and keeps each
@@ -430,6 +440,7 @@ class MiniTrainRMSNormFunction(torch.autograd.Function):
         return y
 
     @staticmethod
+    @torch.amp.custom_bwd(device_type="cuda")
     def backward(ctx, dy: torch.Tensor):
         x_2d, weight, rstd = ctx.saved_tensors
         dy = dy.contiguous()
@@ -448,4 +459,5 @@ class MiniTrainRMSNormFunction(torch.autograd.Function):
 def rmsnorm(x: torch.Tensor, weight: torch.Tensor, eps: float) -> torch.Tensor:
     """Public Triton RMSNorm entry point used by `TritonOpsBackend`."""
 
+    (x,) = cast_cuda_autocast_activations(x)
     return MiniTrainRMSNormFunction.apply(x, weight, eps)

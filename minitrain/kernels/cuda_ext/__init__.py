@@ -6,6 +6,7 @@ implementation, and therefore falls back in the fixed order CUDA -> Triton ->
 PyTorch for everything else.
 """
 
+from minitrain.kernels.amp import cast_cuda_autocast_activations
 from minitrain.kernels.cuda_ext.flash_attention import (
     flash_attention as cuda_flash_attention,
 )
@@ -28,6 +29,7 @@ class CudaOpsBackend(TritonOpsBackend):
     def attention(self, q, k, v, *, is_causal, dropout_p):
         """Try CUDA first, then preserve Triton and PyTorch fallbacks."""
 
+        q, k, v = cast_cuda_autocast_activations(q, k, v)
         if is_flash_attention_supported(q, k, v, dropout_p=dropout_p):
             return cuda_flash_attention(q, k, v, is_causal=is_causal, dropout_p=dropout_p)
         return super().attention(q, k, v, is_causal=is_causal, dropout_p=dropout_p)

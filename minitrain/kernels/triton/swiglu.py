@@ -13,6 +13,7 @@ variants can replace this operator without changing transformer blocks.
 
 import torch
 
+from minitrain.kernels.amp import cast_cuda_autocast_activations
 from minitrain.kernels.triton.cache import configure_triton_cache
 
 
@@ -222,6 +223,7 @@ class MiniTrainSwiGLUFunction(torch.autograd.Function):
     """Autograd bridge around the Triton SwiGLU launchers."""
 
     @staticmethod
+    @torch.amp.custom_fwd(device_type="cuda")
     def forward(ctx, gate: torch.Tensor, up: torch.Tensor):
         gate = gate.contiguous()
         up = up.contiguous()
@@ -232,6 +234,7 @@ class MiniTrainSwiGLUFunction(torch.autograd.Function):
         return out
 
     @staticmethod
+    @torch.amp.custom_bwd(device_type="cuda")
     def backward(ctx, dout: torch.Tensor):
         gate_2d, up_2d = ctx.saved_tensors
         dout = dout.contiguous()
@@ -248,4 +251,5 @@ class MiniTrainSwiGLUFunction(torch.autograd.Function):
 def swiglu(gate: torch.Tensor, up: torch.Tensor) -> torch.Tensor:
     """Public Triton SwiGLU entry point used by `TritonOpsBackend`."""
 
+    gate, up = cast_cuda_autocast_activations(gate, up)
     return MiniTrainSwiGLUFunction.apply(gate, up)

@@ -11,6 +11,7 @@ import struct
 
 import torch
 
+from minitrain.kernels.amp import cast_cuda_autocast_activations
 from minitrain.kernels.cuda_ext.build import compiled_dtypes
 from minitrain.kernels.cuda_ext.build import compiled_head_dims
 from minitrain.kernels.cuda_ext.build import load_cuda_extension
@@ -175,6 +176,7 @@ class MiniTrainCudaFlashAttentionFunction(torch.autograd.Function):
     """Connect upstream CUDA forward/backward kernels to PyTorch autograd."""
 
     @staticmethod
+    @torch.amp.custom_fwd(device_type="cuda")
     def forward(
         ctx,
         q: torch.Tensor,
@@ -212,6 +214,7 @@ class MiniTrainCudaFlashAttentionFunction(torch.autograd.Function):
         return out
 
     @staticmethod
+    @torch.amp.custom_bwd(device_type="cuda")
     def backward(ctx, dout: torch.Tensor):
         """Launch native CUDA backward; no PyTorch SDPA recomputation remains."""
 
@@ -277,6 +280,7 @@ def flash_attention(
 ) -> torch.Tensor:
     """Compute dense attention with the selected CUDA specialization matrix."""
 
+    q, k, v = cast_cuda_autocast_activations(q, k, v)
     dropout_p_f32 = _canonical_dropout_p(dropout_p)
     if dropout_p_f32 is None or not is_flash_attention_supported(
         q, k, v, dropout_p=dropout_p_f32

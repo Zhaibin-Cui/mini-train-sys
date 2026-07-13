@@ -21,6 +21,5 @@ def build_parallel_strategy(cfg: ExperimentConfig) -> ParallelStrategy:
     if name == "ddp":
         return DDPStrategy(**cfg.distributed)
     if name == "fsdp":
-        return FSDPStrategy()
+        return FSDPStrategy(precision=cfg.train.precision, **cfg.distributed)
     raise ValueError(f"Unknown parallel strategy: {name}")
-
