@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import gc
+import json
 import math
+import platform
+import re
 from dataclasses import dataclass
+from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -24,13 +29,133 @@ METRIC_NAMES = (
     "bwd_p95_ms",
     "bwd_peak_mem_mb",
     "bwd_speedup",
+    "full_p50_ms",
+    "full_p95_ms",
+    "full_peak_mem_mb",
+    "full_speedup",
 )
+BENCHMARK_CACHE_SCHEMA_VERSION = 2
 
 
 @dataclass
 class BenchCase:
     tensors: TensorMap
     grad_names: tuple[str, ...] = ()
+
+
+def _utc_timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds")
+
+
+def _timestamp_filename(timestamp: str) -> str:
+    """Convert an ISO timestamp to a sortable Windows-safe filename."""
+
+    return timestamp.replace(":", "-").replace("+", "_")
+
+
+def _path_slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or "unknown-gpu"
+
+
+def gpu_benchmark_metadata(device: int | torch.device | None = None) -> dict[str, Any]:
+    """Describe the active GPU and provide a stable architecture cache key."""
+
+    if not torch.cuda.is_available():
+        raise RuntimeError("benchmark result caching requires an active CUDA device")
+
+    if device is None:
+        device_index = torch.cuda.current_device()
+    elif isinstance(device, int):
+        device_index = device
+    else:
+        device_index = torch.device(device).index
+    if device_index is None:
+        device_index = torch.cuda.current_device()
+    properties = torch.cuda.get_device_properties(device_index)
+    major, minor = torch.cuda.get_device_capability(device_index)
+    gpu_name = properties.name
+    return {
+        "cache_key": f"sm{major}{minor}-{_path_slug(gpu_name)}",
+        "device_index": device_index,
+        "gpu_name": gpu_name,
+        "compute_capability": f"{major}.{minor}",
+        "sm_arch": f"sm{major}{minor}",
+        "total_memory_bytes": properties.total_memory,
+        "multiprocessor_count": properties.multi_processor_count,
+        "torch_version": torch.__version__,
+        "torch_cuda_version": torch.version.cuda,
+        "cudnn_version": torch.backends.cudnn.version(),
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+    }
+
+
+def benchmark_architecture_dir(
+    cache_root: str | Path, device: int | torch.device | None = None
+) -> Path:
+    """Return the result directory for one physical GPU architecture/model."""
+
+    cache_key = gpu_benchmark_metadata(device)["cache_key"]
+    return Path(cache_root) / cache_key
+
+
+def _to_json_value(value: Any) -> Any:
+    """Convert benchmark values to strict, portable JSON values."""
+
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {str(key): _to_json_value(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_to_json_value(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, (torch.dtype, torch.device)):
+        return str(value)
+    item = getattr(value, "item", None)
+    if callable(item):
+        return _to_json_value(item())
+    return str(value)
+
+
+def save_benchmark_results(
+    rows: Iterable[dict[str, Any]],
+    *,
+    benchmark: str,
+    cache_root: str | Path,
+    metadata: dict[str, Any] | None = None,
+) -> Path:
+    """Write one immutable, timestamped file for one benchmark dataset."""
+
+    if not benchmark.strip():
+        raise ValueError("benchmark must be a non-empty name")
+
+    captured_at = _utc_timestamp()
+    environment = gpu_benchmark_metadata()
+    architecture_dir = Path(cache_root) / environment.pop("cache_key")
+    benchmark_dir = architecture_dir / _path_slug(benchmark)
+    benchmark_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = benchmark_dir / f"{_timestamp_filename(captured_at)}.json"
+
+    cache = {
+        "schema_version": BENCHMARK_CACHE_SCHEMA_VERSION,
+        "benchmark": benchmark,
+        "captured_at": captured_at,
+        "environment": _to_json_value(environment),
+        "metadata": _to_json_value({} if metadata is None else metadata),
+        "rows": _to_json_value(list(rows)),
+    }
+
+    temporary_path = cache_path.with_suffix(".tmp")
+    temporary_path.write_text(
+        json.dumps(cache, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    temporary_path.replace(cache_path)
+    return cache_path
 
 
 def release_cache() -> None:
@@ -83,7 +208,9 @@ def triton_config_records(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]
     return records
 
 
-def display_triton_config_summary(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+def display_triton_config_summary(
+    rows: Iterable[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """Display one consolidated table of all selected Triton configurations."""
 
     records = triton_config_records(rows)
@@ -136,7 +263,9 @@ def zero_grads(case: BenchCase) -> None:
         tensor.grad = None
 
 
-def close_stats(actual: Any, expected: Any, *, atol: float, rtol: float) -> dict[str, Any]:
+def close_stats(
+    actual: Any, expected: Any, *, atol: float, rtol: float
+) -> dict[str, Any]:
     actual_tensors = tuple(flatten_tensors(actual))
     expected_tensors = tuple(flatten_tensors(expected))
     if len(actual_tensors) != len(expected_tensors):
@@ -153,31 +282,45 @@ def close_stats(actual: Any, expected: Any, *, atol: float, rtol: float) -> dict
         max_abs = max(max_abs, float(abs_err.max().item()))
         max_rel = max(max_rel, float(rel_err.max().item()))
         try:
-            torch.testing.assert_close(actual_tensor, expected_tensor, atol=atol, rtol=rtol)
+            torch.testing.assert_close(
+                actual_tensor, expected_tensor, atol=atol, rtol=rtol
+            )
         except AssertionError:
             correct = False
 
     return {"correct": correct, "max_abs": max_abs, "max_rel": max_rel}
 
 
-def output_loss(output: Any) -> torch.Tensor:
-    losses = [tensor.float().sum() for tensor in flatten_tensors(output)]
+def output_loss(output: Any, *, random_gradient: bool = False) -> torch.Tensor:
+    tensors = tuple(flatten_tensors(output))
+    if random_gradient:
+        losses = []
+        for index, tensor in enumerate(tensors):
+            generator = torch.Generator(device=tensor.device)
+            generator.manual_seed(17 + index)
+            gradient = torch.randn(
+                tensor.shape,
+                dtype=torch.float32,
+                device=tensor.device,
+                generator=generator,
+            )
+            losses.append((tensor.float() * gradient).sum())
+    else:
+        losses = [tensor.float().sum() for tensor in tensors]
     return sum(losses)
 
 
 def gradient_output(case: BenchCase, provider: str, forward: ForwardFn) -> Any:
     zero_grads(case)
     output = forward(provider, case.tensors)
-    loss = output_loss(output)
+    loss = output_loss(output, random_gradient=True)
     loss.backward()
     del loss
     return output
 
 
 def make_backward_graph(
-    case: BenchCase,
-    provider: str,
-    forward: ForwardFn,
+    case: BenchCase, provider: str, forward: ForwardFn,
 ) -> tuple[Any, torch.Tensor]:
     zero_grads(case)
     output = forward(provider, case.tensors)
@@ -186,11 +329,7 @@ def make_backward_graph(
 
 
 def gradient_stats(
-    actual_case: BenchCase,
-    expected_case: BenchCase,
-    *,
-    atol: float,
-    rtol: float,
+    actual_case: BenchCase, expected_case: BenchCase, *, atol: float, rtol: float,
 ) -> dict[str, Any]:
     actual_grads = []
     expected_grads = []
@@ -244,10 +383,7 @@ def latency_ms(
         import triton
 
         p50, p95 = triton.testing.do_bench(
-            fn,
-            warmup=warmup_ms,
-            rep=rep_ms,
-            quantiles=[0.5, 0.95],
+            fn, warmup=warmup_ms, rep=rep_ms, quantiles=[0.5, 0.95],
         )
         return float(p50), float(p95), "triton.do_bench"
     except ImportError:
@@ -268,7 +404,9 @@ def latency_ms(
         samples.append(start.elapsed_time(end))
 
     values = torch.tensor(samples, dtype=torch.float64)
-    p50, p95 = torch.quantile(values, torch.tensor([0.5, 0.95], dtype=torch.float64)).tolist()
+    p50, p95 = torch.quantile(
+        values, torch.tensor([0.5, 0.95], dtype=torch.float64)
+    ).tolist()
     return float(p50), float(p95), "cuda_events"
 
 
@@ -280,7 +418,7 @@ def peak_memory_mb(fn: Callable[[], None]) -> float:
     torch.cuda.synchronize()
     peak = torch.cuda.max_memory_allocated()
     release_cache()
-    return max(0.0, (peak - baseline) / 2**20)
+    return max(0.0, (peak - baseline) / 2 ** 20)
 
 
 def backward_latency_ms(
@@ -314,11 +452,15 @@ def backward_latency_ms(
     zero_grads(case)
     release_cache()
     values = torch.tensor(samples, dtype=torch.float64)
-    p50, p95 = torch.quantile(values, torch.tensor([0.5, 0.95], dtype=torch.float64)).tolist()
+    p50, p95 = torch.quantile(
+        values, torch.tensor([0.5, 0.95], dtype=torch.float64)
+    ).tolist()
     return float(p50), float(p95), "cuda_events_backward_only"
 
 
-def backward_peak_memory_mb(case: BenchCase, provider: str, forward: ForwardFn) -> float:
+def backward_peak_memory_mb(
+    case: BenchCase, provider: str, forward: ForwardFn
+) -> float:
     release_cache()
     output, loss = make_backward_graph(case, provider, forward)
     torch.cuda.synchronize()
@@ -330,7 +472,7 @@ def backward_peak_memory_mb(case: BenchCase, provider: str, forward: ForwardFn) 
     del loss, output
     zero_grads(case)
     release_cache()
-    return max(0.0, (peak - baseline) / 2**20)
+    return max(0.0, (peak - baseline) / 2 ** 20)
 
 
 def benchmark_step(
@@ -344,15 +486,17 @@ def benchmark_step(
     rep_ms: int,
 ) -> dict[str, Any]:
     case = make_case(size)
-    if mode == "bwd":
+    if mode in ("bwd", "full"):
         seed_case = case
         case = clone_case(seed_case, requires_grad=True)
         free_case(seed_case)
     try:
         if mode == "fwd":
+
             def step() -> None:
                 with torch.no_grad():
                     forward(provider, case.tensors)
+
             p50, p95, timer = latency_ms(step, warmup_ms=warmup_ms, rep_ms=rep_ms)
             zero_grads(case)
             release_cache()
@@ -360,6 +504,19 @@ def benchmark_step(
         elif mode == "bwd":
             p50, p95, timer = backward_latency_ms(case, provider, forward)
             memory = backward_peak_memory_mb(case, provider, forward)
+        elif mode == "full":
+
+            def step() -> None:
+                zero_grads(case)
+                output = forward(provider, case.tensors)
+                loss = output_loss(output)
+                loss.backward()
+                del loss, output
+
+            p50, p95, timer = latency_ms(step, warmup_ms=warmup_ms, rep_ms=rep_ms)
+            zero_grads(case)
+            release_cache()
+            memory = peak_memory_mb(step)
         else:
             raise ValueError(f"Unknown benchmark mode: {mode}")
 
@@ -384,6 +541,7 @@ def bench_provider(
     forward: ForwardFn,
     torch_fwd_p50_ms: float | None,
     torch_bwd_p50_ms: float | None,
+    torch_full_p50_ms: float | None,
     atol: float,
     rtol: float,
     warmup_ms: int,
@@ -398,7 +556,9 @@ def bench_provider(
         "status": "ok",
     }
     try:
-        row.update(correctness_stats(make_case, size, provider, forward, atol=atol, rtol=rtol))
+        row.update(
+            correctness_stats(make_case, size, provider, forward, atol=atol, rtol=rtol)
+        )
         row.update(
             benchmark_step(
                 make_case,
@@ -416,16 +576,36 @@ def bench_provider(
                 size,
                 provider,
                 forward,
+                mode="full",
+                warmup_ms=warmup_ms,
+                rep_ms=rep_ms,
+            )
+        )
+        row.update(
+            benchmark_step(
+                make_case,
+                size,
+                provider,
+                forward,
                 mode="bwd",
                 warmup_ms=warmup_ms,
                 rep_ms=rep_ms,
             )
         )
         row["fwd_speedup"] = (
-            1.0 if torch_fwd_p50_ms in (None, 0.0) else torch_fwd_p50_ms / row["fwd_p50_ms"]
+            1.0
+            if torch_fwd_p50_ms in (None, 0.0)
+            else torch_fwd_p50_ms / row["fwd_p50_ms"]
         )
         row["bwd_speedup"] = (
-            1.0 if torch_bwd_p50_ms in (None, 0.0) else torch_bwd_p50_ms / row["bwd_p50_ms"]
+            1.0
+            if torch_bwd_p50_ms in (None, 0.0)
+            else torch_bwd_p50_ms / row["bwd_p50_ms"]
+        )
+        row["full_speedup"] = (
+            1.0
+            if torch_full_p50_ms in (None, 0.0)
+            else torch_full_p50_ms / row["full_p50_ms"]
         )
         if autotune_kernels and provider == "triton":
             row["triton_best_configs"] = collect_triton_best_configs(autotune_kernels)
@@ -465,6 +645,7 @@ def bench_sweep(
     for size in sizes:
         torch_fwd_p50 = None
         torch_bwd_p50 = None
+        torch_full_p50 = None
         for provider in providers:
             row = bench_provider(
                 kernel=kernel,
@@ -475,6 +656,7 @@ def bench_sweep(
                 forward=forward,
                 torch_fwd_p50_ms=torch_fwd_p50,
                 torch_bwd_p50_ms=torch_bwd_p50,
+                torch_full_p50_ms=torch_full_p50,
                 atol=atol,
                 rtol=rtol,
                 warmup_ms=warmup_ms,
@@ -484,8 +666,10 @@ def bench_sweep(
             if provider == "torch" and row["status"] == "ok":
                 torch_fwd_p50 = row["fwd_p50_ms"]
                 torch_bwd_p50 = row["bwd_p50_ms"]
+                torch_full_p50 = row["full_p50_ms"]
                 row["fwd_speedup"] = 1.0
                 row["bwd_speedup"] = 1.0
+                row["full_speedup"] = 1.0
             rows.append(row)
         release_cache()
     if autotune_kernels:
@@ -520,6 +704,10 @@ def to_summary_dataframe(rows: list[dict[str, Any]]) -> Any:
         "bwd_p95_ms",
         "bwd_peak_mem_mb",
         "bwd_speedup",
+        "full_p50_ms",
+        "full_p95_ms",
+        "full_peak_mem_mb",
+        "full_speedup",
         "error",
     ]
     try:
@@ -529,7 +717,9 @@ def to_summary_dataframe(rows: list[dict[str, Any]]) -> Any:
         present = [name for name in columns if name in frame.columns]
         return frame[present]
     except ImportError:
-        return [{name: row.get(name) for name in columns if name in row} for row in rows]
+        return [
+            {name: row.get(name) for name in columns if name in row} for row in rows
+        ]
 
 
 YLABELS = {
@@ -541,11 +731,17 @@ YLABELS = {
     "bwd_p95_ms": "backward-only p95 latency (ms)",
     "bwd_peak_mem_mb": "backward-only peak memory delta (MB)",
     "bwd_speedup": "backward-only speedup vs torch",
+    "full_p50_ms": "forward + backward p50 latency (ms)",
+    "full_p95_ms": "forward + backward p95 latency (ms)",
+    "full_peak_mem_mb": "forward + backward peak memory delta (MB)",
+    "full_speedup": "forward + backward speedup vs torch",
 }
 
 
 def _plot_metric(ax: Any, rows: list[dict[str, Any]], metric: str) -> None:
-    ok_rows = [row for row in rows if row["status"] == "ok" and row.get(metric) is not None]
+    ok_rows = [
+        row for row in rows if row["status"] == "ok" and row.get(metric) is not None
+    ]
     if not ok_rows:
         ax.text(0.5, 0.5, "no data", ha="center", va="center", transform=ax.transAxes)
         ax.set_axis_off()
@@ -602,10 +798,14 @@ def plot_kernel_grid(
 
     metrics = tuple(metrics)
     kernel = next((row["kernel"] for row in rows if "kernel" in row), "kernel")
-    size_label = next((row["size_label"] for row in rows if "size_label" in row), "size")
+    size_label = next(
+        (row["size_label"] for row in rows if "size_label" in row), "size"
+    )
     cols = 4
     rows_count = math.ceil(len(metrics) / cols)
-    fig, axes = plt.subplots(rows_count, cols, figsize=(4.2 * cols, 3.4 * rows_count), dpi=140)
+    fig, axes = plt.subplots(
+        rows_count, cols, figsize=(4.2 * cols, 3.4 * rows_count), dpi=140
+    )
     fig.patch.set_facecolor("#FBFBFD")
     flat_axes = list(axes.ravel() if hasattr(axes, "ravel") else [axes])
 
@@ -643,7 +843,9 @@ def plot_kernel_grid(
     return fig
 
 
-def plot_kernel(rows: list[dict[str, Any]], *, metric: str, save_path: Path | None = None) -> Any:
+def plot_kernel(
+    rows: list[dict[str, Any]], *, metric: str, save_path: Path | None = None
+) -> Any:
     import matplotlib.pyplot as plt
 
     try:
@@ -651,7 +853,9 @@ def plot_kernel(rows: list[dict[str, Any]], *, metric: str, save_path: Path | No
     except OSError:
         plt.style.use("seaborn-whitegrid")
 
-    ok_rows = [row for row in rows if row["status"] == "ok" and row.get(metric) is not None]
+    ok_rows = [
+        row for row in rows if row["status"] == "ok" and row.get(metric) is not None
+    ]
     if not ok_rows:
         print(f"skip plot: no successful benchmark rows for {metric}")
         return None

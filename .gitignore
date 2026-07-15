@@ -1,8 +1,9 @@
-# Python bytecode and caches
+# Python, test, and tool caches
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.pytest_tmp*/
 .ruff_cache/
 .mypy_cache/
 .pytype/
@@ -11,7 +12,7 @@ __pycache__/
 coverage.xml
 htmlcov/
 
-# Virtual environments and packaging
+# Environments and packaging
 .venv/
 venv/
 env/
@@ -20,16 +21,14 @@ dist/
 build/
 *.egg-info/
 
-# Jupyter
+# Notebook, editor, and OS files
 .ipynb_checkpoints/
-
-# Editor and OS files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# Native/CUDA build artifacts
+# Native/CUDA outputs
 *.o
 *.obj
 *.so
@@ -40,11 +39,9 @@ Thumbs.db
 *.exp
 *.ninja
 
-# Runtime caches
+# Runtime caches and experiment outputs
 .triton_cache/
 triton_cache/
-
-# Experiment outputs
 runs/
 logs/
 checkpoints/
@@ -61,14 +58,11 @@ profiles/
 *.npy
 *.npz
 
-# Keep repository examples, tests, and reports shareable.
+# Tests and reports are shareable; their generated caches/results are not.
 !tests/**
 !reports/**
-
-# Still ignore generated caches inside shareable folders.
 tests/**/__pycache__/
 tests/**/*.py[cod]
+tests/benchmark_results/
 reports/**/__pycache__/
 reports/**/*.py[cod]
-# reports/nsight/
-# reports/*.profile.pkl
