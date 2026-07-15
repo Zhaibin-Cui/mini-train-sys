@@ -39,12 +39,12 @@ Out of scope for the first implementation:
 Those features belong to inference systems such as FlashInfer, vLLM, and
 TensorRT-LLM. They should not block a useful pretraining kernel.
 
-## Why Not Start From Liger Neighborhood Attention
+## Why Not Start From Neighborhood Attention
 
-`../Liger-Kernel/src/liger_kernel/ops/fused_neighborhood_attention.py` is useful
+The upstream fused-neighborhood-attention implementation is useful
 as a Triton engineering example, but it is not the right base for FlashAttention.
 
-The current Liger neighborhood implementation allocates full sequence-by-sequence
+That neighborhood implementation allocates full sequence-by-sequence
 intermediates:
 
 - `qk_scores` has shape `[batch, heads, seq, seq]`;
@@ -56,7 +56,7 @@ it is not the FlashAttention memory model. FlashAttention avoids materializing
 the full attention matrix. It streams K/V blocks, maintains online softmax state,
 and saves log-sum-exp data for backward.
 
-Use Liger for project structure ideas:
+Use existing kernel projects for structure ideas:
 
 - one kernel family per file;
 - explicit autograd function;

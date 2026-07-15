@@ -31,9 +31,9 @@ What MiniTrainSys borrows:
 - checkpoint and optimizer components as independent modules;
 - the preference for a small but complete training path.
 
-## Liger-Kernel
+## Triton LLM Kernels
 
-Location: `../Liger-Kernel`
+Location: external reference checkout
 
 What it does:
 - Triton kernels for LLM training ops;
@@ -41,7 +41,7 @@ What it does:
 - Hugging Face and Megatron integration examples.
 
 What MiniTrainSys borrows:
-- `OpsBackend` exists so Liger-like kernels can be swapped into the model;
+- `OpsBackend` exists so optimized kernels can be swapped into the model;
 - `kernels/triton/*.py` mirrors the one-op-per-file implementation style;
 - `bench/` and `reports/` are first-class, not afterthoughts.
 
@@ -72,6 +72,18 @@ What MiniTrainSys borrows:
 - the long-term split between `core` algorithms and `training` orchestration;
 - future `distributed/tensor_parallel.py` and `pipeline_parallel.py` should be modeled after its boundaries;
 - custom kernels should not leak parallelism details into the base model.
+- MoE keeps fp32 router logits and separates gating, Top-K postprocessing,
+  capacity policy, token dispatch, and grouped expert execution.
+
+## vLLM and SGLang
+
+Locations: official upstream repositories
+
+What MiniTrainSys borrows:
+- compiled Top-K postprocessing remains distinct from expert GEMMs;
+- expert execution consumes compact indices and weights instead of owning
+  router policy;
+- expert-parallel dispatch and permutation are separate distributed stages.
 
 ## DeepSpeed
 
@@ -86,4 +98,3 @@ What MiniTrainSys borrows:
 - `runtime/` as the place for glue code;
 - future ZeRO-like optimizer experiments should live below `distributed/` and `train/optim.py`;
 - CUDA extension work should stay under `kernels/cuda_ext/`.
-

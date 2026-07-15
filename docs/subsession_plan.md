@@ -36,9 +36,9 @@ Deliverables:
 - report p50/p95 latency, memory, and speedup.
 
 References:
-- `../Liger-Kernel/benchmark/`
-- `../Liger-Kernel/src/liger_kernel/ops/rms_norm.py`
-- `../Liger-Kernel/src/liger_kernel/ops/fused_linear_cross_entropy.py` -->
+- upstream kernel benchmarks
+- upstream RMSNorm implementation
+- upstream fused linear cross entropy implementation -->
 
 <!-- ## Session 3: Triton Kernel 1 - RMSNorm
 
@@ -54,7 +54,7 @@ Deliverables:
 - decide whether CUDA C++ is worth trying.
 
 References:
-- `../Liger-Kernel/src/liger_kernel/ops/rms_norm.py`
+- upstream RMSNorm implementation
 
 ## Session 4: Triton Kernel 2 - RoPE and SwiGLU
 
@@ -69,8 +69,8 @@ Deliverables:
 - benchmark launch overhead and memory bandwidth impact.
 
 References:
-- `../Liger-Kernel/src/liger_kernel/ops/rope.py`
-- `../Liger-Kernel/src/liger_kernel/ops/swiglu.py` -->
+- upstream RoPE implementation
+- upstream SwiGLU implementation -->
 
 ## Session 5: Triton FlashAttention For Pretraining
 
@@ -98,7 +98,7 @@ References:
 Notes:
 - This session is for pretraining only. Do not implement KV cache, paged
   attention, decode kernels, or serving-specific features here.
-- Do not use `../Liger-Kernel/src/liger_kernel/ops/fused_neighborhood_attention.py`
+- Do not use the upstream fused neighborhood attention implementation
   as the algorithmic base because it materializes `[seq, seq]` intermediates.
   It is useful only for Triton project structure and benchmark style.
 
@@ -115,8 +115,8 @@ Deliverables:
 - explain numerical stability and avoided logits materialization.
 
 References:
-- `../Liger-Kernel/src/liger_kernel/ops/fused_linear_cross_entropy.py`
-- `../Liger-Kernel/src/liger_kernel/chunked_loss/`
+- upstream fused linear cross entropy implementation
+- upstream chunked-loss implementation
 
 ## Session 7: DDP Benchmark
 
