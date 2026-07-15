@@ -58,11 +58,12 @@ profiles/
 *.npy
 *.npz
 
-# Tests and reports are shareable; their generated caches/results are not.
+# Tests, benchmark results, and reports are shareable.
 !tests/**
 !reports/**
 tests/**/__pycache__/
 tests/**/*.py[cod]
-tests/benchmark_results/
+tests/*_sm86_4gb.ipynb
+tests/*_linux_server.ipynb
 reports/**/__pycache__/
 reports/**/*.py[cod]
