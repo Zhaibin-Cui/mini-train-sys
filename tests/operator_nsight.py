@@ -19,6 +19,9 @@ from typing import Any, Callable
 
 import torch
 
+from operator_bench_utils import cuda_cleanup
+from operator_bench_utils import release_cache
+
 
 _NVTX_RANGE = "minitrain_nsight"
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -158,6 +161,7 @@ def _pin_autotune_configs(spec: ProfileSpec, configs: dict[str, dict[str, Any]])
         kernel.cache.clear()
 
 
+@cuda_cleanup
 def _run_case(spec: ProfileSpec, *, size: int, mode: str) -> None:
     case = _prepare_case(spec, size=size, mode=mode)
     try:
@@ -167,7 +171,7 @@ def _run_case(spec: ProfileSpec, *, size: int, mode: str) -> None:
         torch.cuda.synchronize()
     finally:
         case.tensors.clear()
-        torch.cuda.empty_cache()
+        release_cache()
 
 
 def _autotune_snapshot(spec: ProfileSpec, *, size: int, mode: str) -> dict[str, dict[str, Any]]:
@@ -214,6 +218,7 @@ def _capture_range(capture_mode: str):
         _capture_stop(capture_mode)
 
 
+@cuda_cleanup
 def _run_worker(payload: Path, *, mode: str, capture_mode: str) -> None:
     if not torch.cuda.is_available():
         raise RuntimeError("Nsight kernel profiling requires CUDA.")
@@ -243,6 +248,7 @@ def _run_worker(payload: Path, *, mode: str, capture_mode: str) -> None:
             loss.backward()
         del loss
     torch.cuda.synchronize()
+    case.tensors.clear()
 
 
 def _csv_summary(csv_text: str) -> list[dict[str, str]]:

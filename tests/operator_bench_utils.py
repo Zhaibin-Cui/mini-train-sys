@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import functools
 import gc
 import json
 import math
 import platform
 import re
+import traceback
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timezone
@@ -159,10 +161,62 @@ def save_benchmark_results(
 
 
 def release_cache() -> None:
+    """Release unreferenced PyTorch CUDA allocations.
+
+    Call this only after CUDA tensors have left their Python scope.  It cannot
+    release live tensors or the CUDA context owned by the current process.
+    """
     gc.collect()
-    if torch.cuda.is_available():
+    if not torch.cuda.is_available():
+        return
+
+    # A failed kernel can make synchronize() raise.  Cache release must still
+    # be attempted, and cleanup must never replace the benchmark's real error.
+    try:
         torch.cuda.synchronize()
+    except Exception:
+        pass
+    try:
         torch.cuda.empty_cache()
+    except Exception:
+        pass
+    try:
+        torch.cuda.ipc_collect()
+    except Exception:
+        pass
+
+
+def run_with_cuda_cleanup(fn: Callable[[], Any]) -> Any:
+    """Run a zero-argument benchmark callable and clean CUDA on every exit.
+
+    On failure, Python's traceback retains the failed function's locals.  Those
+    locals can own CUDA tensors, so clear the completed traceback frames before
+    releasing the allocator cache and re-raising the original exception.
+    """
+
+    try:
+        result = fn()
+    except BaseException as error:
+        traceback_chain = error.__traceback__
+        # The first frame is this currently executing helper and cannot be
+        # cleared.  Every following frame has already unwound and is safe.
+        if traceback_chain is not None and traceback_chain.tb_next is not None:
+            traceback.clear_frames(traceback_chain.tb_next)
+        error = error.with_traceback(None)
+        release_cache()
+        raise error from None
+    release_cache()
+    return result
+
+
+def cuda_cleanup(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorate a benchmark boundary with normal and exceptional CUDA cleanup."""
+
+    @functools.wraps(fn)
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
+        return run_with_cuda_cleanup(lambda: fn(*args, **kwargs))
+
+    return wrapped
 
 
 def triton_best_config(kernel: Any) -> dict[str, Any] | None:
@@ -339,6 +393,7 @@ def gradient_stats(
     return close_stats(actual_grads, expected_grads, atol=atol, rtol=rtol)
 
 
+@cuda_cleanup
 def correctness_stats(
     make_case: MakeCaseFn,
     size: int,
@@ -475,6 +530,7 @@ def backward_peak_memory_mb(
     return max(0.0, (peak - baseline) / 2 ** 20)
 
 
+@cuda_cleanup
 def benchmark_step(
     make_case: MakeCaseFn,
     size: int,
@@ -531,6 +587,7 @@ def benchmark_step(
         free_case(case)
 
 
+@cuda_cleanup
 def bench_provider(
     *,
     kernel: str,
@@ -624,6 +681,7 @@ def bench_provider(
     return row
 
 
+@cuda_cleanup
 def bench_sweep(
     *,
     kernel: str,
