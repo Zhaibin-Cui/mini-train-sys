@@ -1,6 +1,18 @@
+from dataclasses import dataclass
 from typing import Protocol
 
 import torch
+
+
+@dataclass
+class RouterPostprocessOutput:
+    """Backend-neutral result of processing fp32 router logits."""
+
+    expert_weights: torch.Tensor
+    expert_indices: torch.Tensor
+    probability_per_expert: torch.Tensor
+    z_loss: torch.Tensor
+    entropy: torch.Tensor
 
 
 class OpsBackend(Protocol):
@@ -54,6 +66,27 @@ class OpsBackend(Protocol):
         targets: torch.Tensor,
     ) -> torch.Tensor:
         """Compute linear plus cross entropy and return an fp32 mixed-precision loss."""
+        ...
+
+    def router_postprocess(
+        self,
+        logits: torch.Tensor,
+        top_k: int,
+        *,
+        normalize: bool,
+    ) -> RouterPostprocessOutput:
+        """Process fp32 router logits and return differentiable routing statistics."""
+        ...
+
+    def fused_moe(
+        self,
+        x: torch.Tensor,
+        gate_up_proj: torch.Tensor,
+        down_proj: torch.Tensor,
+        top_k_index: torch.Tensor,
+        top_k_weights: torch.Tensor,
+    ) -> torch.Tensor:
+        """Apply routed SwiGLU experts and aggregate the selected outputs."""
         ...
 
 

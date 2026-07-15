@@ -1,6 +1,6 @@
 """Triton RMSNorm implementation.
 
-This file mirrors the useful parts of Liger's layering while staying inside
+This file keeps the operator layering inside
 mini-train-sys' backend architecture:
 
 1. JIT kernels live in this one operator file.
@@ -42,7 +42,7 @@ _BLOCK_ROW_SWITCH_N_ROWS = 4096 * 8
 def _calculate_settings(n_cols: int) -> tuple[int, int]:
     """Choose Triton block settings from the normalized hidden dimension.
 
-    This follows Liger's simple, robust policy: one power-of-two block covers
+    One power-of-two block covers
     the whole hidden dimension, and larger reductions get more warps. Different
     `BLOCK_SIZE` / `num_warps` pairs are part of Triton's compile key, so each
     hidden-size bucket gets compiled once and then reused from cache.
@@ -68,7 +68,7 @@ def _calculate_settings(n_cols: int) -> tuple[int, int]:
 
 
 def _use_row_kernel(n_rows: int, block_size: int, row_mode: bool | None = None) -> bool:
-    """Match Liger's row-vs-block routing rule.
+    """Choose the row-vs-block routing rule.
 
     Row mode launches one Triton program per input row. That is good when each
     row has enough columns to amortize scheduling overhead, or when the number
@@ -151,7 +151,7 @@ if triton is not None:
     ):
         """Forward path for small hidden sizes and many rows.
 
-        This mirrors Liger's block kernel shape: one Triton program owns a
+        One Triton program owns a
         `[BLOCK_ROW, BLOCK_SIZE]` tile. The math is identical to the row kernel,
         but the scheduling overhead is spread across multiple short rows.
         """
@@ -373,7 +373,7 @@ def rmsnorm_backward(
     dy_2d = dy.reshape(-1, hidden_size)
     n_rows, n_cols = dy_2d.shape
 
-    # One program per SM mirrors Liger's strategy: enough programs to occupy
+    # One program per SM provides enough programs to occupy
     # the device while each program accumulates a local dW vector in registers.
     sm_count = torch.cuda.get_device_properties(dy.device).multi_processor_count
     rows_per_program = math.ceil(n_rows / sm_count)

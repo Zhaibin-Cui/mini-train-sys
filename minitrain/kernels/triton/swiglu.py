@@ -121,7 +121,7 @@ if triton is not None:
         """Compute gradients for `out = silu(gate) * up`.
 
         The sigmoid is recomputed from `gate` instead of saved from forward,
-        matching Liger's memory-saving strategy.
+        keeping the intermediate memory footprint small.
         """
 
         row_idx = tl.program_id(0).to(tl.int64)
