@@ -1,23 +1,37 @@
 run:
-  name: ddp_torch_baseline
+  name: ddp_llm
   seed: 1337
 backend:
-  ops: torch
+  ops: triton
   parallel: ddp
-distributed:
-  bucket_cap_mb: 25
-  gradient_as_bucket_view: true
-train:
-  batch_size: 8
+optimizer:
+  name: adamw
   lr: 0.0003
   weight_decay: 0.1
-  max_steps: 1000
+  beta1: 0.9
+  beta2: 0.95
+  eps: 1.0e-8
+  fused: null
+lr_scheduler:
+  schedule: cosine
+  warmup_steps: 100
+  decay_steps: null
+  min_lr_ratio: 0.1
+train:
+  batch_size: 8
+  max_steps: null
+  epochs: 10
   log_interval: 10
-  use_fused_loss: false
+  use_fused_loss: true
   precision: bf16
   grad_clip_norm: 1.0
+  checkpoint_every_epochs: 2
+  checkpoint_dir: checkpoints
+  save_final_checkpoint: true
+  resume_from: null
 data:
   source: random
+  path: null
   num_tokens: 100000
   shuffle: true
 logging:
@@ -25,3 +39,6 @@ logging:
   tensorboard: true
   log_dir: runs
   flush_secs: 10
+distributed:
+  bucket_cap_mb: 25
+  gradient_as_bucket_view: true

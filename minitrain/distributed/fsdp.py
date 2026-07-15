@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import torch
 import torch.distributed as dist
 from torch.distributed.fsdp import FullyShardedDataParallel, MixedPrecision, ShardingStrategy
@@ -36,6 +38,7 @@ class FSDPStrategy:
                 ) from exc
         self.sharding_strategy = sharding_strategy
         self.mixed_precision = self._build_mixed_precision(precision)
+        self.local_rank = int(os.environ.get("LOCAL_RANK", "0"))
 
     @staticmethod
     def _build_mixed_precision(precision: str) -> MixedPrecision | None:
@@ -56,6 +59,7 @@ class FSDPStrategy:
         )
 
     def setup(self) -> None:
+        torch.cuda.set_device(self.local_rank)
         if not dist.is_initialized():
             dist.init_process_group(backend="nccl")
 
@@ -64,6 +68,8 @@ class FSDPStrategy:
             model,
             sharding_strategy=self.sharding_strategy,
             mixed_precision=self.mixed_precision,
+            device_id=self.local_rank,
+            use_orig_params=True,
         )
 
     def barrier(self) -> None:

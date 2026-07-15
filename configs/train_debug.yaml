@@ -1,8 +1,8 @@
 run:
-  name: single_llm
+  name: debug
   seed: 1337
 backend:
-  ops: triton
+  ops: torch
   parallel: single
 optimizer:
   name: adamw
@@ -13,29 +13,29 @@ optimizer:
   eps: 1.0e-8
   fused: null
 lr_scheduler:
-  schedule: cosine
-  warmup_steps: 100
+  schedule: constant
+  warmup_steps: 0
   decay_steps: null
   min_lr_ratio: 0.1
 train:
-  batch_size: 8
-  max_steps: null
-  epochs: 10
-  log_interval: 10
-  use_fused_loss: true
-  precision: bf16
+  batch_size: 2
+  max_steps: 10
+  epochs: null
+  log_interval: 1
+  use_fused_loss: false
+  precision: fp32
   grad_clip_norm: 1.0
-  checkpoint_every_epochs: 2
+  checkpoint_every_epochs: null
   checkpoint_dir: checkpoints
-  save_final_checkpoint: true
+  save_final_checkpoint: false
   resume_from: null
 data:
   source: random
   path: null
-  num_tokens: 100000
+  num_tokens: 4096
   shuffle: true
 logging:
   console: true
-  tensorboard: true
+  tensorboard: false
   log_dir: runs
   flush_secs: 10

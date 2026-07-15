@@ -3,12 +3,14 @@ from dataclasses import dataclass
 import torch
 
 from minitrain.train.precision import PrecisionPolicy, resolve_precision_policy
+from minitrain.train.lr_scheduler import LearningRateScheduler
 
 
 @dataclass
 class TrainState:
     step: int = 0
     tokens_seen: int = 0
+    epoch: int = 0
 
 
 class Trainer:
@@ -27,6 +29,7 @@ class Trainer:
         use_fused_loss: bool = False,
         precision: str = "fp32",
         grad_clip_norm: float | None = None,
+        lr_scheduler: LearningRateScheduler | None = None,
     ) -> None:
         self.model = model
         self.optimizer = optimizer
@@ -34,6 +37,9 @@ class Trainer:
         self.use_fused_loss = use_fused_loss
         self.precision: PrecisionPolicy = resolve_precision_policy(precision, device)
         self.grad_clip_norm = grad_clip_norm
+        self.lr_scheduler = lr_scheduler
+        self.last_lr = float(optimizer.param_groups[0]["lr"])
+        self.last_metrics: dict[str, torch.Tensor] = {}
         self.grad_scaler = torch.amp.GradScaler(
             device.type,
             enabled=self.precision.grad_scaling_enabled,
@@ -61,6 +67,10 @@ class Trainer:
         if loss is None:
             raise RuntimeError("Expected loss during training")
 
+        metric_source = getattr(self.model, "module", self.model)
+        self.last_metrics = dict(getattr(metric_source, "last_moe_metrics", {}))
+
+        self.last_lr = float(self.optimizer.param_groups[0]["lr"])
         if self.grad_scaler.is_enabled():
             self.grad_scaler.scale(loss).backward()
             self.grad_scaler.unscale_(self.optimizer)
@@ -74,4 +84,6 @@ class Trainer:
         self.optimizer.zero_grad(set_to_none=True)
         self.state.step += 1
         self.state.tokens_seen += input_ids.numel()
+        if self.lr_scheduler is not None:
+            self.lr_scheduler.step(self.state.step)
         return loss.detach()

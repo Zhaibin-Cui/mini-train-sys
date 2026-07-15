@@ -1,5 +1,6 @@
 import os
 import time
+import warnings
 from pathlib import Path
 from typing import Protocol
 
@@ -139,12 +140,15 @@ def build_event_logger(
         loggers.append(ConsoleLogger())
     if cfg.tensorboard:
         log_dir = tensorboard_log_dir or make_run_log_dir(cfg.log_dir, run_name)
-        loggers.append(
-            TensorBoardLogger(
-                log_dir=log_dir,
-                flush_secs=cfg.flush_secs,
+        try:
+            loggers.append(
+                TensorBoardLogger(
+                    log_dir=log_dir,
+                    flush_secs=cfg.flush_secs,
+                )
             )
-        )
+        except RuntimeError as exc:
+            warnings.warn(f"{exc} Continuing without TensorBoard.", stacklevel=2)
     if not loggers:
         return NullLogger()
     return CompositeLogger(loggers)

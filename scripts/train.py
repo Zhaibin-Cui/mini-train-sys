@@ -1,8 +1,6 @@
 import argparse
 import os
 import sys
-import time
-import tracemalloc
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,13 +10,18 @@ if str(ROOT) not in sys.path:
 import torch
 
 from minitrain.data.dataloader import build_training_dataloader
-from minitrain.model import MiniTransformer, ModelConfig
 from minitrain.runtime.config import experiment_config_from_dict, load_yaml_dict
 from minitrain.runtime.device import get_default_device
-from minitrain.runtime.factory import build_ops_backend, build_parallel_strategy
+from minitrain.runtime.factory import build_model, build_ops_backend, build_parallel_strategy
 from minitrain.runtime.logger import build_event_logger, get_tensorboard_log_dir
 from minitrain.train.optim import build_optimizer
+from minitrain.train.checkpoint import (
+    resolve_resume_checkpoint,
+    restore_training_checkpoint,
+)
+from minitrain.train.lr_scheduler import LearningRateScheduler, resolve_total_steps
 from minitrain.train.precision import resolve_precision_policy
+from minitrain.train.runner import TrainingRunner
 from minitrain.train.trainer import Trainer
 from minitrain.utils.seed import seed_everything
 
@@ -35,75 +38,30 @@ def resolve_device(name: str) -> torch.device:
     if name == "cuda":
         if not torch.cuda.is_available():
             raise RuntimeError("--device cuda was requested, but CUDA is not available")
-        return torch.device("cuda", int(torch.cuda.current_device()))
+        return torch.device("cuda", int(os.environ.get("LOCAL_RANK", "0")))
     if name == "cpu":
         return torch.device("cpu")
     raise ValueError(f"Unknown device: {name}")
-
-
-def memory_metrics_mb(device: torch.device) -> dict[str, float]:
-    """Return memory metrics with device-specific names for TensorBoard."""
-
-    if device.type == "cuda":
-        return {
-            "gpu_memory_allocated_mb": round(torch.cuda.memory_allocated(device) / 1024**2, 2),
-            "gpu_memory_reserved_mb": round(torch.cuda.memory_reserved(device) / 1024**2, 2),
-            "gpu_peak_memory_allocated_mb": round(
-                torch.cuda.max_memory_allocated(device) / 1024**2,
-                2,
-            ),
-        }
-    _, peak_bytes = tracemalloc.get_traced_memory()
-    return {"host_peak_memory_mb": round(peak_bytes / 1024**2, 2)}
-
-
-def maybe_reset_peak_memory(device: torch.device) -> None:
-    if device.type == "cuda":
-        torch.cuda.reset_peak_memory_stats(device)
 
 
 def distributed_world_size() -> int:
     return int(os.environ.get("WORLD_SIZE", "1"))
 
 
-def repeat_dataloader(dataloader):
-    """Yield batches forever without caching them in Python memory."""
-
-    while True:
-        yield from dataloader
-
-
-def build_train_log_event(
-    *,
-    step: int,
-    loss: float,
-    tokens_seen: int,
-    interval_tokens: int,
-    interval_seconds: float,
-    total_seconds: float,
-    device: torch.device,
-    world_size: int,
-) -> dict[str, object]:
-    global_tokens_seen = tokens_seen * world_size
-    global_interval_tokens = interval_tokens * world_size
-    payload: dict[str, object] = {
-        "event": "train",
-        "step": step,
-        "loss": round(float(loss), 6),
-        "tokens_seen": global_tokens_seen,
-        "tokens_per_sec": round(global_interval_tokens / max(interval_seconds, 1e-12), 2),
-        "avg_tokens_per_sec": round(global_tokens_seen / max(total_seconds, 1e-12), 2),
-    }
-    payload.update(memory_metrics_mb(device))
-    return payload
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
-    parser.add_argument("--model-config", default="configs/model_15m.yaml")
+    parser.add_argument("--model-config", default="configs/model_default.yaml")
     parser.add_argument("--smoke-steps", type=int, default=0)
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
+    parser.add_argument(
+        "--resume",
+        nargs="?",
+        const="latest",
+        default=None,
+        metavar="PATH|latest",
+        help="resume from a checkpoint; omit the value to use the latest checkpoint",
+    )
     args = parser.parse_args()
 
     # The run config and model config are separate on purpose: it lets one model
@@ -119,12 +77,10 @@ def main() -> None:
         torch.cuda.set_device(device)
     precision = resolve_precision_policy(cfg.train.precision, device)
     ops = build_ops_backend(cfg.backend)
-    model_cfg = ModelConfig(**cfg.model)
-    model = MiniTransformer(
-        model_cfg,
-        ops,
-        activation_dtype=precision.activation_dtype,
+    model = build_model(
+        cfg.model, ops, activation_dtype=precision.activation_dtype
     ).to(device)
+    model_cfg = model.cfg
     dataloader = build_training_dataloader(
         cfg.data,
         seq_len=model_cfg.seq_len,
@@ -151,12 +107,17 @@ def main() -> None:
             "parallel": strategy.name,
             "world_size": world_size,
             "params": param_count,
+            "ffn_type": model_cfg.ffn_type,
             "data_source": cfg.data.source,
             "batch_size": cfg.train.batch_size,
             "seq_len": model_cfg.seq_len,
             "precision": precision.name,
             "activation_dtype": str(precision.activation_dtype),
             "grad_scaler": precision.grad_scaling_enabled,
+            "optimizer": cfg.optimizer.name,
+            "learning_rate": cfg.optimizer.lr,
+            "lr_schedule": cfg.lr_scheduler.schedule,
+            "warmup_steps": cfg.lr_scheduler.warmup_steps,
             "tensorboard_dir": str(tensorboard_dir) if tensorboard_dir is not None else "disabled",
         }
     )
@@ -164,7 +125,18 @@ def main() -> None:
     try:
         strategy.setup()
         model = strategy.wrap_model(model)
-        optimizer = build_optimizer(model, lr=cfg.train.lr, weight_decay=cfg.train.weight_decay)
+        max_steps = args.smoke_steps if args.smoke_steps > 0 else cfg.train.max_steps
+        total_steps = resolve_total_steps(
+            max_steps=max_steps,
+            epochs=cfg.train.epochs,
+            steps_per_epoch=len(dataloader),
+        )
+        optimizer = build_optimizer(model, cfg=cfg.optimizer)
+        lr_scheduler = LearningRateScheduler(
+            optimizer,
+            cfg.lr_scheduler,
+            total_steps=total_steps,
+        )
         trainer = Trainer(
             model,
             optimizer,
@@ -172,49 +144,49 @@ def main() -> None:
             use_fused_loss=cfg.train.use_fused_loss,
             precision=precision.name,
             grad_clip_norm=cfg.train.grad_clip_norm,
+            lr_scheduler=lr_scheduler,
         )
 
-        max_steps = args.smoke_steps if args.smoke_steps > 0 else cfg.train.max_steps
-        if device.type != "cuda":
-            tracemalloc.start()
-        maybe_reset_peak_memory(device)
-        strategy.barrier()
-        start_time = time.perf_counter()
-        last_log_time = start_time
-        last_log_tokens = 0
+        resume_value = args.resume if args.resume is not None else cfg.train.resume_from
+        resume_path = None
+        if resume_value is not None:
+            resume_path = resolve_resume_checkpoint(
+                resume_value,
+                checkpoint_dir=cfg.train.checkpoint_dir,
+                run_name=cfg.run.name,
+            )
+            restored = restore_training_checkpoint(
+                resume_path,
+                model,
+                optimizer,
+                grad_scaler=trainer.grad_scaler,
+                lr_scheduler=lr_scheduler,
+                restore_rng=True,
+            )
+            trainer.state.step = restored["step"]
+            trainer.state.epoch = restored["epoch"]
+            trainer.state.tokens_seen = restored["tokens_seen"]
+            lr_scheduler.step(trainer.state.step)
+            logger.log_event(
+                {
+                    "event": "resume",
+                    "path": str(resume_path),
+                    **restored,
+                }
+            )
 
-        # Repeat the dataloader so tiny smoke datasets can run for any requested
-        # number of steps without the training script needing special cases.
-        for batch in repeat_dataloader(dataloader):
-            loss = trainer.train_step(batch)
-
-            should_log = trainer.state.step == 1 or trainer.state.step % cfg.train.log_interval == 0
-            should_stop = trainer.state.step >= max_steps
-            if should_log or should_stop:
-                strategy.barrier()
-                now = time.perf_counter()
-                interval_tokens = trainer.state.tokens_seen - last_log_tokens
-                logger.log_event(
-                    build_train_log_event(
-                        step=trainer.state.step,
-                        loss=float(loss),
-                        tokens_seen=trainer.state.tokens_seen,
-                        interval_tokens=interval_tokens,
-                        interval_seconds=now - last_log_time,
-                        total_seconds=now - start_time,
-                        device=device,
-                        world_size=world_size,
-                    )
-                )
-                last_log_time = now
-                last_log_tokens = trainer.state.tokens_seen
-            if should_stop:
-                break
+        TrainingRunner(
+            cfg=cfg,
+            trainer=trainer,
+            dataloader=dataloader,
+            strategy=strategy,
+            logger=logger,
+            device=device,
+            world_size=world_size,
+        ).run(max_steps=max_steps, resume_path=resume_path)
     finally:
         logger.close()
         strategy.teardown()
-        if device.type != "cuda" and tracemalloc.is_tracing():
-            tracemalloc.stop()
 
 
 if __name__ == "__main__":

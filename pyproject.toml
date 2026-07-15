@@ -25,7 +25,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "cloudpickle",
-  "pytest",
   "ruff",
 ]
 triton = [
@@ -39,9 +38,8 @@ cuda = [
 include = ["minitrain*"]
 
 [tool.setuptools.package-data]
-# CUDA kernels compile lazily after installation, so wheels and sdists must
-# carry generated sources, upstream headers, CUTLASS/CUTE, and license texts.
 "minitrain.kernels.cuda_ext" = ["csrc/**/*"]
+"minitrain.kernels.triton" = ["THIRD_PARTY_NOTICES"]
 
 [tool.ruff]
 line-length = 100
