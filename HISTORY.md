@@ -321,7 +321,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 
 ## 2026-07-21 04:42 — Temporary GitHub server snapshot
 
-- Status: preparing push to `origin/train`
+- Status: completed; pushed to `origin/train`
 - Purpose: preserve the machine adaptations, benchmark implementation/fixes, executed notebook,
   exact-model capacity/scaling results, correctness and recovery validation, formal-run metadata,
   industrial checkpoint policy, and persistent server operating rules while training continues.
@@ -338,3 +338,4 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   trailing whitespace as experiment evidence.
 - Active services: formal training tmux `minitrain-synbios-single-fsdp4`; TensorBoard tmux
   `minitrain-tensorboard` on TCP 6006.
+- Remote snapshot commit: `0967d7f` (`feat(server): persist distributed benchmark snapshot`).
