@@ -12,6 +12,20 @@ cd /path/to/mini-train-sys
 source .venv/bin/activate
 ```
 
+服务器应把源码和 `.venv` 留在系统盘，把数据、checkpoint、Probe 结果及编译缓存放在
+挂载 SSD。首次运行先初始化并检查链接：
+
+```bash
+bash scripts/bash/setup_storage.sh /data
+source .minitrain-storage.env
+readlink -f artifacts
+df -h . artifacts
+```
+
+之后本手册中的 Bash 入口会自动读取 `.minitrain-storage.env`。完整分盘布局、已有
+`artifacts` 迁移和磁盘验收见
+[`docs/guides/server_setup.md`](../docs/guides/server_setup.md#2-系统盘与挂载盘分工)。
+
 ### 1.1 编译 CUDA 扩展（可选）
 
 SynBioS 默认使用 Triton，不编译 CUDA 扩展也能运行。若要使用项目的 CUDA
@@ -20,6 +34,7 @@ FlashAttention，在 RTX 4090（SM89）服务器上执行：
 ```bash
 cd /path/to/mini-train-sys
 source .venv/bin/activate
+source .minitrain-storage.env
 
 # 检查 CUDA Toolkit 和编译工具。
 nvcc --version

@@ -5,6 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
+# 自动加载挂载盘上的缓存和实验存储配置。
+[[ -f "$ROOT/.minitrain-storage.env" ]] && source "$ROOT/.minitrain-storage.env"
+
 # 读取并校验分布式策略。
 MODE="${1:-ddp}"
 if [[ "$MODE" != "ddp" && "$MODE" != "fsdp" ]]; then

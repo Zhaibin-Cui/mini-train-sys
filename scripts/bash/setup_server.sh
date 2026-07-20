@@ -5,6 +5,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
+# 默认要求先配置挂载盘，防止正式产物误写入系统盘。
+if [[ -f "$ROOT/.minitrain-storage.env" ]]; then
+  source "$ROOT/.minitrain-storage.env"
+elif [[ "${ALLOW_SYSTEM_DISK_STORAGE:-0}" != "1" ]]; then
+  echo "Run 'bash scripts/bash/setup_storage.sh /mounted/disk' before server setup." >&2
+  echo "For temporary smoke only, set ALLOW_SYSTEM_DISK_STORAGE=1." >&2
+  exit 2
+fi
+
 # 读取可覆盖的安装参数。
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 VENV_DIR="${VENV_DIR:-.venv}"

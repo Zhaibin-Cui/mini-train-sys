@@ -124,8 +124,8 @@ def collect_server_status(
     if checkout is None:
         errors.append("run the check from a mini-train-sys source checkout")
         disk_root = Path.cwd()
+        storage_root = disk_root
     else:
-        disk_root = checkout
         required_paths = (
             checkout / "scripts" / "train.py",
             checkout / "scripts" / "bash" / "synbios_moe.sh",
@@ -138,6 +138,24 @@ def collect_server_status(
             errors.append("checkout is incomplete: " + ", ".join(missing_paths))
         if not os.access(checkout, os.W_OK):
             errors.append(f"checkout is not writable: {checkout}")
+
+        configured_storage = os.getenv("MINITRAIN_STORAGE_ROOT")
+        artifacts = checkout / "artifacts"
+        storage_root = Path(configured_storage).expanduser() if configured_storage else artifacts
+        if storage_root.is_dir():
+            storage_root = storage_root.resolve()
+            disk_root = storage_root
+            if not os.access(storage_root, os.W_OK):
+                errors.append(f"experiment storage is not writable: {storage_root}")
+        elif configured_storage:
+            disk_root = checkout
+            errors.append(f"configured experiment storage does not exist: {storage_root}")
+        else:
+            disk_root = checkout
+            storage_root = checkout
+            warnings.append(
+                "artifacts is not mapped to a data disk; run scripts/bash/setup_storage.sh"
+            )
 
     disk = shutil.disk_usage(disk_root)
     free_disk_gb = disk.free / 1024**3
@@ -161,6 +179,8 @@ def collect_server_status(
         "errors": errors,
         "warnings": warnings,
         "checkout": str(checkout) if checkout is not None else None,
+        "storage_root": str(storage_root),
+        "disk_root": str(disk_root),
         "python": sys.version,
         "platform": platform.platform(),
         "cpu_count": os.cpu_count(),
@@ -183,7 +203,7 @@ def collect_server_status(
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description=__doc__)
     root.add_argument("--expected-gpus", type=int, default=8)
-    root.add_argument("--min-free-disk-gb", type=float, default=100.0)
+    root.add_argument("--min-free-disk-gb", type=float, default=40.0)
     root.add_argument("--require-nvcc", action="store_true")
     root.add_argument("--output", help="optional JSON output path")
     return root

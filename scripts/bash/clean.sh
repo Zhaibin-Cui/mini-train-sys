@@ -4,6 +4,9 @@ set -euo pipefail
 # 定位项目根目录。
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+# 自动加载挂载盘配置，但不删除其中的数据和昂贵缓存。
+[[ -f "$ROOT/.minitrain-storage.env" ]] && source "$ROOT/.minitrain-storage.env"
+
 # 只清理 Python/pytest 临时缓存，保留数据、检查点和 CUDA/Triton 缓存。
 rm -rf -- "$ROOT/.pytest_cache"
 find "$ROOT" -type d -name '__pycache__' -prune -exec rm -rf -- {} +

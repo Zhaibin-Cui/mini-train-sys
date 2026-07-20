@@ -5,6 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
+# 自动加载挂载盘上的缓存和实验存储配置。
+[[ -f "$ROOT/.minitrain-storage.env" ]] && source "$ROOT/.minitrain-storage.env"
+
 # 读取实验变体、训练策略、探针阶段和进程数。
 VARIANT="${1:-single}"
 STRATEGY="${2:-single}"

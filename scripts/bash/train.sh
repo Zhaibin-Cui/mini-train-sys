@@ -5,6 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
+# 自动加载挂载盘上的缓存和实验存储配置。
+[[ -f "$ROOT/.minitrain-storage.env" ]] && source "$ROOT/.minitrain-storage.env"
+
 # 读取单机训练配置并组装启动参数。
 CONFIG="${CONFIG:-configs/train_single.yaml}"
 MODEL_CONFIG="${MODEL_CONFIG:-configs/model_default.yaml}"

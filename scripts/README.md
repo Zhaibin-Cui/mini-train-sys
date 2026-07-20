@@ -7,6 +7,7 @@
 | `synbios_moe.py` | SynBioS prepare/cache/probe/validate/pipeline/summarize/analyze；统一实验入口 |
 | `run_dist_bench.py` | 当前单机多卡 benchmark CLI/worker |
 | `powershell/` | Windows 启动与清理 |
+| `bash/setup_storage.sh` | 将实验产物和编译缓存安全映射到 Linux 挂载盘 |
 | `bash/setup_server.sh` | Linux/NVIDIA 服务器一键创建环境、安装与预检 |
 | `bash/synbios_moe.sh` | Linux 上运行一个 SynBioS 预训练条件 |
 | `bash/synbios_probes.sh` | 对一个 checkpoint 分阶段运行 probe 与 router |

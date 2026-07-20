@@ -56,13 +56,15 @@ pip install -e ".[data,dev]"
 ```
 
 Linux/NVIDIA 实验服务器可以从干净 checkout 一键创建 `.venv`、安装已验证的
-PyTorch/CUDA/Triton 组合并执行环境预检：
+PyTorch/CUDA/Triton 组合并执行环境预检。先把实验产物和编译缓存映射到挂载盘，
+再安装环境：
 
 ```bash
+bash scripts/bash/setup_storage.sh /data
 bash scripts/bash/setup_server.sh
 ```
 
-系统依赖、手工安装、GPU/NCCL 验收、smoke 和正式实验前清单见
+系统盘/挂载盘分工、已有数据迁移、系统依赖、GPU/NCCL 验收、smoke 和正式实验前清单见
 [`docs/guides/server_setup.md`](docs/guides/server_setup.md)。
 
 开发 CUDA C++ 扩展时再安装 `.[cuda]`。训练 notebook 必须使用与命令行相同的
