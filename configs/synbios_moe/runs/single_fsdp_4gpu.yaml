@@ -1,3 +1,23 @@
 extends: single_fsdp.yaml
 run: {name: synbios_moe_single_fsdp_4gpu}
 parallel: {expected_world_size: 4}
+train:
+  # Exact-model 4-GPU FSDP benchmark (forward + backward + AdamW) selected the
+  # fastest stable multiple of eight below the OOM boundary: 55 steps at 86.2%
+  # peak allocated memory. See HISTORY.md and results/benchmarks/.
+  batch_size: 112
+  # Eight progress updates per 32-step epoch, plus the first and final step.
+  log_interval: 4
+checkpoint:
+  # Recovery checkpoints are atomic full FSDP DCP+Adam snapshots. Saving every
+  # ten epochs caps rollback at roughly four compute minutes while removing the
+  # dominant per-epoch I/O pause.
+  every_epochs: 10
+  keep_last: 2
+  keep_safety: 1
+  safety_every_epochs: 50
+  # model.pt is a probe/evaluation convenience copy, not recovery state. Avoid
+  # paying its 1.3 GB full-state gather on every recovery checkpoint.
+  export_model: true
+  export_model_every_epochs: 50
+  keep_model_exports: 1

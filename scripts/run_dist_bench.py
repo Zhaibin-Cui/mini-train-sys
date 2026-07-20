@@ -38,6 +38,7 @@ CONFIGS = {
     for strategy in ("ddp", "fsdp")
     for world in (1, 4, 8)
 }
+CONFIGS[("single", 1)] = "configs/server/rtx4090_24gb/runs/single_1gpu.yaml"
 
 
 def benchmark_source_fingerprint() -> str:
@@ -88,6 +89,7 @@ def worker(args: argparse.Namespace) -> None:
     model = build_model(
         cfg.model, build_ops_backend(cfg.backend), activation_dtype=precision.activation_dtype
     ).to(device)
+    model_seq_len = model.cfg.seq_len
     parameter_count = sum(parameter.numel() for parameter in model.parameters())
     loader = build_training_dataloader(
         cfg.data,
@@ -131,17 +133,22 @@ def worker(args: argparse.Namespace) -> None:
             last_loss = float(loss)
 
         timings = torch.tensor(list(zip(step_ms, data_ms)), device=device, dtype=torch.float64)
-        dist.all_reduce(timings, op=dist.ReduceOp.MAX)
+        if dist.is_initialized():
+            dist.all_reduce(timings, op=dist.ReduceOp.MAX)
         memory_max = torch.tensor(
             [torch.cuda.max_memory_allocated(device), torch.cuda.max_memory_reserved(device)],
             device=device,
             dtype=torch.float64,
         )
         memory_sum = memory_max.clone()
-        dist.all_reduce(memory_max, op=dist.ReduceOp.MAX)
-        dist.all_reduce(memory_sum, op=dist.ReduceOp.SUM)
+        if dist.is_initialized():
+            dist.all_reduce(memory_max, op=dist.ReduceOp.MAX)
+            dist.all_reduce(memory_sum, op=dist.ReduceOp.SUM)
         if strategy.rank == 0:
-            global_tokens = args.batch_size * world_size * model.cfg.seq_len
+            # The parallel strategy may replace the model with DDP/FSDP, whose
+            # wrapper does not expose MiniTransformer.cfg. The resolved config is
+            # the stable source for model dimensions after wrapping.
+            global_tokens = args.batch_size * world_size * model_seq_len
             global_step_ms = timings[:, 0].cpu().tolist()
             global_data_ms = timings[:, 1].cpu().tolist()
             total_memory = torch.cuda.get_device_properties(device).total_memory
@@ -153,7 +160,7 @@ def worker(args: argparse.Namespace) -> None:
                 "world_size": world_size,
                 "local_batch_size": args.batch_size,
                 "global_batch_size": args.batch_size * world_size,
-                "seq_len": model.cfg.seq_len,
+                "seq_len": model_seq_len,
                 "global_tokens_per_step": global_tokens,
                 "warmup_steps": args.warmup_steps,
                 "measure_steps": args.measure_steps,
@@ -272,6 +279,12 @@ def suite(args: argparse.Namespace) -> None:
             "settings": {
                 "strategies": args.strategies,
                 "world_sizes": args.world_sizes,
+                "requested_cases": [
+                    {"strategy": strategy, "world_size": world}
+                    for strategy in args.strategies
+                    for world in args.world_sizes
+                    if (strategy, world) in CONFIGS
+                ],
                 "local_batch": args.local_batch,
                 "batch_sizes": args.batch_sizes,
                 "warmup_steps": args.warmup_steps,
@@ -289,6 +302,8 @@ def suite(args: argparse.Namespace) -> None:
 
     for strategy in args.strategies:
         for world in args.world_sizes:
+            if (strategy, world) not in CONFIGS:
+                continue
             for batch in batches:
                 for repeat in range(args.repeats):
                     name = f"{args.suite}_{strategy}_{world}gpu_b{batch}_r{repeat}.json"
@@ -380,10 +395,17 @@ def parser() -> argparse.ArgumentParser:
     inv.add_argument("--output", default="artifacts/distributed_benchmark")
     run = commands.add_parser("run")
     run.add_argument("--suite", choices=("weak", "capacity"), required=True)
-    run.add_argument("--strategies", nargs="+", choices=("ddp", "fsdp"), default=["ddp", "fsdp"])
+    run.add_argument(
+        "--strategies",
+        nargs="+",
+        choices=("single", "ddp", "fsdp"),
+        default=["single", "ddp", "fsdp"],
+    )
     run.add_argument("--world-sizes", nargs="+", type=int, choices=(1, 4, 8), default=[1, 4, 8])
     run.add_argument("--local-batch", type=int, default=4)
-    run.add_argument("--batch-sizes", nargs="+", type=int, default=[1, 2, 4, 8, 16, 32])
+    run.add_argument(
+        "--batch-sizes", nargs="+", type=int, default=[1, 2, 4, 8, 16, 32, 64, 128]
+    )
     run.add_argument("--warmup-steps", type=int, default=10)
     run.add_argument("--measure-steps", type=int, default=30)
     run.add_argument("--repeats", type=int, default=3)

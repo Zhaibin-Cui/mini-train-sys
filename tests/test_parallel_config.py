@@ -24,6 +24,20 @@ def test_synbios_layered_config_resolves_fsdp():
     assert cfg.checkpoint.export_model
 
 
+def test_synbios_4gpu_formal_checkpoint_and_logging_policy():
+    payload = load_yaml_dict("configs/synbios_moe/runs/single_fsdp_4gpu.yaml")
+    cfg = experiment_config_from_dict(payload)
+
+    assert cfg.train.batch_size == 112
+    assert cfg.train.log_interval == 4
+    assert cfg.checkpoint.every_epochs == 10
+    assert cfg.checkpoint.keep_last == 2
+    assert cfg.checkpoint.keep_safety == 1
+    assert cfg.checkpoint.safety_every_epochs == 50
+    assert cfg.checkpoint.export_model
+    assert cfg.checkpoint.export_model_every_epochs == 50
+
+
 def test_linear_batch_scaling_preserves_epoch_budget():
     payload = load_yaml_dict("configs/synbios_moe/runs/single_ddp.yaml")
     cfg = experiment_config_from_dict(payload)

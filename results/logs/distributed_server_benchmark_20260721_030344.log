@@ -1,0 +1,86 @@
+[NbConvertApp] Converting notebook tests/distributed_server_benchmark.ipynb to notebook
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbformat/__init__.py:96: MissingIDFieldWarning: Cell is missing an id field, this will become a hard error in future nbformat versions. You may want to use `normalize()` on your notebooks before validations (available since nbformat 5.1.4). Previous versions of nbformat are fixing this issue transparently, and will stop doing so in the future.
+  validate(nb)
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 24, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/.venv/bin/jupyter-nbconvert", line 6, in <module>
+    sys.exit(main())
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/jupyter_core/application.py", line 284, in launch_instance
+    super().launch_instance(argv=argv, **kwargs)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/traitlets/config/application.py", line 1082, in launch_instance
+    app.start()
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 420, in start
+    self.convert_notebooks()
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 597, in convert_notebooks
+    self.convert_single_notebook(notebook_filename)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 563, in convert_single_notebook
+    output, resources = self.export_single_notebook(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 487, in export_single_notebook
+    output, resources = self.exporter.from_filename(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 201, in from_filename
+    return self.from_file(f, resources=resources, **kw)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 220, in from_file
+    return self.from_notebook_node(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/exporters/notebook.py", line 36, in from_notebook_node
+    nb_copy, resources = super().from_notebook_node(nb, resources, **kw)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 154, in from_notebook_node
+    nb_copy, resources = self._preprocess(nb_copy, resources)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 353, in _preprocess
+    nbc, resc = preprocessor(nbc, resc)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/preprocessors/base.py", line 48, in __call__
+    return self.preprocess(nb, resources)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/preprocessors/execute.py", line 103, in preprocess
+    self.preprocess_cell(cell, resources, index)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbconvert/preprocessors/execute.py", line 124, in preprocess_cell
+    cell = self.execute_cell(cell, index, store_history=True)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+preflight = bench.preflight()
+inventory = bench.inventory()
+preflight, inventory
+------------------
+
+----- stdout -----
+RUN /usr/bin/python3.10 /home/ubuntu/mini-train-sys/scripts/run_dist_bench.py inventory --output /data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/inventory
+----- stderr -----
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 24, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mRuntimeError[0m                              Traceback (most recent call last)
+Cell [0;32mIn[2], line 2[0m
+[1;32m      1[0m preflight [38;5;241m=[39m bench[38;5;241m.[39mpreflight()
+[0;32m----> 2[0m inventory [38;5;241m=[39m [43mbench[49m[38;5;241;43m.[39;49m[43minventory[49m[43m([49m[43m)[49m
+[1;32m      3[0m preflight, inventory
+
+File [0;32m~/mini-train-sys/tests/distributed_bench_utils.py:512[0m, in [0;36mDistributedBenchmark.inventory[0;34m(self)[0m
+[1;32m    510[0m [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21minventory[39m([38;5;28mself[39m) [38;5;241m-[39m[38;5;241m>[39m [38;5;28mdict[39m:
+[1;32m    511[0m     inventory_dir [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39moutput [38;5;241m/[39m [38;5;124m"[39m[38;5;124minventory[39m[38;5;124m"[39m
+[0;32m--> 512[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_execute[49m[43m([49m[43m[[49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mpython[49m[43m,[49m[43m [49m[38;5;28;43mstr[39;49m[43m([49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mcli[49m[43m)[49m[43m,[49m[43m [49m[38;5;124;43m"[39;49m[38;5;124;43minventory[39;49m[38;5;124;43m"[39;49m[43m,[49m[43m [49m[38;5;124;43m"[39;49m[38;5;124;43m--output[39;49m[38;5;124;43m"[39;49m[43m,[49m[43m [49m[38;5;28;43mstr[39;49m[43m([49m[43minventory_dir[49m[43m)[49m[43m][49m[43m)[49m
+[1;32m    513[0m     [38;5;28;01mreturn[39;00m json[38;5;241m.[39mloads((inventory_dir [38;5;241m/[39m [38;5;124m"[39m[38;5;124minventory.json[39m[38;5;124m"[39m)[38;5;241m.[39mread_text(encoding[38;5;241m=[39m[38;5;124m"[39m[38;5;124mutf-8[39m[38;5;124m"[39m))
+
+File [0;32m~/mini-train-sys/tests/distributed_bench_utils.py:618[0m, in [0;36mDistributedBenchmark._execute[0;34m(self, command)[0m
+[1;32m    616[0m completed [38;5;241m=[39m subprocess[38;5;241m.[39mrun([[38;5;28mstr[39m(part) [38;5;28;01mfor[39;00m part [38;5;129;01min[39;00m command], cwd[38;5;241m=[39m[38;5;28mself[39m[38;5;241m.[39mroot, check[38;5;241m=[39m[38;5;28;01mFalse[39;00m)
+[1;32m    617[0m [38;5;28;01mif[39;00m completed[38;5;241m.[39mreturncode [38;5;241m!=[39m [38;5;241m0[39m:
+[0;32m--> 618[0m     [38;5;28;01mraise[39;00m [38;5;167;01mRuntimeError[39;00m(
+[1;32m    619[0m         [38;5;124mf[39m[38;5;124m"[39m[38;5;124mbenchmark command failed with exit code [39m[38;5;132;01m{[39;00mcompleted[38;5;241m.[39mreturncode[38;5;132;01m}[39;00m[38;5;124m: [39m[38;5;124m"[39m
+[1;32m    620[0m         [38;5;241m+[39m shlex[38;5;241m.[39mjoin([38;5;28mstr[39m(part) [38;5;28;01mfor[39;00m part [38;5;129;01min[39;00m command)
+[1;32m    621[0m     )
+
+[0;31mRuntimeError[0m: benchmark command failed with exit code 1: /usr/bin/python3.10 /home/ubuntu/mini-train-sys/scripts/run_dist_bench.py inventory --output /data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/inventory
+

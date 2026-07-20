@@ -49,7 +49,7 @@ checkpoints/
 wandb/
 outputs/
 profiles/
-artifacts/
+/artifacts
 
 # Large model/data artifacts
 *.pt
@@ -59,6 +59,23 @@ artifacts/
 *.bin
 *.npy
 *.npz
+
+# Portable server evidence is versioned: benchmark JSON/CSV/plots, validation
+# reports, logs, environment inventories, run events, and checkpoint metadata.
+# Tensor payloads and raw dataset shards remain on the mounted artifacts disk.
+!/results/
+!/results/**
+/results/**/distributed/
+/results/**/*.distcp
+/results/**/*.pt
+/results/**/*.pth
+/results/**/*.safetensors
+/results/**/*.ckpt
+/results/**/*.bin
+/results/**/*.npy
+/results/**/*.npz
+!/results/**/runtime.pt
+!/results/**/rng_rank_*.pt
 
 # Tests, benchmark results, and reports are shareable.
 !tests/**

@@ -1,0 +1,14 @@
+extends: single_fsdp_4gpu.yaml
+run: {name: synbios_moe_single_fsdp_4gpu_validation}
+train:
+  # Keep this identical to the formal batch while isolating checkpoint artifacts.
+  log_interval: 1
+checkpoint:
+  directory: artifacts/validation/synbios_moe/checkpoints
+  every_epochs: null
+  keep_last: 2
+  keep_safety: 0
+  save_final: true
+  export_model: true
+logging:
+  log_dir: artifacts/validation/synbios_moe/runs

@@ -19,8 +19,13 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 
-SUPPORTED_STRATEGIES = ("ddp", "fsdp")
+SUPPORTED_STRATEGIES = ("single", "ddp", "fsdp")
 SUPPORTED_WORLD_SIZES = (1, 4, 8)
+SUPPORTED_TOPOLOGIES = {
+    "single": (1,),
+    "ddp": SUPPORTED_WORLD_SIZES,
+    "fsdp": SUPPORTED_WORLD_SIZES,
+}
 DEFAULT_COLUMNS = (
     "strategy",
     "world_size",
@@ -138,11 +143,14 @@ def quality_gates(report_or_path: dict | str | Path) -> dict[str, object]:
     ]
     expected_repeats = int(report.get("settings", {}).get("repeats", 1))
     settings = report.get("settings", {})
-    expected_cases = (
-        len(settings.get("strategies", []))
-        * len(settings.get("world_sizes", []))
-        * expected_repeats
-    )
+    requested_cases = settings.get("requested_cases")
+    if requested_cases is None:
+        requested_case_count = len(settings.get("strategies", [])) * len(
+            settings.get("world_sizes", [])
+        )
+    else:
+        requested_case_count = len(requested_cases)
+    expected_cases = requested_case_count * expected_repeats
     return {
         "runs_succeeded": len(report["results"]),
         "runs_failed": len(report["failures"]),
@@ -410,7 +418,7 @@ class BenchmarkSettings:
     strategies: tuple[str, ...] = SUPPORTED_STRATEGIES
     model_config: str = "configs/model_125m_moe.yaml"
     local_batch: int = 4
-    capacity_batches: tuple[int, ...] = (1, 2, 4, 8, 16, 32)
+    capacity_batches: tuple[int, ...] = (1, 2, 4, 8, 16, 32, 64, 128)
     warmup_steps: int = 10
     measure_steps: int = 30
     repeats: int = 3
@@ -458,7 +466,10 @@ class DistributedBenchmark:
             else (self.root / output_path).resolve()
         )
         self.settings = settings or BenchmarkSettings()
-        self.python = str(Path(python).resolve())
+        # Keep a virtualenv interpreter path intact. ``Path.resolve()`` follows the
+        # venv's ``bin/python`` symlink to the system interpreter, which drops the
+        # virtualenv context when benchmark subprocesses are launched.
+        self.python = str(Path(python).absolute())
         self.cli = self.root / "scripts" / "run_dist_bench.py"
 
     def preflight(self, *, require_cuda: bool = True) -> dict[str, object]:
@@ -474,6 +485,7 @@ class DistributedBenchmark:
             / f"configs/server/rtx4090_24gb/runs/{strategy}_{world_size}gpu.yaml"
             for strategy in self.settings.strategies
             for world_size in self.settings.world_sizes
+            if world_size in SUPPORTED_TOPOLOGIES[strategy]
         )
         missing = [str(path) for path in required_files if not path.is_file()]
         if missing:

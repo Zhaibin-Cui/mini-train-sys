@@ -132,7 +132,7 @@ class TrainingRunner:
             else:
                 totals[name] = detached.clone()
 
-    def _save(self, *, epoch: int) -> Path:
+    def _save(self, *, epoch: int, force_model_export: bool = False) -> Path:
         state = self.trainer.state
         path = checkpoint_path(
             self.cfg.checkpoint.directory,
@@ -140,6 +140,13 @@ class TrainingRunner:
             epoch=epoch,
             step=state.step,
         )
+        export_interval = self.cfg.checkpoint.export_model_every_epochs
+        export_model = self.cfg.checkpoint.export_model and (
+            force_model_export
+            or export_interval is None
+            or epoch % export_interval == 0
+        )
+        checkpoint_started = time.perf_counter()
         save_checkpoint(
             path,
             self.trainer.model,
@@ -152,10 +159,14 @@ class TrainingRunner:
             lr_scheduler=self.trainer.lr_scheduler,
             precision=self.trainer.precision.name,
             config=asdict(self.cfg),
-            export_model=self.cfg.checkpoint.export_model,
+            export_model=export_model,
             cpu_offload=self.cfg.checkpoint.cpu_offload,
         )
         if self.rank == 0:
+            checkpoint_seconds = time.perf_counter() - checkpoint_started
+            checkpoint_bytes = sum(
+                item.stat().st_size for item in path.rglob("*") if item.is_file()
+            )
             removed: list[Path] = []
             if self.cfg.checkpoint.keep_last is not None:
                 removed = prune_checkpoints(
@@ -171,6 +182,9 @@ class TrainingRunner:
                     "event": "checkpoint",
                     "path": str(path),
                     "includes_optimizer": True,
+                    "exported_model": export_model,
+                    "checkpoint_seconds": round(checkpoint_seconds, 3),
+                    "checkpoint_bytes": checkpoint_bytes,
                     "removed_old_checkpoints": [str(old) for old in removed],
                 }
             )
@@ -282,7 +296,14 @@ class TrainingRunner:
                 and epoch % self.cfg.checkpoint.every_epochs == 0
             )
             if checkpoint_due:
-                last_checkpoint = self._save(epoch=epoch)
+                terminal_epoch = (
+                    self.cfg.train.epochs is not None and epoch >= self.cfg.train.epochs
+                )
+                terminal_step = max_steps is not None and state.step >= max_steps
+                last_checkpoint = self._save(
+                    epoch=epoch,
+                    force_model_export=terminal_epoch or terminal_step,
+                )
             # Keep ranks aligned around rank-0-only checkpoint publication.
             self.strategy.barrier()
 
@@ -296,7 +317,7 @@ class TrainingRunner:
                 step=state.step,
             )
             if final_path != last_checkpoint:
-                self._save(epoch=state.epoch)
+                self._save(epoch=state.epoch, force_model_export=True)
 
         if self.device.type != "cuda" and tracemalloc.is_tracing():
             tracemalloc.stop()

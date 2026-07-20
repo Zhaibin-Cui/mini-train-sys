@@ -1,0 +1,63 @@
+{
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "checkout": "/home/ubuntu/mini-train-sys",
+  "storage_root": "/data/mini-train-sys",
+  "disk_root": "/data/mini-train-sys",
+  "python": "3.10.12 (main, Jun 22 2026, 18:55:27) [GCC 11.4.0]",
+  "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+  "cpu_count": 44,
+  "torch": "2.5.1+cu118",
+  "torch_cuda": "11.8",
+  "cuda_available": true,
+  "nccl_available": true,
+  "bf16_supported": true,
+  "visible_gpus": 4,
+  "gpus": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 4090",
+      "compute_capability": "8.9",
+      "memory_gb": 23.65
+    },
+    {
+      "index": 1,
+      "name": "NVIDIA GeForce RTX 4090",
+      "compute_capability": "8.9",
+      "memory_gb": 23.65
+    },
+    {
+      "index": 2,
+      "name": "NVIDIA GeForce RTX 4090",
+      "compute_capability": "8.9",
+      "memory_gb": 23.65
+    },
+    {
+      "index": 3,
+      "name": "NVIDIA GeForce RTX 4090",
+      "compute_capability": "8.9",
+      "memory_gb": 23.65
+    }
+  ],
+  "nvidia_smi": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-800e09d3-f879-3678-3a81-d0b5be4877f4)\nGPU 1: NVIDIA GeForce RTX 4090 (UUID: GPU-0caa5d5c-3a92-327e-6a71-f81c81521bca)\nGPU 2: NVIDIA GeForce RTX 4090 (UUID: GPU-c1d23de5-ac10-5852-c4f5-8fa33b1bd368)\nGPU 3: NVIDIA GeForce RTX 4090 (UUID: GPU-2baa5c33-c7d5-2ce5-7953-44529fffab63)",
+  "topology": "\u001b[4mGPU0\tGPU1\tGPU2\tGPU3\tCPU Affinity\tNUMA Affinity\u001b[0m\nGPU0\t X \tSYS\tSYS\tSYS\t0-10\t0\nGPU1\tSYS\t X \tSYS\tSYS\t11-21\t1\nGPU2\tSYS\tSYS\t X \tSYS\t22-32\t2\nGPU3\tSYS\tSYS\tSYS\t X \t33-43\t3\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks",
+  "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2022 NVIDIA Corporation\nBuilt on Wed_Sep_21_10:33:58_PDT_2022\nCuda compilation tools, release 11.8, V11.8.89\nBuild cuda_11.8.r11.8/compiler.31833905_0",
+  "free_disk_gb": 90.02,
+  "dev_shm_gb": 62.94,
+  "modules": {
+    "cloudpickle": true,
+    "IPython": true,
+    "jupyterlab": true,
+    "matplotlib": true,
+    "numpy": true,
+    "pandas": true,
+    "pyarrow": true,
+    "pytest": true,
+    "tensorboard": true,
+    "tiktoken": true,
+    "tokenizers": true,
+    "triton": true,
+    "yaml": true
+  }
+}

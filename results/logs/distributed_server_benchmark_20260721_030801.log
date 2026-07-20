@@ -1,0 +1,35 @@
+[NbConvertApp] Converting notebook tests/distributed_server_benchmark.ipynb to notebook
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/nbformat/__init__.py:96: MissingIDFieldWarning: Cell is missing an id field, this will become a hard error in future nbformat versions. You may want to use `normalize()` on your notebooks before validations (available since nbformat 5.1.4). Previous versions of nbformat are fixing this issue transparently, and will stop doing so in the future.
+  validate(nb)
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+{
+  "timestamp_utc": "2026-07-20T19:08:08.084598+00:00",
+  "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+  "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+  "python": "3.10.12 (main, Jun 22 2026, 18:55:27) [GCC 11.4.0]",
+  "cpu_count": 44,
+  "torch": "2.5.1+cu118",
+  "cuda": "11.8",
+  "nvidia_smi": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-800e09d3-f879-3678-3a81-d0b5be4877f4)\nGPU 1: NVIDIA GeForce RTX 4090 (UUID: GPU-0caa5d5c-3a92-327e-6a71-f81c81521bca)\nGPU 2: NVIDIA GeForce RTX 4090 (UUID: GPU-c1d23de5-ac10-5852-c4f5-8fa33b1bd368)\nGPU 3: NVIDIA GeForce RTX 4090 (UUID: GPU-2baa5c33-c7d5-2ce5-7953-44529fffab63)",
+  "gpu_inventory": "0, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:29:00.0\n1, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2C:00.0\n2, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2F:00.0\n3, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:32:00.0",
+  "topology": "\u001b[4mGPU0\tGPU1\tGPU2\tGPU3\tCPU Affinity\tNUMA Affinity\u001b[0m\nGPU0\t X \tSYS\tSYS\tSYS\t0-10\t0\nGPU1\tSYS\t X \tSYS\tSYS\t11-21\t1\nGPU2\tSYS\tSYS\t X \tSYS\t22-32\t2\nGPU3\tSYS\tSYS\tSYS\t X \t33-43\t3\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks",
+  "git_commit": "bde795e3daae7b92be2a7a6e48c2e7ccb8d7bcb1",
+  "git_status": "M .gitignore\n M tests/distributed_bench_utils.py\n M tests/distributed_server_benchmark.ipynb\n M tests/test_distributed_bench_utils.py\n?? AGENTS.md\n?? artifacts"
+}
+{
+  "timestamp_utc": "2026-07-20T19:08:10.830356+00:00",
+  "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+  "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+  "python": "3.10.12 (main, Jun 22 2026, 18:55:27) [GCC 11.4.0]",
+  "cpu_count": 44,
+  "torch": "2.5.1+cu118",
+  "cuda": "11.8",
+  "nvidia_smi": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-800e09d3-f879-3678-3a81-d0b5be4877f4)\nGPU 1: NVIDIA GeForce RTX 4090 (UUID: GPU-0caa5d5c-3a92-327e-6a71-f81c81521bca)\nGPU 2: NVIDIA GeForce RTX 4090 (UUID: GPU-c1d23de5-ac10-5852-c4f5-8fa33b1bd368)\nGPU 3: NVIDIA GeForce RTX 4090 (UUID: GPU-2baa5c33-c7d5-2ce5-7953-44529fffab63)",
+  "gpu_inventory": "0, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:29:00.0\n1, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2C:00.0\n2, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2F:00.0\n3, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:32:00.0",
+  "topology": "\u001b[4mGPU0\tGPU1\tGPU2\tGPU3\tCPU Affinity\tNUMA Affinity\u001b[0m\nGPU0\t X \tSYS\tSYS\tSYS\t0-10\t0\nGPU1\tSYS\t X \tSYS\tSYS\t11-21\t1\nGPU2\tSYS\tSYS\t X \tSYS\t22-32\t2\nGPU3\tSYS\tSYS\tSYS\t X \t33-43\t3\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks",
+  "git_commit": "bde795e3daae7b92be2a7a6e48c2e7ccb8d7bcb1",
+  "git_status": "M .gitignore\n M tests/distributed_bench_utils.py\n M tests/distributed_server_benchmark.ipynb\n M tests/test_distributed_bench_utils.py\n?? AGENTS.md\n?? artifacts"
+}
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 1 scripts/run_dist_bench.py _worker --config configs/server/rtx4090_24gb/runs/ddp_1gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/model_125m_moe.yaml --batch-size 4 --warmup-steps 10 --measure-steps 30 --repeat 0 --case-identity b1f605d8bf3cdcc4181c55f0c6b10cae545d459d9f440d6ba2d5d2dc427f1b36 --output /data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/weak/raw/weak_ddp_1gpu_b4_r0.json
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 1 scripts/run_dist_bench.py _worker --config configs/server/rtx4090_24gb/runs/ddp_1gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/model_125m_moe.yaml --batch-size 4 --warmup-steps 10 --measure-steps 30 --repeat 1 --case-identity 69bd9c8b261da0d0183ddad14912e1908634ccf04b3473b08fb5ce9049c747ed --output /data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/weak/raw/weak_ddp_1gpu_b4_r1.json
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 1 scripts/run_dist_bench.py _worker --config configs/server/rtx4090_24gb/runs/ddp_1gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/model_125m_moe.yaml --batch-size 4 --warmup-steps 10 --measure-steps 30 --repeat 2 --case-identity 6652cf3615671e64a23e97e3213865f07f3377796a812db2c6b362b91e21f1db --output /data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/weak/raw/weak_ddp_1gpu_b4_r2.json

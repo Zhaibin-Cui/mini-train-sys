@@ -2,6 +2,7 @@ import torch
 
 from minitrain.runtime.config import CheckpointConfig
 from minitrain.train.checkpoint import (
+    _fill_missing_optimizer_group_options,
     load_model_state_dict_from_checkpoint,
     prune_checkpoints,
     resolve_resume_checkpoint,
@@ -10,10 +11,35 @@ from minitrain.train.checkpoint import (
 )
 
 
+def test_missing_dcp_optimizer_group_options_are_filled_without_overwriting_loaded_values():
+    model = torch.nn.Linear(3, 2)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, betas=(0.9, 0.95))
+    original_groups = [dict(group) for group in optimizer.param_groups]
+
+    optimizer.param_groups[0].pop("betas")
+    optimizer.param_groups[0]["lr"] = 2e-3
+    _fill_missing_optimizer_group_options(optimizer, original_groups)
+
+    assert optimizer.param_groups[0]["betas"] == (0.9, 0.95)
+    assert optimizer.param_groups[0]["lr"] == 2e-3
+    optimizer.zero_grad(set_to_none=True)
+    model(torch.ones(2, 3)).sum().backward()
+    optimizer.step()
+
+
 def test_default_epoch_checkpoint_policy():
     assert CheckpointConfig().every_epochs == 1
     assert CheckpointConfig().keep_last is None
     assert CheckpointConfig().keep_safety == 0
+
+
+def test_model_export_interval_requires_enabled_export():
+    try:
+        CheckpointConfig(export_model_every_epochs=10)
+    except ValueError as exc:
+        assert "requires checkpoint.export_model=true" in str(exc)
+    else:
+        raise AssertionError("disabled model export accepted an export interval")
 
 
 def test_full_checkpoint_resumes_adam_but_model_reader_ignores_it(tmp_path):

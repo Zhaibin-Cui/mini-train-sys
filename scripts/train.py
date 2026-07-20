@@ -154,6 +154,9 @@ def main() -> None:
             "epochs": cfg.train.epochs,
             "checkpoint_every_epochs": cfg.checkpoint.every_epochs,
             "checkpoint_keep_last": cfg.checkpoint.keep_last,
+            "checkpoint_export_model_every_epochs": (
+                cfg.checkpoint.export_model_every_epochs
+            ),
             "precision": precision.name,
             "activation_dtype": str(precision.activation_dtype),
             "grad_scaler": precision.grad_scaling_enabled,

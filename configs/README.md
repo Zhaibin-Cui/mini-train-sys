@@ -125,6 +125,7 @@ checkpoint:
   save_final: true
   resume_from: null              # null | latest | safety | 显式目录
   export_model: true             # 为 evaluate/probe 写 model.pt
+  export_model_every_epochs: 50  # 可选：减少昂贵的完整模型聚合；最终保存仍强制导出
   cpu_offload: true
 ```
 

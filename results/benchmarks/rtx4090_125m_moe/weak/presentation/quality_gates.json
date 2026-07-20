@@ -1,0 +1,8 @@
+{
+  "runs_succeeded": 15,
+  "runs_failed": 0,
+  "all_requested_repeats_completed": true,
+  "weak_scaling_efficiency_ge_80pct": false,
+  "data_stall_le_5pct": true,
+  "memory_headroom_ge_10pct": true
+}

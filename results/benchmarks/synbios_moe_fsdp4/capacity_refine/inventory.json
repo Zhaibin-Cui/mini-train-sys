@@ -1,0 +1,14 @@
+{
+  "timestamp_utc": "2026-07-20T19:56:15.889707+00:00",
+  "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+  "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+  "python": "3.10.12 (main, Jun 22 2026, 18:55:27) [GCC 11.4.0]",
+  "cpu_count": 44,
+  "torch": "2.5.1+cu118",
+  "cuda": "11.8",
+  "nvidia_smi": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-800e09d3-f879-3678-3a81-d0b5be4877f4)\nGPU 1: NVIDIA GeForce RTX 4090 (UUID: GPU-0caa5d5c-3a92-327e-6a71-f81c81521bca)\nGPU 2: NVIDIA GeForce RTX 4090 (UUID: GPU-c1d23de5-ac10-5852-c4f5-8fa33b1bd368)\nGPU 3: NVIDIA GeForce RTX 4090 (UUID: GPU-2baa5c33-c7d5-2ce5-7953-44529fffab63)",
+  "gpu_inventory": "0, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:29:00.0\n1, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2C:00.0\n2, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2F:00.0\n3, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:32:00.0",
+  "topology": "\u001b[4mGPU0\tGPU1\tGPU2\tGPU3\tCPU Affinity\tNUMA Affinity\u001b[0m\nGPU0\t X \tSYS\tSYS\tSYS\t0-10\t0\nGPU1\tSYS\t X \tSYS\tSYS\t11-21\t1\nGPU2\tSYS\tSYS\t X \tSYS\t22-32\t2\nGPU3\tSYS\tSYS\tSYS\t X \t33-43\t3\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks",
+  "git_commit": "bde795e3daae7b92be2a7a6e48c2e7ccb8d7bcb1",
+  "git_status": "M .gitignore\n M docs/benchmarks/distributed_benchmark.md\n M scripts/run_dist_bench.py\n M tests/distributed_bench_utils.py\n M tests/distributed_server_benchmark.ipynb\n M tests/test_distributed_bench_utils.py\n?? AGENTS.md\n?? HISTORY.md\n?? results/\n?? scripts/bash/export_test_results.sh"
+}

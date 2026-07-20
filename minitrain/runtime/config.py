@@ -181,6 +181,7 @@ class CheckpointConfig:
     save_final: bool = False
     resume_from: str | None = None
     export_model: bool = False
+    export_model_every_epochs: int | None = None
     cpu_offload: bool = True
 
     def __post_init__(self) -> None:
@@ -200,6 +201,17 @@ class CheckpointConfig:
             )
         if self.keep_model_exports is not None and self.keep_model_exports <= 0:
             raise ValueError("checkpoint.keep_model_exports must be positive or null")
+        if (
+            self.export_model_every_epochs is not None
+            and self.export_model_every_epochs <= 0
+        ):
+            raise ValueError(
+                "checkpoint.export_model_every_epochs must be positive or null"
+            )
+        if self.export_model_every_epochs is not None and not self.export_model:
+            raise ValueError(
+                "checkpoint.export_model_every_epochs requires checkpoint.export_model=true"
+            )
         if not self.directory.strip():
             raise ValueError("checkpoint.directory must not be empty")
 

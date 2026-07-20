@@ -1,0 +1,90 @@
+
+--- STDERR ---
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_init_utils.py:444: UserWarning: FSDP is switching to use `NO_SHARD` instead of ShardingStrategy.FULL_SHARD since the world size is 1.
+  warnings.warn(
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 440, in <module>
+[rank0]:     main()
+[rank0]:   File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 432, in main
+[rank0]:     worker(args)
+[rank0]:   File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 117, in worker
+[rank0]:     trainer.train_step(batch)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/train/trainer.py", line 99, in train_step
+[rank0]:     loss, _ = self.model(input_ids, targets=targets, use_fused_loss=self.use_fused_loss)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py", line 864, in forward
+[rank0]:     output = self._fsdp_wrapped_module(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/model/transformer.py", line 131, in forward
+[rank0]:     hidden = self.hidden_states(input_ids)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/model/transformer.py", line 90, in hidden_states
+[rank0]:     block_output = block(hidden, self.ops, rope_cos, rope_sin)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py", line 864, in forward
+[rank0]:     output = self._fsdp_wrapped_module(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/model/blocks.py", line 128, in forward
+[rank0]:     ffn_output = self.ffn(self.ffn_norm(x, ops), ops)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/model/blocks.py", line 91, in forward
+[rank0]:     hidden = ops.fused_moe(
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/kernels/triton/__init__.py", line 112, in fused_moe
+[rank0]:     return triton_fused_moe(x, gate_up_proj, down_proj, top_k_index, top_k_weights)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/kernels/triton/fused_moe.py", line 449, in fused_moe
+[rank0]:     return _FusedMoEFunction.apply(x, gate_up_proj, down_proj, top_k_index, top_k_weights)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/autograd/function.py", line 575, in apply
+[rank0]:     return super().apply(*args, **kwargs)  # type: ignore[misc]
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/kernels/triton/fused_moe.py", line 29, in wrapper
+[rank0]:     return fn(ctx, *args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/kernels/triton/fused_moe.py", line 199, in forward
+[rank0]:     pre_act = torch.empty(TK, 2 * intermediate_dim, dtype=x.dtype, device=x.device)
+[rank0]: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 GiB. GPU 0 has a total capacity of 23.65 GiB of which 1.26 GiB is free. Including non-PyTorch memory, this process has 22.38 GiB memory in use. Of the allocated memory 21.50 GiB is allocated by PyTorch, and 314.29 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+E0721 03:46:46.109000 120673 .venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 120735) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py", line 923, in <module>
+    main()
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py", line 919, in main
+    run(args)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py", line 910, in run
+    elastic_launch(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:46:46
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 120735)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

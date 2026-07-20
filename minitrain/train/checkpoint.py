@@ -10,6 +10,7 @@ from __future__ import annotations
 import random
 import re
 import shutil
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,16 @@ from torch.distributed.checkpoint.state_dict import (
     get_model_state_dict,
     get_state_dict,
     set_state_dict,
+)
+
+# PyTorch 2.5 emits this deprecation from its internal FSDP checkpoint path on
+# every save/load. It is not actionable in application code until PyTorch's DCP
+# implementation switches to DTensor. Keep every other warning visible.
+warnings.filterwarnings(
+    "ignore",
+    message=r"Please use DTensor instead.*",
+    category=FutureWarning,
+    module=r"torch\.distributed\..*",
 )
 
 
@@ -162,6 +173,29 @@ def _restore_rng(state: dict[str, Any]) -> None:
         torch.cuda.set_rng_state(state["cuda"])
 
 
+def _fill_missing_optimizer_group_options(
+    optimizer: torch.optim.Optimizer,
+    original_groups: list[dict[str, Any]],
+) -> None:
+    """Retain constructor options that DCP may omit from FSDP param groups.
+
+    PyTorch 2.5's FSDP/DCP state-dict path can restore tensor state and the
+    parameter mapping while dropping non-tensor AdamW options such as
+    ``betas``.  Keep values that were present in the checkpoint, and fill only
+    missing keys from the freshly constructed optimizer's matching group.
+    """
+
+    if len(optimizer.param_groups) != len(original_groups):
+        raise ValueError(
+            "Checkpoint changed the optimizer parameter-group count: "
+            f"expected {len(original_groups)}, got {len(optimizer.param_groups)}"
+        )
+    for restored, original in zip(optimizer.param_groups, original_groups, strict=True):
+        for key, value in original.items():
+            if key != "params":
+                restored.setdefault(key, value)
+
+
 def save_checkpoint(
     path: str | Path,
     model: torch.nn.Module,
@@ -298,6 +332,7 @@ def restore_training_checkpoint(
         raise ValueError("Training restore requires an optimizer")
 
     options = StateDictOptions(cpu_offload=True)
+    original_optimizer_groups = [dict(group) for group in optimizer.param_groups]
     model_state, optim_state = get_state_dict(model, optimizer, options=options)
     state = {"model": model_state, "optimizer": optim_state}
     dcp.load(state, checkpoint_id=path / "distributed")
@@ -308,6 +343,7 @@ def restore_training_checkpoint(
         optim_state_dict=state["optimizer"],
         options=options,
     )
+    _fill_missing_optimizer_group_options(optimizer, original_optimizer_groups)
     runtime = torch.load(path / "runtime.pt", map_location="cpu", weights_only=False)
     if grad_scaler is not None and "grad_scaler" in runtime:
         grad_scaler.load_state_dict(runtime["grad_scaler"])

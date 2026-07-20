@@ -1,0 +1,79 @@
+{
+  "boundary_token_id": 50256,
+  "bytes_per_token": 2,
+  "chunking": {
+    "max_document_chars": 100000,
+    "overlap_chars": 0
+  },
+  "cleaning": {
+    "enabled": true,
+    "exact_dedup": true,
+    "max_control_ratio": 0.01,
+    "max_repeated_line_fraction": 0.5,
+    "min_alpha_ratio": 0.05,
+    "min_chars": 1
+  },
+  "cleaning_stats": {
+    "accepted": 100000,
+    "rejected_alpha_ratio": 0,
+    "rejected_control_ratio": 0,
+    "rejected_duplicate": 0,
+    "rejected_empty": 0,
+    "rejected_repetition": 0,
+    "rejected_short": 0,
+    "seen": 100000
+  },
+  "document_boundary": "prepend boundary_token_id to every document chunk",
+  "dtype": "<u2",
+  "format_version": 1,
+  "splits": {
+    "train": {
+      "chunks": 100000,
+      "document_index": {
+        "columns": [
+          "token_offset",
+          "token_length"
+        ],
+        "dtype": "<u8",
+        "entries": 100000,
+        "num_bytes": 1600000,
+        "path": "train/documents.idx",
+        "sha256": "9948847f5fb8acac192c0b522877f05e8fe53c9242ae0d7d26c75dad204b9294"
+      },
+      "documents": 100000,
+      "shards": [
+        {
+          "num_bytes": 14810204,
+          "num_tokens": 7405102,
+          "path": "train/shard_00000.bin",
+          "sha256": "638540fb3ed1a5ac077b596898a04703b06ed954ad2fad747462b725f94d370b"
+        }
+      ],
+      "tokens": 7405102
+    },
+    "validation": {
+      "chunks": 0,
+      "document_index": {
+        "columns": [
+          "token_offset",
+          "token_length"
+        ],
+        "dtype": "<u8",
+        "entries": 0,
+        "num_bytes": 0,
+        "path": "validation/documents.idx",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "documents": 0,
+      "shards": [],
+      "tokens": 0
+    }
+  },
+  "splitting": {
+    "algorithm": "sha256(seed:document_id)",
+    "seed": 1337,
+    "validation_fraction": 0.0
+  },
+  "tokenizer_fingerprint": "8d09f5199b642788c7f2a992699542c8aaede18f07fdbdcbbe03beebf5769c67",
+  "vocab_size": 50257
+}
