@@ -47,5 +47,14 @@ the exact SynBioS benchmark above is authoritative for formal training.
 - Optimized recovery checkpoint: epoch 10/step 320, 3,677,964,267 bytes, atomically committed in
   26.929 seconds without the redundant 1.3 GB probe export.
 
+## Formal convergence pilot status
+
+The first optimized 540-epoch launch was stopped safely at epoch 30/step 960. Loss fell to about
+1.10 around epochs 10–20, then persistently increased to 5.38 while unclipped gradient norms rose
+to hundreds or thousands (occasionally tens of thousands) and clipping remained continuously
+active. This rejects the linearly scaled peak LR `0.004667` for global batch 448; the run is
+retained as failure evidence, not presented as a successful formal result. A lower-LR convergence
+sweep is required before the formal restart.
+
 Raw evidence is under `benchmarks/`, `validation/`, and `logs/`; exact commands and stopped/failed
 runs are preserved in `../HISTORY.md`.

@@ -249,7 +249,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 
 ## 2026-07-21 04:15 — Formal SynBioS single-corpus 4-GPU FSDP pretraining
 
-- Status: running from a fresh step 0 (automatic resume explicitly disabled)
+- Status: stopped safely at epoch 30 / step 960 (2026-07-21 04:48 Asia/Shanghai)
 - Purpose: formal `single` corpus pretraining with the exact SynBioS MoE model, Triton operators,
   BF16, and FSDP full sharding on all four RTX 4090 GPUs.
 - tmux session: `minitrain-synbios-single-fsdp4`
@@ -318,6 +318,13 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   shards, optimizer state, runtime/scheduler counters, and four RNG states, with no redundant
   `model.pt`. Training immediately continued into epoch 11. Steady training throughput was about
   348k–369k tokens/s and the tmux session remained healthy.
+- Convergence stop: loss initially fell to about 1.10 around epochs 10–20, then rose persistently
+  to 5.38 by epoch 30 while the unclipped gradient norm repeatedly reached hundreds to tens of
+  thousands and every logged interval clipped gradients. The global-batch linear-scaled peak LR
+  `0.004667` is therefore not accepted as a correct formal recipe even though throughput and
+  memory were stable. Epoch-30 checkpoint `epoch_000030_step_000000960` committed atomically,
+  then the tmux training job was stopped; all GPUs returned to 0 MiB. A lower-LR short convergence
+  sweep is required before restarting the 540-epoch formal run.
 
 ## 2026-07-21 04:42 — Temporary GitHub server snapshot
 
