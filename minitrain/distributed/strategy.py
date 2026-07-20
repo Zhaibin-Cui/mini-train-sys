@@ -13,6 +13,12 @@ class ParallelStrategy(Protocol):
 
     name: str
 
+    @property
+    def rank(self) -> int: ...
+
+    @property
+    def world_size(self) -> int: ...
+
     def setup(self) -> None:
         """Initialize device and process-group state needed by the strategy."""
         ...

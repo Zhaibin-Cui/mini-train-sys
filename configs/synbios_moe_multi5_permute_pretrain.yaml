@@ -1,0 +1,2 @@
+# Backward-compatible alias for the 24 GB RTX 4090 single-GPU augmented run.
+extends: synbios_moe/runs/multi5_permute_single.yaml

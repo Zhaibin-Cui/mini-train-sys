@@ -1,0 +1,12 @@
+run:
+  seed: 1337
+train:
+  # Five-times larger corpus needs one fifth as many epochs for equal exposure.
+  epochs: 108
+data:
+  source: token_shards
+  path: artifacts/synbios_moe/multi5_permute/token_shards/manifest.json
+  shuffle: true
+  packing: randomized_documents
+  shuffle_window: 1024
+  max_open_shards: 8

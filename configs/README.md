@@ -1,103 +1,151 @@
-# Configuration
+# 配置系统说明
 
-Run config and model config are separate. The supplied presets are intentionally small:
+## 先理解两类 YAML
 
-- `train_debug.yaml`: CPU/quick validation, fixed LR, no warmup.
-- `train_single.yaml`: single-GPU LLM default, warmup + cosine decay.
-- `train_ddp.yaml`: multi-GPU DDP.
-- `train_fsdp.yaml`: multi-GPU FSDP.
-- `model_default.yaml`: default LLaMA-style dense model (32K vocab, 2K context).
-- `model_debug_{dense,moe}.yaml`: tiny architecture checks.
-- `model_15m_dense.yaml`: fast end-to-end experiments.
-- `model_125m_{dense,moe}.yaml`: representative dense/MoE training.
+- `model_*.yaml` 或 `synbios_moe/model.yaml`：只描述 Transformer 结构。
+- run YAML：描述数据、训练、优化器、并行、日志和 checkpoint。
 
-The default model uses 12 layers, 12 heads, hidden size 768, SwiGLU size 2048,
-RMSNorm epsilon `1e-5`, RoPE theta `10000`, no dropout, and untied input/output
-embeddings. Debug presets remain deliberately small and are never selected implicitly.
+`scripts/train.py` 同时接收两者。不要把模型尺寸复制进每个 run，否则对比 DDP/FSDP
+时很容易出现模型不一致。
 
-## LR recipes
+## `extends` 如何合并
+
+run YAML 支持一个或多个相对路径父配置：
 
 ```yaml
-# Industrial LLM default: linear warmup, then cosine to 10% of peak LR.
-lr_scheduler: {schedule: cosine, warmup_steps: 100, decay_steps: null, min_lr_ratio: 0.1}
-
-# Fixed LR, no warmup.
-lr_scheduler: {schedule: constant, warmup_steps: 0, decay_steps: null, min_lr_ratio: 0.1}
-
-# Fixed LR after warmup.
-lr_scheduler: {schedule: constant, warmup_steps: 100, decay_steps: null, min_lr_ratio: 0.1}
-
-# Cosine immediately, without warmup.
-lr_scheduler: {schedule: cosine, warmup_steps: 0, decay_steps: null, min_lr_ratio: 0.1}
+extends:
+  - ../base.yaml
+  - ../strategies/fsdp.yaml
+  - ../topologies/8gpu.yaml
+run:
+  name: my_fsdp_8gpu
 ```
 
-`decay_steps: null` derives the decay horizon from the effective training limit. When both
-`max_steps` and `epochs` are set, the first reached limit wins.
+按列表顺序递归合并，后者覆盖前者，最后由当前文件覆盖。相对路径始终相对于当前
+YAML 所在目录。循环继承会报错。
 
-## All options
+## 顶层配置段
 
-| Key | Values / meaning |
-| --- | --- |
-| `run.name` | Run/checkpoint/log name. |
-| `run.seed` | Python and Torch seed. |
-| `backend.ops` | `torch`, `triton`, or `cuda`. |
-| `backend.parallel` | `single`, `ddp`, or `fsdp`. |
-| `optimizer.name` | `adamw` (currently the supported optimizer). |
-| `optimizer.lr` | Peak/fixed learning rate. |
-| `optimizer.weight_decay` | Applied only to matrix-like parameters; norms and biases use zero decay. |
-| `optimizer.beta1`, `beta2`, `eps` | AdamW numerical settings. LLM defaults: `0.9`, `0.95`, `1e-8`. |
-| `optimizer.fused` | `null` auto-selects fused AdamW on CUDA; `true`/`false` forces it. |
-| `lr_scheduler.schedule` | `constant` or `cosine`. |
-| `lr_scheduler.warmup_steps` | `0` disables warmup; positive values enable linear warmup. |
-| `lr_scheduler.decay_steps` | Explicit cosine end step, or `null` for the effective total steps. |
-| `lr_scheduler.min_lr_ratio` | Final LR divided by peak LR, from `0` to `1`. |
-| `train.batch_size` | Per-process micro-batch size. |
-| `train.max_steps` | Total optimizer-step limit, or `null`. |
-| `train.epochs` | Total completed-epoch limit, or `null`; cannot be null with `max_steps`. |
-| `train.log_interval` | Log every N optimizer steps. |
-| `train.use_fused_loss` | Use backend fused LM loss when available. |
-| `train.precision` | `fp32`, `bf16`, or `fp16`. |
-| `train.grad_clip_norm` | Global gradient norm limit, or `null` to disable. |
-| `train.checkpoint_every_epochs` | Save every N completed epochs, or `null`. |
-| `train.checkpoint_dir` | Checkpoint root directory. |
-| `train.save_final_checkpoint` | Save final/partial state on normal completion. |
-| `train.resume_from` | `null`, `latest`, or an explicit `.pt` path. |
-| `data.source` | `random` or `tokens`. |
-| `data.path` | `.pt`, `.pth`, `.npy`, or uint16 `.bin`; required for `tokens`. |
-| `data.num_tokens` | Synthetic token count for `random`. |
-| `data.shuffle` | Shuffle samples each epoch. |
-| `logging.console` | Enable rank-0 console events. |
-| `logging.tensorboard` | Enable rank-0 TensorBoard logging. |
-| `logging.log_dir`, `flush_secs` | TensorBoard root and flush interval. |
-| `distributed.bucket_cap_mb` | DDP communication bucket size. |
-| `distributed.gradient_as_bucket_view` | DDP gradient bucket views. |
-| `distributed.sharding_strategy` | FSDP: `full_shard`, `shard_grad_op`, `no_shard`, `hybrid_shard`. |
-| `model.vocab_size`, `seq_len` | Vocabulary and context size. |
-| `model.n_layers`, `n_heads`, `hidden_size`, `intermediate_size` | Transformer dimensions. |
-| `model.dropout` | Dropout probability. |
-| `model.ffn_type` | `dense` or `moe`. |
-| `model.num_experts`, `experts_per_token` | MoE expert count and top-k routing. |
-| `model.router_aux_loss_coef` | MoE load-balancing loss coefficient. |
-| `model.router_z_loss_coef` | Router logit stabilization loss coefficient. |
-| `model.router_normalize_topk` | Renormalize selected expert weights to sum to one. |
-| `model.router_jitter_noise` | Multiplicative training-only router input jitter; `0` disables it. |
-| `model.expert_capacity_factor` | Reserved; currently ignored by `TopKRouter.forward`, which always uses dropless routing. |
-| `model.expert_min_capacity` | Reserved minimum capacity for a future capacity-aware compact dispatch implementation. |
+| 段 | 负责什么 |
+|---|---|
+| `run` | 名称与随机 seed |
+| `backend` | `torch`、`triton`、`cuda` 算子 backend |
+| `parallel` | single/DDP/FSDP 与固定 world size |
+| `optimizer` | AdamW 参数 |
+| `lr_scheduler` | constant/cosine、warmup、decay |
+| `train` | 每 rank batch、epoch/step、精度、clip |
+| `checkpoint` | 保存频率、保留数量、恢复、模型导出 |
+| `data` | 数据源、packing、worker、prefetch |
+| `logging` | console、JSONL、TensorBoard |
 
-## Run
+所有字段最终由 `minitrain/runtime/config.py` 的 dataclass 校验；拼错字段不会被默默
+接受，而会在构造配置时报错。
 
-Windows PowerShell:
+## Batch、epoch 与学习率
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run_train.ps1
-powershell -ExecutionPolicy Bypass -File scripts/run_train.ps1 -ModelConfig configs/model_debug_moe.yaml -Resume latest
+```yaml
+train:
+  batch_size: 8                 # 每 rank；不是 global batch
+  epochs: 540
+  max_steps: null
+  reference_global_batch_size: 96
+  batch_size_scaling: linear
+  log_interval: 10              # 每多少 optimizer step 记录一次完整状态
+  check_finite: true            # loss 为 NaN/Inf 时立即失败
+  grad_clip_norm: 5.0           # 全局 L2 norm 安全阈值；null 表示关闭
 ```
 
-Linux:
+本项目没有梯度累计：
 
-```bash
-bash scripts/run_train.sh
-MODEL_CONFIG=configs/model_debug_moe.yaml RESUME=latest bash scripts/run_train.sh
-NPROC=8 bash scripts/run_distributed.sh ddp
-NPROC=8 bash scripts/run_distributed.sh fsdp
+```text
+actual_global_batch = batch_size × WORLD_SIZE
 ```
+
+`linear` 时，运行时按 `actual/reference` 缩放 LR，并反向缩放 warmup/显式 decay step。
+epoch 不随卡数改变，所以文档/人物曝光次数保持不变。普通实验不需要线性缩放时使用
+`batch_size_scaling: none`。
+
+## 数据与 worker
+
+```yaml
+data:
+  source: token_shards           # random | tokens | token_shards
+  path: path/to/manifest.json
+  packing: randomized_documents  # contiguous | randomized_documents
+  num_workers: null              # null=自动；整数=每 rank 固定值
+  worker_budget: 32              # 单机所有 rank 的总预算
+  max_workers_per_rank: 4
+  worker_cpu_affinity: true
+  prefetch_factor: 2
+  pin_memory: true
+  persistent_workers: true
+  drop_last: true
+```
+
+自动模式先为每个 trainer rank 保留 CPU，再在节点预算内分配 worker，并限制每 rank
+上限。Linux worker 会单线程并尝试 CPU affinity。CPU/debug 配置应显式设
+`num_workers: 0`、`persistent_workers: false`。
+
+`randomized_documents` 只适用于带 `documents.idx` 的 token-shard manifest；它每 epoch
+重排完整文档后再打包固定长度 block。`contiguous` 直接把整个 token 流按位置切块。
+
+## Single、DDP 与 FSDP
+
+```yaml
+parallel:
+  strategy: fsdp
+  process_group_backend: nccl
+  expected_world_size: 8
+  fsdp:
+    sharding_strategy: full_shard
+    auto_wrap_policy: transformer_block
+    backward_prefetch: backward_pre
+    forward_prefetch: false
+    limit_all_gathers: true
+    use_orig_params: true
+    sync_module_states: true
+    cpu_offload: false
+    activation_checkpointing: false
+```
+
+`expected_world_size` 是固定服务器 preset 的防误用检查。FSDP 默认每个
+`TransformerBlock` 一个 unit；`auto_wrap_policy: none` 只用于诊断。各字段的执行语义
+见 [distributed_training.md](../docs/training/distributed_training.md)。
+
+## Checkpoint
+
+```yaml
+checkpoint:
+  directory: checkpoints
+  every_epochs: 1
+  keep_last: 2
+  keep_safety: 1               # 额外保留较老的完整DCP+Adam锚点
+  safety_every_epochs: 10      # 安全锚点只从10的倍数epoch选择
+  keep_model_exports: 1       # 只有最新目录保留重复的model.pt
+  save_final: true
+  resume_from: null              # null | latest | safety | 显式目录
+  export_model: true             # 为 evaluate/probe 写 model.pt
+  cpu_offload: true
+```
+
+`export_model` 不等于训练 checkpoint：训练恢复读取 DCP 模型和 Adam；`model.pt` 只是
+完整权重导出。大模型不做 probe 时可关闭导出，降低 rank-0 CPU 峰值和磁盘占用。
+`keep_last + keep_safety` 是 checkpoint 目录数的硬上限；安全目录仍可完整恢复训练，只是
+没有 `model.pt`，因此不能直接交给 probe。`--resume safety` 会选择带 `SAFETY` 标记的锚点。
+
+## 当前 preset
+
+| 路径 | 用途 |
+|---|---|
+| `train_debug.yaml` | CPU 最小训练 |
+| `train_single.yaml` | 24 GB RTX 4090 单卡兼容入口 |
+| `train_ddp.yaml` / `train_fsdp.yaml` | 默认 8 卡兼容入口 |
+| `server/rtx4090_24gb/runs/` | 显式 single/DDP/FSDP × 1/4/8 卡矩阵 |
+| `smoke/` | DDP/FSDP/checkpoint 极小验证 |
+| `synbios_moe/` | base、variant、strategy 和具体 run 分层 |
+
+服务器上优先使用显式 `server/.../runs/*.yaml`，而不是依赖兼容别名。
+
+`synbios_moe/probe_pipeline.yaml` 是正式 `smoke → pilot → formal` probe 预算；
+`synbios_moe/probe_pipeline_notebook_smoke.yaml` 仅供端到端 notebook 用 3 steps 验证
+调度、独立 validation、监控和汇总链路，不能用于论文结果。

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import torch
 
 from minitrain.distributed.ddp import DDPStrategy
@@ -27,14 +29,26 @@ def build_model(
     return MiniTransformer(model_cfg, ops, activation_dtype=activation_dtype)
 
 
-def build_parallel_strategy(cfg: ExperimentConfig) -> ParallelStrategy:
+def build_parallel_strategy(
+    cfg: ExperimentConfig, *, resolved_precision: str | None = None
+) -> ParallelStrategy:
     """Build the distributed strategy selected by the experiment config."""
 
-    name = cfg.backend.parallel
+    name = cfg.parallel.strategy
     if name == "single":
         return SingleDeviceStrategy()
     if name == "ddp":
-        return DDPStrategy(**cfg.distributed)
+        return DDPStrategy(
+            process_group_backend=cfg.parallel.process_group_backend,
+            timeout_minutes=cfg.parallel.timeout_minutes,
+            **vars(cfg.parallel.ddp),
+        )
     if name == "fsdp":
-        return FSDPStrategy(precision=cfg.train.precision, **cfg.distributed)
+        precision = cfg.train.precision if resolved_precision is None else resolved_precision
+        return FSDPStrategy(
+            process_group_backend=cfg.parallel.process_group_backend,
+            timeout_minutes=cfg.parallel.timeout_minutes,
+            precision=precision,
+            **vars(cfg.parallel.fsdp),
+        )
     raise ValueError(f"Unknown parallel strategy: {name}")

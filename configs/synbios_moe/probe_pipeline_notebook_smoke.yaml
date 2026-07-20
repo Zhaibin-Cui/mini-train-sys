@@ -1,0 +1,16 @@
+gate:
+  threshold: 0.0
+  examples: 20
+  batch_size: 4
+
+stages:
+  smoke:
+    steps: 3
+    requires: null
+    tasks:
+      - kind: p
+        attribute: birth_city
+        target: first
+      - kind: q
+        attribute: birth_city
+        target: first

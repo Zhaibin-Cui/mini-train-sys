@@ -1,0 +1,26 @@
+gate:
+  threshold: 0.90
+  examples: 10000
+  batch_size: 8
+
+stages:
+  smoke:
+    steps: 500
+    requires: null
+    tasks:
+      - kind: p
+        attribute: birth_city
+        target: whole
+      - kind: q
+        attribute: birth_city
+        target: whole
+
+  pilot:
+    steps: 3000
+    requires: smoke
+    tasks: all
+
+  formal:
+    steps: 30000
+    requires: pilot
+    tasks: all

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import torch
 
 from minitrain.runtime.config import OptimizerConfig
@@ -16,6 +18,14 @@ def build_optimizer(
             weight_decay=(
                 weight_decay if weight_decay is not None else OptimizerConfig.weight_decay
             ),
+        )
+    elif lr is not None or weight_decay is not None:
+        from dataclasses import replace
+
+        cfg = replace(
+            cfg,
+            lr=cfg.lr if lr is None else lr,
+            weight_decay=cfg.weight_decay if weight_decay is None else weight_decay,
         )
 
     decay, no_decay = [], []

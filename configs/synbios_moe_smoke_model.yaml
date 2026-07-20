@@ -1,0 +1,13 @@
+model:
+  vocab_size: 50257
+  seq_len: 128
+  n_layers: 2
+  n_heads: 4
+  hidden_size: 128
+  intermediate_size: 256
+  dropout: 0.1
+  ffn_type: moe
+  num_experts: 4
+  experts_per_token: 2
+  router_aux_loss_coef: 0.01
+  router_z_loss_coef: 0.001

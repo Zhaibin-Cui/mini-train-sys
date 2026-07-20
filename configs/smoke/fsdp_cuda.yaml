@@ -1,0 +1,41 @@
+run:
+  name: smoke_fsdp_cuda
+  seed: 1337
+backend:
+  ops: torch
+parallel:
+  strategy: fsdp
+  timeout_minutes: 5
+  fsdp:
+    sharding_strategy: full_shard
+    auto_wrap_policy: transformer_block
+    backward_prefetch: backward_pre
+    limit_all_gathers: true
+    use_orig_params: true
+    sync_module_states: true
+optimizer:
+  lr: 0.0003
+lr_scheduler:
+  schedule: constant
+  warmup_steps: 0
+train:
+  batch_size: 2
+  max_steps: 2
+  epochs: null
+  log_interval: 1
+  precision: bf16
+data:
+  source: random
+  num_tokens: 4096
+  num_workers: 0
+  persistent_workers: false
+  pin_memory: true
+checkpoint:
+  every_epochs: null
+  save_final: true
+  directory: artifacts/smoke/checkpoints
+  export_model: true
+logging:
+  console: true
+  tensorboard: false
+  jsonl: false

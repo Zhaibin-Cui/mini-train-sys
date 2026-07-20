@@ -1,0 +1,2 @@
+# Backward-compatible model-config alias.
+extends: synbios_moe/model.yaml

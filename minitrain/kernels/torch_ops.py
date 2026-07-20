@@ -21,17 +21,17 @@ class TorchOpsBackend:
     name = "torch"
 
     def rmsnorm(self, x: torch.Tensor, weight: torch.Tensor, eps: float) -> torch.Tensor:
-        """RMSNorm reference: reduce in fp32, then return activation dtype.
+        """RMSNorm reference: compute normalization in fp32, then cast once.
 
-        RMSNorm computes the reduction in fp32 for stability, but
-        the normalized activation is cast back before it leaves the op. Casting
-        the weight to the activation dtype keeps the reference backend aligned
-        with the Triton kernel when model weights are fp32 and activations are
-        bf16/fp16.
+        Keeping both the inverse RMS and normalization multiply in fp32 matches
+        the Triton kernel and avoids accumulating an artificial fp16/bf16
+        quantization error in the weight gradient. Parameters remain fp32 in
+        mixed-precision training, while the public activation contract remains
+        ``x.dtype``.
         """
         variance = x.float().pow(2).mean(dim=-1, keepdim=True)
-        x = x * torch.rsqrt(variance + eps).to(dtype=x.dtype)
-        return x * weight.to(dtype=x.dtype)
+        normalized = x.float() * torch.rsqrt(variance + eps)
+        return (normalized * weight.float()).to(dtype=x.dtype)
 
     def rope(
         self,
@@ -65,7 +65,10 @@ class TorchOpsBackend:
         )
 
     def cross_entropy(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        return F.cross_entropy(logits, targets)
+        # Loss reductions stay fp32 even when callers invoke the backend
+        # directly outside autocast. This is the same contract implemented by
+        # the fused Triton kernels and used by production mixed precision.
+        return F.cross_entropy(logits.float(), targets)
 
     def fused_linear_cross_entropy(
         self,
@@ -78,7 +81,8 @@ class TorchOpsBackend:
         Triton/CUDA versions should keep the same output while avoiding the large
         `[tokens, vocab]` intermediate where possible.
         """
-        return F.cross_entropy(F.linear(x, weight), targets)
+        logits = F.linear(x, weight)
+        return F.cross_entropy(logits.float(), targets)
 
     def router_postprocess(
         self,

@@ -111,12 +111,29 @@ class TopKRouter(nn.Module):
             #     accepted_indices, minlength=self.cfg.num_experts
             # ).float()
             accepted_per_expert = route_counts.float()
+            load_fraction = accepted_per_expert / max(expert_indices.numel(), 1)
+            uniform_fraction = 1.0 / self.cfg.num_experts
             metrics = {
                 "moe/router_entropy": route.entropy,
+                "moe/router_entropy_normalized": (
+                    route.entropy
+                    / (math.log(self.cfg.num_experts) if self.cfg.num_experts > 1 else 1.0)
+                ).detach(),
                 # "moe/dropped_route_fraction": (1.0 - capacity_mask.float().mean()).detach(),
                 "moe/dropped_route_fraction": expert_weights.new_zeros(()).detach(),
                 "moe/max_expert_load": accepted_per_expert.max().detach(),
                 "moe/min_expert_load": accepted_per_expert.min().detach(),
+                "moe/expert_load_cv": (
+                    load_fraction.std(unbiased=False) / uniform_fraction
+                ).detach(),
+                "moe/max_to_mean_load": (
+                    load_fraction.max() / uniform_fraction
+                ).detach(),
+                "moe/dead_expert_count": (accepted_per_expert == 0).sum().detach(),
+                # Vector metrics are stacked by transformer layer and emitted as
+                # TensorBoard heatmaps/histograms by the runtime logger.
+                "moe/expert_load_fraction": load_fraction.detach(),
+                "moe/expert_probability": route.probability_per_expert.detach(),
             }
 
         return RouterOutput(

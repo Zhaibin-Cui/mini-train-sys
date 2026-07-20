@@ -38,7 +38,13 @@ class MiniTransformer(nn.Module):
             self.lm_head.weight = self.embed.weight
         else:
             nn.init.normal_(self.lm_head.weight, mean=0.0, std=0.02)
-        self.last_moe_metrics: dict[str, torch.Tensor] = {}
+        self.last_training_metrics: dict[str, torch.Tensor] = {}
+        self.last_training_visualizations: dict[str, torch.Tensor] = {}
+        # Backward-compatible names retained for existing experiment code.
+        self.last_moe_metrics = self.last_training_metrics
+        self.last_moe_visualizations = self.last_training_visualizations
+        self._last_router_aux_loss: torch.Tensor | None = None
+        self._last_router_z_loss: torch.Tensor | None = None
 
     def _base_loss(
         self, hidden: torch.Tensor, targets: torch.Tensor, use_fused_loss: bool
@@ -56,13 +62,24 @@ class MiniTransformer(nn.Module):
         )
         return loss, logits
 
-    def forward(
+    def hidden_states(
         self,
         input_ids: torch.Tensor,
-        targets: torch.Tensor | None = None,
-        use_fused_loss: bool = False,
-    ) -> tuple[torch.Tensor | None, torch.Tensor]:
-        hidden = self.dropout(self.embed(input_ids).to(dtype=self.activation_dtype))
+        *,
+        embedding_delta: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Return final normalized states without materializing vocabulary logits.
+
+        ``embedding_delta`` is intentionally narrow: probes can add a differentiable
+        low-rank update while leaving the pretrained embedding and transformer frozen.
+        """
+
+        hidden = self.embed(input_ids)
+        if embedding_delta is not None:
+            if embedding_delta.shape != hidden.shape:
+                raise ValueError("embedding_delta must match embedded input shape")
+            hidden = hidden + embedding_delta
+        hidden = self.dropout(hidden.to(dtype=self.activation_dtype))
         rope_cos, rope_sin = self.rotary(hidden.size(1))
         if rope_cos.device != hidden.device or rope_cos.dtype != hidden.dtype:
             raise RuntimeError("RoPE cache must match the residual device and dtype")
@@ -78,21 +95,61 @@ class MiniTransformer(nn.Module):
                 z_losses.append(block_output.router_z_loss)
             for name, value in (block_output.router_metrics or {}).items():
                 router_metrics.setdefault(name, []).append(value)
-        self.last_moe_metrics = {
-            name: torch.stack(values).mean() for name, values in router_metrics.items()
-        }
+        scalar_metrics: dict[str, torch.Tensor] = {}
+        visualizations: dict[str, torch.Tensor] = {}
+        for name, values in router_metrics.items():
+            stacked = torch.stack(values)
+            if stacked.ndim == 1:
+                scalar_metrics[name] = stacked.float().mean()
+                continue
+            by_layer = stacked.detach()
+            visualizations[f"{name}_by_layer"] = by_layer
+            for expert_index, value in enumerate(by_layer.mean(dim=0)):
+                scalar_metrics[f"{name}/expert_{expert_index:02d}"] = value
+        self.last_training_metrics = scalar_metrics
+        self.last_training_visualizations = visualizations
+        self.last_moe_metrics = self.last_training_metrics
+        self.last_moe_visualizations = self.last_training_visualizations
         if aux_losses:
-            self.last_moe_metrics["moe/aux_loss"] = torch.stack(aux_losses).mean().detach()
+            self.last_training_metrics["moe/aux_loss"] = (
+                torch.stack(aux_losses).mean().detach()
+            )
         if z_losses:
-            self.last_moe_metrics["moe/z_loss"] = torch.stack(z_losses).mean().detach()
-        hidden = self.norm(hidden, self.ops)
+            self.last_training_metrics["moe/z_loss"] = (
+                torch.stack(z_losses).mean().detach()
+            )
+        self._last_router_aux_loss = torch.stack(aux_losses).mean() if aux_losses else None
+        self._last_router_z_loss = torch.stack(z_losses).mean() if z_losses else None
+        return self.norm(hidden, self.ops)
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        targets: torch.Tensor | None = None,
+        use_fused_loss: bool = False,
+    ) -> tuple[torch.Tensor | None, torch.Tensor]:
+        hidden = self.hidden_states(input_ids)
         if targets is None:
             return None, self.lm_head(hidden)
-        loss, output = self._base_loss(hidden, targets, use_fused_loss)
-        if aux_losses and self.cfg.router_aux_loss_coef:
-            loss = loss + self.cfg.router_aux_loss_coef * torch.stack(aux_losses).mean()
-        if z_losses and self.cfg.router_z_loss_coef:
-            loss = loss + self.cfg.router_z_loss_coef * torch.stack(z_losses).mean()
+        lm_loss, output = self._base_loss(hidden, targets, use_fused_loss)
+        loss = lm_loss
+        self.last_training_metrics["loss/lm_cross_entropy"] = lm_loss.detach()
+        moe_regularization = lm_loss.new_zeros(())
+        if self._last_router_aux_loss is not None:
+            weighted_aux = self.cfg.router_aux_loss_coef * self._last_router_aux_loss
+            loss = loss + weighted_aux
+            moe_regularization = moe_regularization + weighted_aux
+            self.last_training_metrics["loss/moe_aux_weighted"] = weighted_aux.detach()
+        if self._last_router_z_loss is not None:
+            weighted_z = self.cfg.router_z_loss_coef * self._last_router_z_loss
+            loss = loss + weighted_z
+            moe_regularization = moe_regularization + weighted_z
+            self.last_training_metrics["loss/moe_z_weighted"] = weighted_z.detach()
+        if self.cfg.is_moe:
+            self.last_training_metrics["loss/moe_regularization_total"] = (
+                moe_regularization.detach()
+            )
+        self.last_training_metrics["loss/total"] = loss.detach()
         return loss, output
 
 

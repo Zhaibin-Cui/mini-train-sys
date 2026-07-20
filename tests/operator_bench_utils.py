@@ -329,18 +329,42 @@ def close_stats(
     max_abs = 0.0
     max_rel = 0.0
     for actual_tensor, expected_tensor in zip(actual_tensors, expected_tensors):
-        actual_f = actual_tensor.detach().float()
-        expected_f = expected_tensor.detach().float()
-        abs_err = (actual_f - expected_f).abs()
-        rel_err = abs_err / expected_f.abs().clamp_min(1e-8)
-        max_abs = max(max_abs, float(abs_err.max().item()))
-        max_rel = max(max_rel, float(rel_err.max().item()))
-        try:
-            torch.testing.assert_close(
-                actual_tensor, expected_tensor, atol=atol, rtol=rtol
-            )
-        except AssertionError:
+        if (
+            actual_tensor.shape != expected_tensor.shape
+            or actual_tensor.device != expected_tensor.device
+            or actual_tensor.dtype != expected_tensor.dtype
+        ):
             correct = False
+            max_abs = math.inf
+            max_rel = math.inf
+            continue
+
+        # A full-tensor fp32 comparison can need several times the tensor's
+        # storage for casts, absolute/relative errors, and the close mask. That
+        # turns an otherwise valid memory-bound benchmark into a comparison OOM.
+        # Stream over flat slices so correctness memory stays bounded.
+        chunk_elements = 4 * 1024 * 1024
+        actual_flat = actual_tensor.detach().reshape(-1)
+        expected_flat = expected_tensor.detach().reshape(-1)
+        for start in range(0, actual_flat.numel(), chunk_elements):
+            stop = min(start + chunk_elements, actual_flat.numel())
+            actual_f = actual_flat[start:stop].float()
+            expected_f = expected_flat[start:stop].float()
+            abs_err = (actual_f - expected_f).abs()
+            rel_err = abs_err / expected_f.abs().clamp_min(1e-8)
+            if abs_err.numel():
+                max_abs = max(max_abs, float(abs_err.max().item()))
+                max_rel = max(max_rel, float(rel_err.max().item()))
+                if not bool(
+                    torch.isclose(
+                        actual_f,
+                        expected_f,
+                        atol=atol,
+                        rtol=rtol,
+                    ).all().item()
+                ):
+                    correct = False
+            del actual_f, expected_f, abs_err, rel_err
 
     return {"correct": correct, "max_abs": max_abs, "max_rel": max_rel}
 

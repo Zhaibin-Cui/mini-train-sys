@@ -1,0 +1,3 @@
+extends: multi5_permute_ddp.yaml
+run: {name: synbios_moe_multi5_permute_ddp_8gpu}
+parallel: {expected_world_size: 8}

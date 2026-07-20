@@ -42,12 +42,13 @@ Thumbs.db
 # Runtime caches and experiment outputs
 .triton_cache/
 triton_cache/
-runs/
+/runs/
 logs/
 checkpoints/
 wandb/
 outputs/
 profiles/
+artifacts/
 
 # Large model/data artifacts
 *.pt
@@ -61,9 +62,14 @@ profiles/
 # Tests, benchmark results, and reports are shareable.
 !tests/**
 !reports/**
+# Machine-specific benchmark notebooks are local execution artifacts. Keep the
+# portable notebook variants tracked and regenerate these per target machine.
+# tests/**/*_sm86_4gb.ipynb
+# tests/**/*_linux_server.ipynb
 tests/**/__pycache__/
 tests/**/*.py[cod]
-tests/*_sm86_4gb.ipynb
-tests/*_linux_server.ipynb
 reports/**/__pycache__/
 reports/**/*.py[cod]
+
+# temp for ignored: docs
+# .docs/

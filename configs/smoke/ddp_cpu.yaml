@@ -1,0 +1,33 @@
+run:
+  name: smoke_ddp_cpu
+  seed: 1337
+backend:
+  ops: torch
+parallel:
+  strategy: ddp
+  process_group_backend: gloo
+  timeout_minutes: 5
+optimizer:
+  lr: 0.0003
+lr_scheduler:
+  schedule: constant
+  warmup_steps: 0
+train:
+  batch_size: 2
+  max_steps: 2
+  epochs: null
+  log_interval: 1
+  precision: fp32
+data:
+  source: random
+  num_tokens: 4096
+  num_workers: 0
+  persistent_workers: false
+  pin_memory: false
+checkpoint:
+  every_epochs: null
+  save_final: false
+logging:
+  console: true
+  tensorboard: false
+  jsonl: false

@@ -1,0 +1,55 @@
+backend:
+  ops: triton
+optimizer:
+  name: adamw
+  # Allen-Zhu reference hyperparameter at global batch 96.
+  lr: 0.001
+  weight_decay: 0.1
+  beta1: 0.9
+  beta2: 0.95
+  eps: 1.0e-6
+  fused: null
+lr_scheduler:
+  schedule: cosine
+  warmup_steps: 1000
+  decay_steps: null
+  min_lr_ratio: 0.1
+train:
+  max_steps: null
+  log_interval: 240
+  use_fused_loss: true
+  precision: auto
+  grad_clip_norm: 5.0
+  reference_global_batch_size: 96
+  batch_size_scaling: linear
+data:
+  # One CPU hosts all GPUs. Auto allocation caps at four workers per rank and
+  # 32 workers for the node, instead of multiplying a fixed value blindly.
+  num_workers: null
+  worker_budget: 32
+  max_workers_per_rank: 4
+  worker_cpu_affinity: true
+  prefetch_factor: 2
+  pin_memory: true
+  persistent_workers: true
+  drop_last: true
+checkpoint:
+  directory: artifacts/synbios_moe/checkpoints
+  every_epochs: 1
+  keep_last: 2
+  # Keep one older full DCP+Adam fallback in addition to the two newest epochs.
+  keep_safety: 1
+  safety_every_epochs: 10
+  # Only the newest checkpoint needs the duplicate model.pt used by probes.
+  keep_model_exports: 1
+  save_final: true
+  resume_from: null
+  # Probes read model.pt and never materialize Adam state.
+  export_model: true
+  cpu_offload: true
+logging:
+  console: true
+  tensorboard: true
+  jsonl: true
+  log_dir: artifacts/synbios_moe/runs
+  flush_secs: 10

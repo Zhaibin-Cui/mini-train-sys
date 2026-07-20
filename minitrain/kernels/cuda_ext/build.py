@@ -9,7 +9,8 @@ Three profiles make the same source tree practical on different machines:
 ``minimal``
     fp16, head-dim bucket 32. Intended for CI and compiler smoke tests.
 ``workstation`` (default)
-    fp16/bf16, buckets 32/64/128. Covers common small-model configurations.
+    fp16/bf16, head-dim bucket 64. Matches this project's model defaults and
+    keeps local Windows builds practical on the RTX 3050 development machine.
 ``full``
     fp16/bf16, all upstream buckets through 256. Intended for build servers.
 
@@ -56,7 +57,13 @@ _HEAD_DIM_BUCKETS = (32, 64, 96, 128, 192, 256)
 _DTYPES = ("fp16", "bf16")
 _PROFILES = {
     "minimal": ((32,), ("fp16",)),
-    "workstation": ((32, 64, 128), _DTYPES),
+    # Previous workstation default, retained as an easy opt-back reference:
+    # "workstation": ((32, 64, 128), _DTYPES),
+    # The active local default compiles the model's D=64 path in both training
+    # dtypes. Select ``full`` or MINITRAIN_CUDA_HEAD_DIMS when broader serving
+    # coverage is required; keeping it explicit avoids surprise multi-hour
+    # first builds on a memory-constrained Windows workstation.
+    "workstation": ((64,), _DTYPES),
     "full": (_HEAD_DIM_BUCKETS, _DTYPES),
 }
 

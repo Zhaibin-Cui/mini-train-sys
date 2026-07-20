@@ -1,0 +1,3 @@
+extends: single_ddp.yaml
+run: {name: synbios_moe_single_ddp_8gpu}
+parallel: {expected_world_size: 8}

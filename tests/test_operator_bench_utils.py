@@ -14,6 +14,29 @@ class _Marker:
     pass
 
 
+def test_close_stats_streams_across_chunk_boundaries():
+    chunk_elements = 4 * 1024 * 1024
+    expected = torch.zeros(chunk_elements + 3)
+    actual = expected.clone()
+    actual[-1] = 0.25
+
+    stats = bench_utils.close_stats(actual, expected, atol=0.1, rtol=0.0)
+
+    assert stats["correct"] is False
+    assert stats["max_abs"] == pytest.approx(0.25)
+
+
+def test_close_stats_rejects_tensor_metadata_mismatch():
+    stats = bench_utils.close_stats(
+        torch.zeros(2, dtype=torch.float32),
+        torch.zeros(2, dtype=torch.float64),
+        atol=0.0,
+        rtol=0.0,
+    )
+
+    assert stats == {"correct": False, "max_abs": float("inf"), "max_rel": float("inf")}
+
+
 def test_release_cache_attempts_empty_cache_after_synchronize_failure(monkeypatch):
     emptied = []
     ipc_collected = []

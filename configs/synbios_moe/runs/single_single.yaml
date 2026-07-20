@@ -1,0 +1,6 @@
+extends:
+  - ../base.yaml
+  - ../variants/single.yaml
+  - ../strategies/single.yaml
+run:
+  name: synbios_moe_single_single

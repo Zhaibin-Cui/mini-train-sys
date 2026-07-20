@@ -1,0 +1,6 @@
+extends:
+  - ../base.yaml
+  - ../variants/multi5_permute.yaml
+  - ../strategies/fsdp.yaml
+run:
+  name: synbios_moe_multi5_permute_fsdp

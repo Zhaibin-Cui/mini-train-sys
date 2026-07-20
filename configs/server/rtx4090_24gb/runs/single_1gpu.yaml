@@ -1,0 +1,6 @@
+extends:
+  - ../base.yaml
+  - ../strategies/single.yaml
+  - ../topologies/1gpu.yaml
+run:
+  name: rtx4090_single_1gpu
