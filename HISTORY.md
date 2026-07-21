@@ -663,9 +663,9 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Push result: Conventional Commit `8b39e6a` (`docs(readme): publish formal server experiment
   report`) was pushed to `origin/train`; local/remote divergence was `0 0` afterward.
 
-## 2026-07-21 15:04 — Launch multi5+permute 4-GPU FSDP pretraining
+## 2026-07-21 14:37 — Launch multi5+permute 4-GPU FSDP pretraining
 
-- Status: pre-launch validation in progress.
+- Status: running successfully.
 - Decision basis: the completed `single` run establishes stable optimization and 100% strict
   training-corpus recall. This is sufficient to validate the training implementation/configuration
   before starting the augmentation condition, while remaining explicitly distinct from unseen
@@ -681,3 +681,27 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   1,000 steps, cosine floor `1e-4`, with no batch LR scaling.
 - Pre-launch resources: all four GPUs idle at 0 MiB/0% utilization; `/data` has 30 GiB free;
   local and `origin/train` are synchronized at `0 0`; only TensorBoard tmux is active.
+- Config/test commit: `3285476` (`fix(config): align multi5 fsdp4 with validated capacity`) was
+  pushed to `origin/train` before launch, leaving the training process with a clean Git worktree.
+- Data preparation tmux/log: `minitrain-multi5-prepare` and
+  `artifacts/logs/synbios_multi5_permute_prepare.log`. It generated 500,000 accepted biographies
+  and 37,046,556 training tokens. Dataset/token manifest SHA256 values are
+  `31b99dd8d415007c34e00e3b32440014be4b34c27b7c3c1a80f7e1319019566e` and
+  `0f589d4def4ddf1a2ac6f774cd28d8343ea168eb07b3199b9e6e5209444f1547`.
+- Integrity: every raw and token-shard size/SHA256 passed; all 500,000 document-index entries are
+  present; the 100,000-person `profiles.jsonl` is byte-identical to `single`. With drop-last and
+  global batch 448, the resolved schedule is 161 steps/epoch × 108 = 17,388 steps and
+  3,988,389,888 scheduled tokens.
+- Formal tmux: `minitrain-synbios-multi5-permute-fsdp4`; command:
+
+  ```bash
+  AUTO_RESUME=0 NPROC=4 bash scripts/bash/synbios_moe.sh multi5_permute fsdp
+  ```
+
+- Console log: `artifacts/logs/synbios_moe_multi5_permute_fsdp4_formal.log`; TensorBoard/JSONL:
+  `artifacts/synbios_moe/runs/synbios_moe_multi5_permute_fsdp_4gpu/`; checkpoints:
+  `artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/`.
+- Live verification through batch 40/161 of epoch 1: loss fell `10.94893 → 7.96582`, LR warmed
+  `1e-6 → 4e-5`, grad norm fell `17.113 → 7.030`, steady throughput reached 353k–364k tok/s,
+  compute utilization was about 97.5%–98.2%, and interval peak allocated memory was 20.39/23.65
+  GiB (the validated 86.2%). No NaN/Inf, OOM, dead process, or data stall was observed.

@@ -1,0 +1,12 @@
+W0721 14:43:45.332000 41989 torch/distributed/run.py:793] 
+W0721 14:43:45.332000 41989 torch/distributed/run.py:793] *****************************************
+W0721 14:43:45.332000 41989 torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0721 14:43:45.332000 41989 torch/distributed/run.py:793] *****************************************
+[init] run=synbios_moe_multi5_permute_fsdp_4gpu device=cuda:0 strategy=fsdp world=4 params=293494272
+[parallel_ready] {"event": "parallel_ready", "strategy": "fsdp", "fsdp_units": 13, "auto_wrap_policy": "transformer_block", "sharding_strategy": "full_shard"}
+[train] batch 1/161 | epoch 1/108 | loss 10.94893 | lr 1.000e-06 | grad 17.113 | data-wait 0.2% | tok/s 29,750.8 | gpu-peak 19.82/23.65 GiB | gpu-util 37.1% | 0.0% | ETA 37:14:12
+[train] batch 20/161 | epoch 1/108 | loss 9.69518 | lr 2.000e-05 | grad 8.762 | data-wait 0.2% | tok/s 352,783.0 | gpu-peak 20.39/23.65 GiB | gpu-util 98.2% | 0.1% | ETA 4:50:23
+[train] batch 40/161 | epoch 1/108 | loss 7.96582 | lr 4.000e-05 | grad 7.030 | data-wait 0.3% | tok/s 363,763.5 | gpu-peak 20.38/23.65 GiB | gpu-util 97.5% | 0.2% | ETA 3:56:11
+[train] batch 60/161 | epoch 1/108 | loss 4.84090 | lr 6.000e-05 | grad 4.082 | data-wait 0.3% | tok/s 370,473.0 | gpu-peak 20.38/23.65 GiB | gpu-util 98.4% | 0.3% | ETA 3:36:52
+[train] batch 80/161 | epoch 1/108 | loss 3.40319 | lr 8.000e-05 | grad 1.291 | data-wait 0.4% | tok/s 368,590.0 | gpu-peak 20.38/23.65 GiB | gpu-util 98.1% | 0.5% | ETA 3:27:20
+[train] batch 100/161 | epoch 1/108 | loss 2.60918 | lr 1.000e-04 | grad 1.684 | data-wait 0.3% | tok/s 371,777.8 | gpu-peak 20.38/23.65 GiB | gpu-util 98.3% | 0.6% | ETA 3:21:14
