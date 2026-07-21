@@ -608,3 +608,5 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   exported file, source/documentation diff checks pass, and no exported file exceeds 90 MiB.
 - Remote preflight at 14:19 Asia/Shanghai: `git fetch origin` succeeded and
   `HEAD...origin/train` was `0 0` before creating the new snapshot.
+- Push result: commit `596bffb` (`feat(eval): add progressive biography cloze recall`) was pushed
+  successfully to `origin/train`; local and remote divergence was verified as `0 0` afterward.
