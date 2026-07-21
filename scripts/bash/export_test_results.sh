@@ -33,7 +33,7 @@ copy_tree "$ROOT/artifacts/logs" "$DEST/logs"
 # mounted artifact volume and are intentionally not duplicated into Git.
 if [[ -d "$ROOT/artifacts/validation" ]]; then
   rsync -a \
-    --exclude='distributed/' \
+    --exclude='distributed/*.distcp' \
     --exclude='model.pt' \
     "$ROOT/artifacts/validation/" "$DEST/validation/"
 fi
@@ -68,7 +68,7 @@ copy_tree \
 if [[ -d "$ROOT/artifacts/synbios_moe/checkpoints" ]]; then
   mkdir -p "$DEST/formal_runs/synbios_moe/checkpoints"
   rsync -a \
-    --exclude='distributed/' \
+    --exclude='distributed/*.distcp' \
     --exclude='model.pt' \
     "$ROOT/artifacts/synbios_moe/checkpoints/" \
     "$DEST/formal_runs/synbios_moe/checkpoints/"
@@ -80,7 +80,7 @@ copy_tree "$ROOT/runs" "$DEST/smoke/local_runs"
 if [[ -d "$ROOT/checkpoints/rtx4090_single_1gpu" ]]; then
   mkdir -p "$DEST/smoke/checkpoints/rtx4090_single_1gpu"
   rsync -a \
-    --exclude='distributed/' \
+    --exclude='distributed/*.distcp' \
     --exclude='model.pt' \
     "$ROOT/checkpoints/rtx4090_single_1gpu/" \
     "$DEST/smoke/checkpoints/rtx4090_single_1gpu/"

@@ -66,7 +66,8 @@ profiles/
 # Tensor payloads and raw dataset shards remain on the mounted artifacts disk.
 !/results/
 !/results/**
-/results/**/distributed/
+/results/**/distributed/*
+!/results/**/distributed/.metadata
 /results/**/*.distcp
 /results/**/*.pt
 /results/**/*.pth

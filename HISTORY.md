@@ -742,3 +742,20 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   data manifests, and checkpoint metadata, with `results/MANIFEST.sha256` regenerated.
 - Push result: Conventional Commit `1361173` (`docs(results): publish multi5 training and
   validation`) was pushed successfully to `origin/train`.
+
+## 2026-07-21 19:13 — Audit and synchronize all Git-safe server evidence
+
+- Scope: every server-side benchmark, smoke run, formal training run, validation run, cloze
+  result, operation log, console log, TensorBoard event, JUnit report, environment inventory,
+  dataset manifest, and lightweight checkpoint recovery file.
+- A source-to-export `rsync --dry-run` audit reported no missing files for all covered artifact
+  roots after refresh: `distributed_benchmark`, `logs`, `validation`, `smoke`, SynBioS `runs`,
+  `results`, `operation_logs`, `checkpoints`, and local smoke `runs/checkpoints`.
+- Gap fixed: the previous checkpoint rule excluded the complete `distributed/` directory and thus
+  omitted each small DCP `.metadata` file. The exporter now excludes only `*.distcp` tensor shards
+  and `model.pt`, while preserving nine DCP metadata files (about 20–253 KiB each) across smoke,
+  validation, `single`, and `multi5_permute` checkpoints.
+- Deliberate remote exclusions remain raw biography/token payloads, `model.pt`, and DCP/Adam tensor
+  shards. These are data/model payloads rather than result evidence, include files as large as
+  1.33 GB, and would exceed or misuse normal GitHub storage. Their exact hashes, manifests, sizes,
+  committed markers, runtime/RNG state, and DCP layout metadata are retained remotely.
