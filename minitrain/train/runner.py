@@ -14,8 +14,10 @@ from minitrain.distributed.strategy import ParallelStrategy
 from minitrain.runtime.config import ExperimentConfig
 from minitrain.runtime.logger import EventLogger
 from minitrain.runtime.monitoring import (
+    GpuUtilizationMonitor,
     distributed_mean,
     distributed_mean_tensors,
+    distributed_gpu_utilization,
     memory_metrics,
 )
 from minitrain.train.checkpoint import checkpoint_path, prune_checkpoints, save_checkpoint
@@ -45,6 +47,7 @@ class TrainingRunner:
         self.device = device
         self.world_size = world_size
         self.rank = strategy.rank
+        self.gpu_monitor = GpuUtilizationMonitor(device)
 
     def _log_step(
         self,
@@ -114,7 +117,10 @@ class TrainingRunner:
         }
         if self.cfg.train.epochs is not None:
             payload["epochs_total"] = self.cfg.train.epochs
-        payload.update(memory_metrics(self.device))
+        payload.update(memory_metrics(self.device, reset_peak_stats=True))
+        payload.update(
+            distributed_gpu_utilization(self.gpu_monitor.read_interval(), self.device)
+        )
         payload.update(scalars)
         payload.update(visualizations)
         self.logger.log_event(payload)
@@ -199,6 +205,7 @@ class TrainingRunner:
             tracemalloc.start()
         else:
             torch.cuda.reset_peak_memory_stats(self.device)
+            self.gpu_monitor.start()
 
         # Enter timing only after every distributed rank has completed setup.
         self.strategy.barrier()
@@ -321,3 +328,4 @@ class TrainingRunner:
 
         if self.device.type != "cuda" and tracemalloc.is_tracing():
             tracemalloc.stop()
+        self.gpu_monitor.close()

@@ -8,7 +8,10 @@ checkpoint:
   every_epochs: null
   keep_last: 2
   keep_safety: 0
-  save_final: true
-  export_model: true
+  # Stability probes must not spend tens of seconds writing a multi-GB formal
+  # checkpoint. Full save/resume correctness has its own validation gate.
+  save_final: false
+  export_model: false
+  export_model_every_epochs: null
 logging:
   log_dir: artifacts/validation/synbios_moe/runs

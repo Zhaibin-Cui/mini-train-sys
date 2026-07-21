@@ -128,12 +128,16 @@ def format_console_event(payload: dict[str, object]) -> str:
             parts.append(f"tok/s {_number(payload, 'tokens_per_sec', 1)}")
         if "items_per_sec" in payload and not payload.get("tokens_per_sec"):
             parts.append(f"items/s {_number(payload, 'items_per_sec', 1)}")
-        if "gpu_memory_allocated_mb_max" in payload:
-            used = float(payload["gpu_memory_allocated_mb_max"]) / 1024
+        if "gpu_peak_memory_allocated_mb_max" in payload:
+            used = float(payload["gpu_peak_memory_allocated_mb_max"]) / 1024
             capacity = float(payload.get("gpu_memory_capacity_mb_max", 0)) / 1024
-            parts.append(f"gpu(max) {used:.2f}/{capacity:.2f} GiB")
+            parts.append(f"gpu-peak {used:.2f}/{capacity:.2f} GiB")
         elif "host_peak_memory_mb" in payload:
             parts.append(f"host-peak {_number(payload, 'host_peak_memory_mb', 1)} MiB")
+        if "gpu_compute_utilization_percent_mean" in payload:
+            parts.append(
+                f"gpu-util {_number(payload, 'gpu_compute_utilization_percent_mean', 1)}%"
+            )
         parts.append(f"{_number(payload, 'progress_percent', 1)}%")
         parts.append(f"ETA {_duration(payload.get('eta_seconds'))}")
         return " | ".join(parts)

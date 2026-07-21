@@ -14,8 +14,9 @@
 `80,000 × 96 × 512 = 3.932B` 的预算。这里不用梯度累计。
 
 切换 single/DDP/FSDP 不改 epochs，只改变每卡 batch、global batch 和 optimizer
-update 数。运行时按 reference global batch 96 自动线性缩放 LR/warmup，详见
-[`distributed_training.md`](../training/distributed_training.md)。
+update 数。SynBioS 正式配置固定采用论文 LR `1e-3`、warmup 1,000 step 与 cosine
+floor `1e-4`；实际 global batch 不为 96 是单独记录的 fidelity 差异。通用 batch
+缩放机制详见 [`distributed_training.md`](../training/distributed_training.md)。
 
 ## 2. 代码地图
 

@@ -4,7 +4,11 @@ import torch
 
 from minitrain.runtime.config import LoggingConfig
 from minitrain.runtime.logger import build_event_logger, format_console_event
-from minitrain.runtime.monitoring import ProgressReporter
+from minitrain.runtime.monitoring import (
+    GpuUtilizationMonitor,
+    ProgressReporter,
+    distributed_gpu_utilization,
+)
 
 
 def test_jsonl_logger_persists_every_event(tmp_path):
@@ -37,8 +41,9 @@ def test_console_progress_is_human_readable():
             "loss": 2.125,
             "lr": 3e-4,
             "tokens_per_sec": 12_345,
-            "gpu_memory_allocated_mb_max": 12_288,
+            "gpu_peak_memory_allocated_mb_max": 12_288,
             "gpu_memory_capacity_mb_max": 24_576,
+            "gpu_compute_utilization_percent_mean": 97.5,
             "progress_percent": 1.0,
             "eta_seconds": 3661,
         }
@@ -46,7 +51,8 @@ def test_console_progress_is_human_readable():
 
     assert "batch 100/10000" in rendered
     assert "lr 3.000e-04" in rendered
-    assert "gpu(max) 12.00/24.00 GiB" in rendered
+    assert "gpu-peak 12.00/24.00 GiB" in rendered
+    assert "gpu-util 97.5%" in rendered
     assert "ETA 1:01:01" in rendered
 
 
@@ -134,6 +140,30 @@ def test_tensorboard_records_full_numeric_state(tmp_path):
         "train/moe/expert_load_fraction_by_layer/ratio_histogram"
         in accumulator.Tags()["histograms"]
     )
+
+
+def test_gpu_utilization_interval_has_unambiguous_compute_and_controller_metrics():
+    monitor = GpuUtilizationMonitor(torch.device("cpu"))
+    monitor._samples = [(80.0, 30.0), (100.0, 50.0)]
+
+    metrics = distributed_gpu_utilization(monitor.read_interval(), torch.device("cpu"))
+
+    assert metrics == {
+        "gpu_compute_utilization_percent_min": 80.0,
+        "gpu_compute_utilization_percent_mean": 90.0,
+        "gpu_compute_utilization_percent_max": 100.0,
+        "gpu_memory_controller_utilization_percent_min": 30.0,
+        "gpu_memory_controller_utilization_percent_mean": 40.0,
+        "gpu_memory_controller_utilization_percent_max": 50.0,
+        "gpu_utilization_samples_per_rank_min": 2,
+        "gpu_utilization_available": 1,
+    }
+
+
+def test_gpu_utilization_reports_unavailable_without_inventing_zero_utilization():
+    assert distributed_gpu_utilization({}, torch.device("cpu")) == {
+        "gpu_utilization_available": 0
+    }
 
 
 def test_progress_reporter_uses_standard_batch_plural():

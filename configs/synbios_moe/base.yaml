@@ -21,7 +21,10 @@ train:
   precision: auto
   grad_clip_norm: 5.0
   reference_global_batch_size: 96
-  batch_size_scaling: linear
+  # Preserve the paper's optimizer trajectory even when the hardware-efficient
+  # global batch differs from 96. In particular, never linearly amplify the
+  # 1e-3 peak LR for the 4-GPU batch-448 run.
+  batch_size_scaling: none
 data:
   # One CPU hosts all GPUs. Auto allocation caps at four workers per rank and
   # 32 workers for the node, instead of multiplying a fixed value blindly.

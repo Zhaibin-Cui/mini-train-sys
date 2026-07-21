@@ -38,7 +38,7 @@ def test_synbios_4gpu_formal_checkpoint_and_logging_policy():
     assert cfg.checkpoint.export_model_every_epochs == 50
 
 
-def test_linear_batch_scaling_preserves_epoch_budget():
+def test_synbios_paper_optimizer_schedule_is_not_batch_scaled():
     payload = load_yaml_dict("configs/synbios_moe/runs/single_ddp.yaml")
     cfg = experiment_config_from_dict(payload)
     resolved = resolve_batch_scale(
@@ -50,8 +50,9 @@ def test_linear_batch_scaling_preserves_epoch_budget():
 
     assert cfg.train.epochs == 540
     assert resolved.global_batch_size == 64
-    assert resolved.optimizer.lr == cfg.optimizer.lr * 2 / 3
-    assert resolved.lr_scheduler.warmup_steps == 1500
+    assert resolved.scale == 1.0
+    assert resolved.optimizer.lr == cfg.optimizer.lr == 0.001
+    assert resolved.lr_scheduler.warmup_steps == 1000
 
 
 def test_4090_server_matrix_has_explicit_topology_and_auto_workers():

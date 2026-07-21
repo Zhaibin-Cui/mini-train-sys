@@ -1,0 +1,2 @@
+{"event": "prepare", "step": 1, "steps_total": 2, "progress_percent": 50.0, "elapsed_seconds": 26.668, "eta_seconds": 26.668, "items_processed": 100000, "items_per_sec": 3749.882, "tokens_processed": 0, "tokens_per_sec": 0.0, "phase": 1.0, "host_peak_memory_mb": 38.72}
+{"event": "prepare", "step": 2, "steps_total": 2, "progress_percent": 100.0, "elapsed_seconds": 77.597, "eta_seconds": 0.0, "items_processed": 100000, "items_per_sec": 1288.717, "tokens_processed": 0, "tokens_per_sec": 0.0, "phase": 2.0, "host_peak_memory_mb": 38.72}

@@ -7,7 +7,7 @@
 `TrainingRunner` 每隔 `train.log_interval` 个 optimizer step 输出一行，例如：
 
 ```text
-[train] batch 100/10000 | epoch 2/5 | loss 2.10431 | lr 3.000e-04 | tok/s 82,410.0 | gpu(max) 18.20/24.00 GiB | 21.0% | ETA 0:42:18
+[train] batch 100/10000 | epoch 2/5 | loss 2.10431 | lr 3.000e-04 | tok/s 82,410.0 | gpu-peak 18.20/24.00 GiB | gpu-util 97.5% | 21.0% | ETA 0:42:18
 ```
 
 这里一个 batch 就是一个 optimizer update；本项目没有梯度累计。主要字段如下：
@@ -17,7 +17,7 @@
 | `batch/batches_total` | 当前 epoch 内 DataLoader 进度 |
 | `step/step_total` | 整个实验的 optimizer update 进度 |
 | `loss` | 当前日志区间、所有 rank 的平均总 loss |
-| `lr` | 当前实际学习率；多卡 batch scaling 后的值也反映在这里 |
+| `lr` | 当前实际学习率；若配置启用 batch scaling，缩放后的值也反映在这里 |
 | `tokens_seen/tokens_goal` | 全局已训练 token 与计划 token |
 | `tokens_per_sec` | 这段日志区间内所有 GPU 合计吞吐 |
 | `avg_tokens_per_sec` | 本次进程启动以来的平均总吞吐 |
@@ -26,14 +26,18 @@
 | `gpu_memory_allocated_mb_max` | 所有 rank 中最高的实际 tensor 显存 |
 | `gpu_memory_allocated_mb_total` | 当前作业所有 rank 的 tensor 显存之和 |
 | `gpu_memory_reserved_mb_max/total` | PyTorch allocator 保留显存的最大值/总和 |
-| `gpu_peak_memory_allocated_mb_max` | 从本轮运行开始的 rank 峰值中的最大值 |
+| `gpu_peak_memory_allocated_mb_max` | 当前日志区间内各 rank 的 peak allocated 最大值 |
+| `gpu_memory_current/reserved/peak_percent_max` | 当前、allocator reserved、区间 peak allocated 分别占物理显存的比例 |
+| `gpu_compute_utilization_percent_min/mean/max` | NVML 200ms 后台采样后，日志区间跨 rank 的 GPU 核心利用率分布 |
+| `gpu_memory_controller_utilization_percent_min/mean/max` | NVML 的显存控制器忙碌比例；不是显存容量占用率 |
+| `gpu_utilization_samples_per_rank_min` | 本区间每个 rank 至少取得的 NVML 样本数；用于判断曲线可信度 |
 | `grad_norm` | clip 前的全局梯度范数；可用于发现爆炸 |
 | `grad_clip_threshold` | 配置的全局梯度裁剪阈值；正式 preset 默认为 5.0 |
 | `grad_clip_coefficient` | 本 step 梯度实际乘数；1.0 表示没有裁剪 |
 | `grad_was_clipped` | 本 step 是否触发裁剪，0 或 1 |
 | `grad_clip_fraction` | 当前日志区间内触发裁剪的 step 比例 |
 
-`loss`、学习率、MoE router 指标和梯度指标在分布式训练中会先跨 rank 聚合。显存同时保留“单个最坏 rank”和“整个作业总和”，因此不会把 8 卡总显存误报成一张卡的使用量。
+`loss`、学习率、MoE router 指标和梯度指标在分布式训练中会先跨 rank 聚合。显存同时保留“单个最坏 rank”和“整个作业总和”，因此不会把 8 卡总显存误报成一张卡的使用量。GPU compute util 来自各 rank 独立的 NVML 后台采样，再聚合为 min/mean/max；不能用 PyTorch allocator 的当前显存比例代替 compute util。若 NVML 不可用，只写 `gpu_utilization_available=0`，不会伪造 0% 利用率。
 
 训练指标不是只取打印时的最后一个 batch。`TrainingRunner` 会先在设备上累计整个
 `log_interval`，到日志点再求区间平均并跨 rank 聚合；这样不会每一步同步 CUDA，也避免
@@ -68,7 +72,7 @@ logging:
 tensorboard --logdir artifacts/runs
 ```
 
-常看的曲线是 `train/loss`、`train/lr`、`train/tokens_per_sec`、`train/data_wait_percent`、`train/gpu_memory_allocated_mb_max`、`train/gpu_memory_allocated_mb_total` 和 `train/grad_norm`。`train/check_finite: true` 会在 loss 变成 NaN/Inf 时立即终止，避免继续写坏 checkpoint。
+常看的曲线是 `train/loss`、`train/lr`、`train/tokens_per_sec`、`train/data_wait_percent`、`train/gpu_compute_utilization_percent_mean`、`train/gpu_memory_peak_percent_max` 和 `train/grad_norm`。需要排查卡间不均衡时，同时看 compute util 的 min/max；需要判断显存容量时看 peak percent，而不是 memory-controller util。`train/check_finite: true` 会在 loss 变成 NaN/Inf 时立即终止，避免继续写坏 checkpoint。
 
 ### Dense 与 MoE loss
 

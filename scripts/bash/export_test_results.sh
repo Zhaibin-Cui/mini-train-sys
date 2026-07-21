@@ -20,7 +20,9 @@ copy_tree() {
   local target="$2"
   if [[ -d "$source" ]]; then
     mkdir -p "$target"
-    rsync -a --delete "$source/" "$target/"
+    # Results are an append-only provenance archive. Active artifacts may be
+    # pruned or reset between runs; never mirror those deletions into Git.
+    rsync -a "$source/" "$target/"
   fi
 }
 
@@ -30,7 +32,7 @@ copy_tree "$ROOT/artifacts/logs" "$DEST/logs"
 # markers in Git. Multi-gigabyte DCP shards and model exports remain on the
 # mounted artifact volume and are intentionally not duplicated into Git.
 if [[ -d "$ROOT/artifacts/validation" ]]; then
-  rsync -a --delete \
+  rsync -a \
     --exclude='distributed/' \
     --exclude='model.pt' \
     "$ROOT/artifacts/validation/" "$DEST/validation/"
@@ -59,13 +61,28 @@ done
 # Persist formal metrics and recovery metadata, never multi-gigabyte tensor
 # payloads. COMMITTED/runtime/RNG files prove a checkpoint was publishable.
 copy_tree "$ROOT/artifacts/synbios_moe/runs" "$DEST/formal_runs/synbios_moe/runs"
+copy_tree \
+  "$ROOT/artifacts/synbios_moe/operation_logs" \
+  "$DEST/formal_runs/synbios_moe/operation_logs"
 if [[ -d "$ROOT/artifacts/synbios_moe/checkpoints" ]]; then
   mkdir -p "$DEST/formal_runs/synbios_moe/checkpoints"
-  rsync -a --delete \
+  rsync -a \
     --exclude='distributed/' \
     --exclude='model.pt' \
     "$ROOT/artifacts/synbios_moe/checkpoints/" \
     "$DEST/formal_runs/synbios_moe/checkpoints/"
+fi
+
+# Preserve generic/local smoke runs created before the server-specific artifact
+# roots are selected. Export only recovery metadata from checkpoints.
+copy_tree "$ROOT/runs" "$DEST/smoke/local_runs"
+if [[ -d "$ROOT/checkpoints/rtx4090_single_1gpu" ]]; then
+  mkdir -p "$DEST/smoke/checkpoints/rtx4090_single_1gpu"
+  rsync -a \
+    --exclude='distributed/' \
+    --exclude='model.pt' \
+    "$ROOT/checkpoints/rtx4090_single_1gpu/" \
+    "$DEST/smoke/checkpoints/rtx4090_single_1gpu/"
 fi
 
 # Hash every exported file so a Git snapshot can be checked independently of

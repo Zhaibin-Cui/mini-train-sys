@@ -17,7 +17,7 @@
 | tokenizer/context | GPT-2，512 tokens，条目间 EOS | `tiktoken:gpt2`，512，EOS 边界 |
 | packing | 随机采样 BIO 条目、EOS 分隔并拼成 512-token 序列 | 每 epoch 确定性随机重排完整 BIO 条目，再切非重叠 512-token blocks；允许切中条目 |
 | 主干 | 12 layers, 12 heads, d=768, RoPE | 相同尺寸；FFN 改为 MoE |
-| 预训练 | AdamW, wd=.1, eps=1e-6, lr=1e-3, warmup 1k, cosine 到 1e-4, batch 96, 80k steps；约 540 passes | 每卡 batch 8、无梯度累积；single 540 epochs、multi5+permute 108 epochs，约 4.0B token；LR/warmup 按实际 global batch 缩放 |
+| 预训练 | AdamW, wd=.1, eps=1e-6, lr=1e-3, warmup 1k, cosine 到 1e-4, batch 96, 80k steps；约 540 passes | 无梯度累积；single 540 epochs、multi5+permute 108 epochs，约 4.0B token；硬件 batch 可不同，但固定使用论文 LR/warmup，不做线性放大 |
 | P-probe | 冻结主干；embedding rank 2；LayerNorm+linear；batch 50；30k steps | 相同；AdamW lr=1e-3, wd=.3, eps=1e-6，linear decay |
 | Q-probe | 仅 BOS+姓名+EOS；embedding rank 16；BatchNorm+linear；batch 200；30k steps | 相同；AdamW lr=1e-3, wd=.3, eps=1e-6，linear decay |
 
@@ -25,7 +25,7 @@ MoE 主配置采用 8 experts、top-2、dropless routing、SwiGLU、负载均衡
 
 还需说明 MiniTrain 主干本身是 Llama 风格的 RMSNorm/SwiGLU、无 bias 投影和全 head RoPE，而论文 probing 主干是改用 1/4 rotary dimension 的 GPT-2。项目现有模型没有 GPT-2 LayerNorm/GELU block，因此这里保持论文的宏观尺寸和训练协议，使用 MiniTrain MoE block；这些实现差异会进入 fidelity ledger。若需要论文 dense 数值的逐点复现，应另加 GPT-2 dense control，不能从本 MoE run 反推。
 
-训练不使用梯度累计，因此只有实际 global batch 恰好为 96 时才能匹配论文 batch；optimizer-update 轨迹仍会因 packing 和实现差异而不同。本复刻优先保持总 token/人物曝光预算：`single:multi5+permute` 使用严格的 `540:108 = 5:1` epoch 比例。运行时按 `actual_global_batch / 96` 线性缩放峰值 LR，并反向缩放 warmup，使 warmup 覆盖的 token 数近似不变。例如单卡 batch 8 使用 LR `8.333e-5`、warmup 12,000；8 卡每卡 batch 8 使用 global batch 64、LR `6.667e-4`、warmup 1,500。该线性规则是工程折中，不是论文原始设置。
+训练不使用梯度累计，因此只有实际 global batch 恰好为 96 时才能匹配论文 batch；optimizer-update 轨迹仍会因 packing 和实现差异而不同。本复刻优先保持总 token/人物曝光预算：`single:multi5+permute` 使用严格的 `540:108 = 5:1` epoch 比例。为避免大 batch 线性缩放偏离论文且引发不稳定，所有 SynBioS 正式配置固定使用论文峰值 LR `1e-3`、warmup 1,000 step 和 cosine floor `1e-4`。global batch 不为 96 仍是明确记录的 fidelity 差异。
 
 论文给出了每类模板数量，但没有随论文发布完整模板表、姓名/城市/学校/专业/公司原始清单。实现会固定生成器版本、seed、候选数、依赖关系和模板数，并保存 manifest/hash；这能做到可重复的机制复刻，但不是原始数据逐条复原。
 
@@ -51,7 +51,7 @@ MoE 主配置采用 8 experts、top-2、dropless routing、SwiGLU、负载均衡
    - `--resume latest` 恢复完整训练状态并从下一个 epoch 开始；probe/evaluate 只加载 checkpoint 的模型权重。
 5. 验证
    - 本机只运行 tiny profile/token-position/model/probe smoke tests。
-   - 先运行 smoke 配置，再用分布式 benchmark 在目标 24 GB RTX 4090 上确认 batch 8 的显存余量；若 OOM，应降低每卡 batch，运行时会按比例调整学习率/warmup，不改变 epoch/token 预算。
+   - 先运行 smoke 配置，再用分布式 benchmark 在目标 24 GB RTX 4090 上确认安全 batch；若 OOM，应降低每卡 batch，但仍保持论文学习率和 warmup，不改变 epoch/token 预算。
 
 ## 判定与报告
 

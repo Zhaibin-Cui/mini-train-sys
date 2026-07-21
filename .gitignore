@@ -50,6 +50,7 @@ wandb/
 outputs/
 profiles/
 /artifacts
+/data
 
 # Large model/data artifacts
 *.pt

@@ -346,3 +346,135 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Active services: formal training tmux `minitrain-synbios-single-fsdp4`; TensorBoard tmux
   `minitrain-tensorboard` on TCP 6006.
 - Remote snapshot commit: `0967d7f` (`feat(server): persist distributed benchmark snapshot`).
+
+## 2026-07-21 04:51 — Paper-fidelity LR and GPU telemetry correction
+
+- Status: running
+- Local/UTC start: 2026-07-21 04:51 Asia/Shanghai / 2026-07-20 20:51 UTC
+- Purpose: replace the misleading post-step allocator ratio with interval-sampled NVML GPU
+  compute/memory-controller utilization, validate 4-GPU FSDP, and restart the formal `single`
+  corpus run from random initialization with the paper optimizer schedule.
+- Git at launch: `858cf3f19e247bd8b4b9f4f2cd7c3075e89d214c`; dirty with the telemetry,
+  configuration, test, and documentation changes described by this entry.
+- Hardware/topology: one node, four RTX 4090 24 GB GPUs, FSDP full shard, BF16, Triton ops.
+- Corrected training contract: local batch 112, global batch 448, AdamW peak LR `1e-3`,
+  warmup 1,000 optimizer steps, cosine floor `1e-4`, weight decay `0.1`, epsilon `1e-6`,
+  gradient clipping threshold 5.0, and no LR/warmup batch scaling. The larger-than-paper batch
+  remains an explicit fidelity difference; the paper optimizer hyperparameters are preserved.
+- Data contract before reset: generated-data manifest SHA256
+  `144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25`, token-manifest
+  SHA256 `2bdabe8d64941a5e4c51bde05d35618eaa65392b4215a7f382bbc3b7f69541f8`.
+- Reset scope: after validation, permanently remove only the active failed formal run's
+  checkpoints, TensorBoard/JSONL run directory, and console log. Preserve the checked source
+  dataset and the Git-exported historical failure evidence required by `AGENTS.md`.
+- Validation tmux/session, exact commands, results, destructive reset inventory, and formal
+  launch details will be appended below before the run starts.
+- Regression gate: initial run found only the obsolete linear-scaling assertion (71 passed,
+  1 failed); after updating that contract test, 72 tests passed and full ruff passed in tmux
+  `minitrain-fidelity-tests-rerun`. JUnit:
+  `artifacts/validation/pytest_fidelity_gpu_telemetry.xml`; log:
+  `artifacts/logs/fidelity_gpu_telemetry_tests_rerun.log`.
+- NVML sampler check: a two-second CUDA matrix load produced 22 samples with compute utilization
+  mean 81.73% and max 99%, while post-workload allocator memory returned to zero. This confirms
+  compute utilization is no longer inferred from post-step allocated memory.
+- 4-GPU preflight status: running in tmux `minitrain-fidelity-fsdp4-preflight`.
+- Preflight command:
+
+  ```bash
+  torchrun --standalone --nproc_per_node 4 scripts/train.py --device cuda \
+    --config configs/synbios_moe/runs/single_fsdp_4gpu_validation.yaml \
+    --model-config configs/synbios_moe/model.yaml --smoke-steps 64
+  ```
+
+- Preflight log: `artifacts/logs/fidelity_fsdp4_preflight.log`; isolated result root:
+  `artifacts/validation/synbios_moe/runs/synbios_moe_single_fsdp_4gpu_validation/`.
+- First preflight attempt failed before CUDA allocation because validation disabled model export
+  while inheriting `export_model_every_epochs: 50`. The validation override now explicitly sets
+  that interval to null; retry tmux is `minitrain-fidelity-fsdp4-preflight-r2` with the same
+  command and log `artifacts/logs/fidelity_fsdp4_preflight_r2.log`.
+- Preflight result: completed 64/64 optimizer steps with no NaN/Inf. Loss fell from 10.94644 to
+  3.68811; grad norm ended at 1.438 and the per-step clipping signal ended at zero after one
+  transient maximum of 70.656. Steady throughput reached 353k-358k token/s. NVML compute
+  utilization averaged 96.89% across all logged points (about 97%-99% after startup), and the
+  corrected interval peak allocated-memory ratio was 86.2%. All four GPUs returned to 0 MiB.
+  Event directory:
+  `artifacts/validation/synbios_moe/runs/synbios_moe_single_fsdp_4gpu_validation/20260721-045343/`.
+- Dataset integrity gate: all six files named by the generation/token manifests passed exact size
+  and SHA256 verification; 100,000 biographies, 100,000 document-index entries, and 7,405,102
+  training tokens remain unchanged.
+- Fresh reset completed at 2026-07-21 04:55 Asia/Shanghai: the exact active failed-run targets
+  (11,033,892,817 checkpoint bytes in 34 files, 4,009,995 run-log bytes in two files, and the
+  40,097-byte console log) were moved to the mounted filesystem trash after direct deletion was
+  blocked by the host safety policy. Their active paths are absent, so no checkpoint/log can be
+  resumed or mixed into the new TensorBoard run; historical Git exports and the source dataset
+  remain. `/data` has 42 GiB available and all four GPUs are empty.
+- Formal fresh-launch status: starting from random initialization in tmux
+  `minitrain-synbios-single-fsdp4`; no `--resume` argument and `AUTO_RESUME=0`.
+- Formal command:
+
+  ```bash
+  AUTO_RESUME=0 NPROC=4 bash scripts/bash/synbios_moe.sh single fsdp
+  ```
+
+- Formal console log: `artifacts/logs/synbios_moe_single_fsdp4_formal.log`; checkpoints:
+  `artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/`; TensorBoard/JSONL:
+  `artifacts/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/`. Run-config SHA256:
+  `0f75102bde77e16b419b91e60f211f9b30c47c7cafca572e2bce5e3c5abfb0b2`.
+- Result-export correction: the first post-reset export exposed that `rsync --delete` would mirror
+  active artifact pruning into Git and remove the prior failed-run evidence. No commit occurred.
+  The exporter is now append-only for benchmarks, logs, validation, formal runs, and checkpoint
+  metadata; the tracked epoch-10/20/30 metadata and old `20260721-042956` events were restored
+  before regenerating `results/MANIFEST.sha256`.
+- Formal live verification: the new TensorBoard event file contains every corrected telemetry tag
+  (NVML compute min/mean/max, memory-controller min/mean/max, and allocator
+  current/reserved/interval-peak percentages). At epoch 7 the loss was about 1.11, grad norm about
+  0.14, LR `2.0e-4` in the 1,000-step warmup, steady compute utilization about 98%, and interval
+  peak allocated memory 86.2%. This is a fresh trajectory, not a resume of the rejected run.
+- End/status: 2026-07-21 08:28 Asia/Shanghai / 2026-07-21 00:28 UTC; `completed`, exit code 0.
+- Final result: completed all 540 epochs / 17,280 optimizer steps and 3,963,617,280 scheduled
+  tokens. Logged loss fell from 10.94644 at step 1 to 0.193221 at step 17,280 (minimum logged
+  0.192083); final grad norm was 0.02456, final LR was `1.00000008e-4`, average end-to-end
+  throughput was 312,868 tok/s, mean logged NVML compute utilization was 97.02%, and interval peak
+  allocated memory remained 86.2%. Only 0.197% of logged steps clipped gradients.
+- Final retained checkpoint: `epoch_000540_step_000017280`, atomically `COMMITTED`, with four DCP
+  model/Adam shards, runtime/scheduler state, four RNG states, and the final `model.pt` export.
+  Retention also preserves epoch 500 as the safety anchor and epoch 530 as the previous recovery
+  point; the active formal checkpoint root is 12 GiB.
+- Final evidence: TensorBoard event file 27,376,320 bytes, JSONL event stream 31,135,172 bytes,
+  and console log 783,380 bytes under the paths above. All Git-safe evidence is exported under
+  `results/formal_runs/synbios_moe/` and `results/logs/`; tensor payloads remain on `/data`.
+
+## 2026-07-21 13:33 — Completed formal-run GitHub snapshot
+
+- Status: validation completed; snapshot commit/push pending.
+- Local/UTC start: 2026-07-21 13:33 Asia/Shanghai / 2026-07-21 05:33 UTC.
+- Purpose: export and push every Git-safe server result and process artifact after the successful
+  540-epoch SynBioS run, especially complete TensorBoard/JSONL metrics, console/test/service logs,
+  validation reports, dataset manifests, checkpoint recovery metadata, and content hashes.
+- Source Git revision: `858cf3f19e247bd8b4b9f4f2cd7c3075e89d214c` on `train`, initially synchronized
+  with `origin/train`; working tree contains the completed GPU telemetry/config/test changes and
+  generated evidence described in the preceding run entry.
+- Export command: `bash scripts/bash/export_test_results.sh`; append-only destination `results/`.
+- Validation tmux: `minitrain-prepush-20260721`; log:
+  `artifacts/logs/prepush_validation_20260721-1333.log`.
+- Validation command:
+
+  ```bash
+  python -m pytest -q && python -m ruff check minitrain scripts tests
+  ```
+
+- Planned exclusions: raw datasets/token shards, caches, trash, virtualenv contents, `model.pt`,
+  and multi-gigabyte DCP/optimizer shards. Their retained locations, sizes, hashes/manifests, and
+  `COMMITTED`/runtime/RNG evidence are preserved where allowed by the repository policy.
+- Validation result: 72 tests passed with zero failures in 22.18 seconds; Ruff passed. Exit status
+  was zero and the complete output is retained in the validation log above.
+- Export result: 254 content-hashed files totaling 64 MiB. This includes the successful formal
+  run's 31,135,172-byte JSONL stream and 27,376,320-byte TensorBoard event, validation and data
+  preparation TensorBoard events, the early single-GPU smoke events, console/service/test logs,
+  JUnit, checkpoint runtime/RNG/COMMITTED metadata, manifests, benchmark raw data, CSV, and plots.
+- Safety audit: every `results/MANIFEST.sha256` entry verified; no staged file reaches GitHub's
+  100 MiB hard limit; credential scans found no private key, cloud key, GitHub/OpenAI token,
+  bearer token, or assignment-style secret. `git diff --check` passed for source/documentation;
+  raw generated logs/events retain their original formatting as provenance.
+- Remote preflight: `git fetch origin` completed and `HEAD...origin/train` was `0 0` before the
+  snapshot commit. TensorBoard remains available in tmux `minitrain-tensorboard` on TCP 6006.

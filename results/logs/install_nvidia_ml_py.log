@@ -1,0 +1,5 @@
+Collecting nvidia-ml-py<14,>=12
+  Downloading nvidia_ml_py-13.610.43-py3-none-any.whl.metadata (9.7 kB)
+Downloading nvidia_ml_py-13.610.43-py3-none-any.whl (53 kB)
+Installing collected packages: nvidia-ml-py
+Successfully installed nvidia-ml-py-13.610.43

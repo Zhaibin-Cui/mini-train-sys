@@ -56,5 +56,30 @@ active. This rejects the linearly scaled peak LR `0.004667` for global batch 448
 retained as failure evidence, not presented as a successful formal result. A lower-LR convergence
 sweep is required before the formal restart.
 
+## Paper-fidelity restart and corrected GPU telemetry
+
+The rejected linear scaling was removed. The new formal run keeps local/global batch 112/448 for
+the validated hardware throughput but fixes AdamW peak LR at `1e-3`, warmup at 1,000 optimizer
+steps, and cosine floor at `1e-4`, matching the paper hyperparameters rather than multiplying LR
+by `448/96`.
+
+A fresh 64-step 4-GPU FSDP preflight completed without NaN/Inf: loss fell from 10.94644 to
+3.68811, the final unclipped grad norm was 1.438, and the final clipping signal was zero. Steady
+throughput was 353k-358k token/s. The corrected NVML compute-utilization metric averaged 96.89%
+over all logged steps and about 97%-99% after startup; interval peak allocated memory was 86.2%.
+The previous `gpu_memory_utilization_percent_max=4.71%` was a post-step PyTorch allocator ratio,
+not compute utilization, and has been replaced by explicitly named current/reserved/interval-peak
+memory percentages plus NVML compute and memory-controller min/mean/max metrics.
+
+After manifest size/SHA256 verification of all six generated/token data files, the failed active
+formal checkpoints and logs were cleared and a new random-initialized FSDP4 run started at step 0.
+It completed all 540 epochs / 17,280 optimizer steps and 3,963,617,280 scheduled tokens. Logged
+loss fell from 10.94644 to 0.193221 (minimum 0.192083), final grad norm was 0.02456, mean logged
+NVML compute utilization was 97.02%, average end-to-end throughput was 312,868 tok/s, and interval
+peak allocated memory remained 86.2%. The final atomically committed checkpoint includes the full
+FSDP model/Adam recovery state and a separate `model.pt` export. The old failed run remains only
+as historical Git evidence and in recoverable mounted-volume trash; it cannot be auto-resumed or
+mixed into the successful TensorBoard directory.
+
 Raw evidence is under `benchmarks/`, `validation/`, and `logs/`; exact commands and stopped/failed
 runs are preserved in `../HISTORY.md`.

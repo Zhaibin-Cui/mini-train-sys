@@ -6,6 +6,9 @@ train:
   # fastest stable multiple of eight below the OOM boundary: 55 steps at 86.2%
   # peak allocated memory. See HISTORY.md and results/benchmarks/.
   batch_size: 112
+  # Keep the paper's lr=1e-3, 1k-step warmup, and cosine floor=1e-4 at global
+  # batch 448. The previous linear rule produced lr=4.667e-3 and diverged.
+  batch_size_scaling: none
   # Eight progress updates per 32-step epoch, plus the first and final step.
   log_interval: 4
 checkpoint:

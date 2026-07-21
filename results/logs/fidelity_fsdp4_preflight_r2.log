@@ -1,0 +1,70 @@
+W0721 04:53:36.103000 189175 torch/distributed/run.py:793] 
+W0721 04:53:36.103000 189175 torch/distributed/run.py:793] *****************************************
+W0721 04:53:36.103000 189175 torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0721 04:53:36.103000 189175 torch/distributed/run.py:793] *****************************************
+[init] run=synbios_moe_single_fsdp_4gpu_validation device=cuda:0 strategy=fsdp world=4 params=293494272
+[parallel_ready] {"event": "parallel_ready", "strategy": "fsdp", "fsdp_units": 13, "auto_wrap_policy": "transformer_block", "sharding_strategy": "full_shard"}
+[train] batch 1/32 | epoch 1/540 | loss 10.94644 | lr 1.000e-06 | grad 16.964 | data-wait 0.7% | tok/s 50,594.7 | gpu-peak 19.82/23.65 GiB | gpu-util 62.5% | 1.6% | ETA 0:04:45
+[train] batch 2/32 | epoch 1/540 | loss 10.90426 | lr 2.000e-06 | grad 17.088 | data-wait 0.4% | tok/s 276,508.0 | gpu-peak 20.39/23.65 GiB | gpu-util 97.5% | 3.1% | ETA 0:02:46
+[train] batch 3/32 | epoch 1/540 | loss 10.82207 | lr 3.000e-06 | grad 16.807 | data-wait 0.2% | tok/s 263,356.8 | gpu-peak 20.38/23.65 GiB | gpu-util 99.1% | 4.7% | ETA 0:02:06
+[train] batch 4/32 | epoch 1/540 | loss 10.69625 | lr 4.000e-06 | grad 16.521 | data-wait 0.2% | tok/s 335,535.2 | gpu-peak 20.38/23.65 GiB | gpu-util 98.1% | 6.2% | ETA 0:01:43
+[train] batch 5/32 | epoch 1/540 | loss 10.55074 | lr 5.000e-06 | grad 15.312 | data-wait 0.2% | tok/s 352,371.9 | gpu-peak 20.38/23.65 GiB | gpu-util 97.7% | 7.8% | ETA 0:01:29
+[train] batch 6/32 | epoch 1/540 | loss 10.37464 | lr 6.000e-06 | grad 14.048 | data-wait 0.2% | tok/s 350,487.6 | gpu-peak 20.38/23.65 GiB | gpu-util 97.4% | 9.4% | ETA 0:01:19
+[train] batch 7/32 | epoch 1/540 | loss 10.17935 | lr 7.000e-06 | grad 12.552 | data-wait 0.2% | tok/s 349,157.0 | gpu-peak 20.38/23.65 GiB | gpu-util 97.5% | 10.9% | ETA 0:01:12
+[train] batch 8/32 | epoch 1/540 | loss 10.00337 | lr 8.000e-06 | grad 11.166 | data-wait 0.3% | tok/s 347,074.6 | gpu-peak 20.38/23.65 GiB | gpu-util 96.9% | 12.5% | ETA 0:01:06
+[train] batch 9/32 | epoch 1/540 | loss 9.83177 | lr 9.000e-06 | grad 9.855 | data-wait 0.2% | tok/s 351,173.8 | gpu-peak 20.38/23.65 GiB | gpu-util 97.3% | 14.1% | ETA 0:01:02
+[train] batch 10/32 | epoch 1/540 | loss 9.66245 | lr 1.000e-05 | grad 8.403 | data-wait 0.2% | tok/s 351,506.3 | gpu-peak 20.38/23.65 GiB | gpu-util 97.5% | 15.6% | ETA 0:00:58
+[train] batch 11/32 | epoch 1/540 | loss 9.52231 | lr 1.100e-05 | grad 7.113 | data-wait 0.2% | tok/s 351,342.0 | gpu-peak 20.38/23.65 GiB | gpu-util 97.6% | 17.2% | ETA 0:00:55
+[train] batch 12/32 | epoch 1/540 | loss 9.38943 | lr 1.200e-05 | grad 5.992 | data-wait 0.3% | tok/s 332,163.9 | gpu-peak 20.38/23.65 GiB | gpu-util 94.1% | 18.8% | ETA 0:00:52
+[train] batch 13/32 | epoch 1/540 | loss 9.28835 | lr 1.300e-05 | grad 5.154 | data-wait 0.2% | tok/s 348,887.8 | gpu-peak 20.38/23.65 GiB | gpu-util 97.3% | 20.3% | ETA 0:00:50
+[train] batch 14/32 | epoch 1/540 | loss 9.19132 | lr 1.400e-05 | grad 4.527 | data-wait 0.2% | tok/s 351,664.9 | gpu-peak 20.38/23.65 GiB | gpu-util 98.1% | 21.9% | ETA 0:00:48
+[train] batch 15/32 | epoch 1/540 | loss 9.10823 | lr 1.500e-05 | grad 4.060 | data-wait 0.2% | tok/s 347,464.1 | gpu-peak 20.38/23.65 GiB | gpu-util 97.2% | 23.4% | ETA 0:00:46
+[train] batch 16/32 | epoch 1/540 | loss 9.04212 | lr 1.600e-05 | grad 3.716 | data-wait 0.2% | tok/s 352,472.3 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 25.0% | ETA 0:00:44
+[train] batch 17/32 | epoch 1/540 | loss 8.98409 | lr 1.700e-05 | grad 3.522 | data-wait 0.2% | tok/s 342,722.8 | gpu-peak 20.38/23.65 GiB | gpu-util 96.0% | 26.6% | ETA 0:00:42
+[train] batch 18/32 | epoch 1/540 | loss 8.93302 | lr 1.800e-05 | grad 3.401 | data-wait 0.2% | tok/s 351,996.5 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 28.1% | ETA 0:00:41
+[train] batch 19/32 | epoch 1/540 | loss 8.88916 | lr 1.900e-05 | grad 3.291 | data-wait 0.2% | tok/s 354,135.3 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 29.7% | ETA 0:00:39
+[train] batch 20/32 | epoch 1/540 | loss 8.84552 | lr 2.000e-05 | grad 3.232 | data-wait 0.2% | tok/s 352,769.2 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 31.2% | ETA 0:00:38
+[train] batch 21/32 | epoch 1/540 | loss 8.80565 | lr 2.100e-05 | grad 3.178 | data-wait 0.2% | tok/s 353,541.5 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 32.8% | ETA 0:00:37
+[train] batch 22/32 | epoch 1/540 | loss 8.77075 | lr 2.200e-05 | grad 3.127 | data-wait 0.2% | tok/s 279,257.6 | gpu-peak 20.38/23.65 GiB | gpu-util 89.1% | 34.4% | ETA 0:00:36
+[train] batch 23/32 | epoch 1/540 | loss 8.72688 | lr 2.300e-05 | grad 3.103 | data-wait 0.3% | tok/s 349,035.3 | gpu-peak 20.38/23.65 GiB | gpu-util 97.6% | 35.9% | ETA 0:00:34
+[train] batch 24/32 | epoch 1/540 | loss 8.69472 | lr 2.400e-05 | grad 3.071 | data-wait 0.3% | tok/s 302,270.0 | gpu-peak 20.38/23.65 GiB | gpu-util 94.8% | 37.5% | ETA 0:00:33
+[train] batch 25/32 | epoch 1/540 | loss 8.64904 | lr 2.500e-05 | grad 3.071 | data-wait 0.5% | tok/s 351,176.5 | gpu-peak 20.38/23.65 GiB | gpu-util 97.8% | 39.1% | ETA 0:00:32
+[train] batch 26/32 | epoch 1/540 | loss 8.59821 | lr 2.600e-05 | grad 3.086 | data-wait 0.0% | tok/s 354,129.6 | gpu-peak 20.38/23.65 GiB | gpu-util 98.2% | 40.6% | ETA 0:00:31
+[train] batch 27/32 | epoch 1/540 | loss 8.54298 | lr 2.700e-05 | grad 3.107 | data-wait 0.0% | tok/s 351,402.2 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 42.2% | ETA 0:00:30
+[train] batch 28/32 | epoch 1/540 | loss 8.48489 | lr 2.800e-05 | grad 3.130 | data-wait 0.0% | tok/s 353,458.5 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 43.8% | ETA 0:00:29
+[train] batch 29/32 | epoch 1/540 | loss 8.41167 | lr 2.900e-05 | grad 3.161 | data-wait 0.0% | tok/s 353,234.1 | gpu-peak 20.38/23.65 GiB | gpu-util 97.9% | 45.3% | ETA 0:00:28
+[train] batch 30/32 | epoch 1/540 | loss 8.32033 | lr 3.000e-05 | grad 3.229 | data-wait 0.0% | tok/s 352,645.0 | gpu-peak 20.38/23.65 GiB | gpu-util 98.2% | 46.9% | ETA 0:00:27
+[train] batch 31/32 | epoch 1/540 | loss 8.20587 | lr 3.100e-05 | grad 3.402 | data-wait 0.0% | tok/s 353,931.7 | gpu-peak 20.38/23.65 GiB | gpu-util 98.2% | 48.4% | ETA 0:00:26
+[train] batch 32/32 | epoch 1/540 | loss 8.07012 | lr 3.200e-05 | grad 3.696 | data-wait 0.0% | tok/s 353,926.4 | gpu-peak 20.38/23.65 GiB | gpu-util 97.9% | 50.0% | ETA 0:00:25
+[train] batch 1/32 | epoch 2/540 | loss 7.88288 | lr 3.300e-05 | grad 4.318 | data-wait 2.7% | tok/s 313,310.2 | gpu-peak 20.38/23.65 GiB | gpu-util 89.7% | 51.6% | ETA 0:00:24
+[train] batch 2/32 | epoch 2/540 | loss 7.64041 | lr 3.400e-05 | grad 6.052 | data-wait 0.2% | tok/s 347,093.2 | gpu-peak 20.38/23.65 GiB | gpu-util 97.7% | 53.1% | ETA 0:00:23
+[train] batch 3/32 | epoch 2/540 | loss 7.36752 | lr 3.500e-05 | grad 6.274 | data-wait 0.3% | tok/s 351,907.2 | gpu-peak 20.38/23.65 GiB | gpu-util 97.6% | 54.7% | ETA 0:00:22
+[train] batch 4/32 | epoch 2/540 | loss 7.13414 | lr 3.600e-05 | grad 12.026 | data-wait 0.3% | tok/s 352,276.3 | gpu-peak 20.38/23.65 GiB | gpu-util 97.6% | 56.2% | ETA 0:00:21
+[train] batch 5/32 | epoch 2/540 | loss 6.94475 | lr 3.700e-05 | grad 14.959 | data-wait 0.2% | tok/s 352,345.8 | gpu-peak 20.38/23.65 GiB | gpu-util 97.8% | 57.8% | ETA 0:00:21
+[train] batch 6/32 | epoch 2/540 | loss 6.91923 | lr 3.800e-05 | grad 70.656 | data-wait 0.3% | tok/s 354,099.1 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 59.4% | ETA 0:00:20
+[train] batch 7/32 | epoch 2/540 | loss 6.56338 | lr 3.900e-05 | grad 10.976 | data-wait 0.2% | tok/s 353,193.7 | gpu-peak 20.38/23.65 GiB | gpu-util 97.7% | 60.9% | ETA 0:00:19
+[train] batch 8/32 | epoch 2/540 | loss 6.43243 | lr 4.000e-05 | grad 13.308 | data-wait 0.2% | tok/s 353,220.6 | gpu-peak 20.38/23.65 GiB | gpu-util 97.8% | 62.5% | ETA 0:00:18
+[train] batch 9/32 | epoch 2/540 | loss 6.19646 | lr 4.100e-05 | grad 9.107 | data-wait 0.2% | tok/s 353,508.7 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 64.1% | ETA 0:00:17
+[train] batch 10/32 | epoch 2/540 | loss 6.07280 | lr 4.200e-05 | grad 22.520 | data-wait 0.2% | tok/s 354,415.2 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 65.6% | ETA 0:00:16
+[train] batch 11/32 | epoch 2/540 | loss 5.87672 | lr 4.300e-05 | grad 10.035 | data-wait 0.3% | tok/s 354,128.4 | gpu-peak 20.38/23.65 GiB | gpu-util 97.8% | 67.2% | ETA 0:00:15
+[train] batch 12/32 | epoch 2/540 | loss 5.70477 | lr 4.400e-05 | grad 6.473 | data-wait 0.3% | tok/s 353,072.1 | gpu-peak 20.38/23.65 GiB | gpu-util 97.6% | 68.8% | ETA 0:00:15
+[train] batch 13/32 | epoch 2/540 | loss 5.57753 | lr 4.500e-05 | grad 7.034 | data-wait 0.2% | tok/s 353,777.4 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 70.3% | ETA 0:00:14
+[train] batch 14/32 | epoch 2/540 | loss 5.38611 | lr 4.600e-05 | grad 4.542 | data-wait 0.3% | tok/s 353,372.3 | gpu-peak 20.38/23.65 GiB | gpu-util 97.7% | 71.9% | ETA 0:00:13
+[train] batch 15/32 | epoch 2/540 | loss 5.23174 | lr 4.700e-05 | grad 5.253 | data-wait 0.2% | tok/s 354,841.4 | gpu-peak 20.38/23.65 GiB | gpu-util 97.9% | 73.4% | ETA 0:00:12
+[train] batch 16/32 | epoch 2/540 | loss 5.08723 | lr 4.800e-05 | grad 5.506 | data-wait 0.2% | tok/s 354,807.0 | gpu-peak 20.38/23.65 GiB | gpu-util 97.7% | 75.0% | ETA 0:00:11
+[train] batch 17/32 | epoch 2/540 | loss 4.92895 | lr 4.900e-05 | grad 4.723 | data-wait 0.2% | tok/s 357,414.5 | gpu-peak 20.38/23.65 GiB | gpu-util 97.8% | 76.6% | ETA 0:00:11
+[train] batch 18/32 | epoch 2/540 | loss 4.78949 | lr 5.000e-05 | grad 3.351 | data-wait 0.2% | tok/s 358,210.5 | gpu-peak 20.38/23.65 GiB | gpu-util 98.2% | 78.1% | ETA 0:00:10
+[train] batch 19/32 | epoch 2/540 | loss 4.65709 | lr 5.100e-05 | grad 3.219 | data-wait 0.2% | tok/s 357,804.3 | gpu-peak 20.38/23.65 GiB | gpu-util 97.9% | 79.7% | ETA 0:00:09
+[train] batch 20/32 | epoch 2/540 | loss 4.53477 | lr 5.200e-05 | grad 3.051 | data-wait 0.2% | tok/s 358,370.0 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 81.2% | ETA 0:00:08
+[train] batch 21/32 | epoch 2/540 | loss 4.42041 | lr 5.300e-05 | grad 2.330 | data-wait 0.2% | tok/s 357,877.6 | gpu-peak 20.38/23.65 GiB | gpu-util 97.9% | 82.8% | ETA 0:00:08
+[train] batch 22/32 | epoch 2/540 | loss 4.33496 | lr 5.400e-05 | grad 2.469 | data-wait 0.3% | tok/s 353,947.6 | gpu-peak 20.38/23.65 GiB | gpu-util 97.5% | 84.4% | ETA 0:00:07
+[train] batch 23/32 | epoch 2/540 | loss 4.23240 | lr 5.500e-05 | grad 2.046 | data-wait 0.2% | tok/s 353,575.3 | gpu-peak 20.38/23.65 GiB | gpu-util 97.8% | 85.9% | ETA 0:00:06
+[train] batch 24/32 | epoch 2/540 | loss 4.15765 | lr 5.600e-05 | grad 2.129 | data-wait 0.2% | tok/s 354,754.3 | gpu-peak 20.38/23.65 GiB | gpu-util 97.5% | 87.5% | ETA 0:00:05
+[train] batch 25/32 | epoch 2/540 | loss 4.08219 | lr 5.700e-05 | grad 1.876 | data-wait 0.6% | tok/s 354,696.4 | gpu-peak 20.38/23.65 GiB | gpu-util 97.8% | 89.1% | ETA 0:00:05
+[train] batch 26/32 | epoch 2/540 | loss 4.02176 | lr 5.800e-05 | grad 1.857 | data-wait 0.0% | tok/s 355,662.4 | gpu-peak 20.38/23.65 GiB | gpu-util 97.9% | 90.6% | ETA 0:00:04
+[train] batch 27/32 | epoch 2/540 | loss 3.95558 | lr 5.900e-05 | grad 1.623 | data-wait 0.0% | tok/s 356,063.8 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 92.2% | ETA 0:00:03
+[train] batch 28/32 | epoch 2/540 | loss 3.89286 | lr 6.000e-05 | grad 1.710 | data-wait 0.0% | tok/s 356,818.8 | gpu-peak 20.38/23.65 GiB | gpu-util 98.6% | 93.8% | ETA 0:00:02
+[train] batch 29/32 | epoch 2/540 | loss 3.82940 | lr 6.100e-05 | grad 1.496 | data-wait 0.0% | tok/s 356,459.0 | gpu-peak 20.38/23.65 GiB | gpu-util 98.2% | 95.3% | ETA 0:00:02
+[train] batch 30/32 | epoch 2/540 | loss 3.78898 | lr 6.200e-05 | grad 1.548 | data-wait 0.0% | tok/s 357,379.9 | gpu-peak 20.38/23.65 GiB | gpu-util 98.1% | 96.9% | ETA 0:00:01
+[train] batch 31/32 | epoch 2/540 | loss 3.73900 | lr 6.300e-05 | grad 1.598 | data-wait 0.0% | tok/s 355,721.4 | gpu-peak 20.38/23.65 GiB | gpu-util 98.0% | 98.4% | ETA 0:00:00
+[train] batch 32/32 | epoch 2/540 | loss 3.68811 | lr 6.400e-05 | grad 1.438 | data-wait 0.0% | tok/s 355,527.8 | gpu-peak 20.38/23.65 GiB | gpu-util 97.9% | 100.0% | ETA 0:00:00

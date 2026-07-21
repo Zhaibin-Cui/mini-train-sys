@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import math
+import threading
 import time
 import tracemalloc
 from dataclasses import dataclass
+from typing import Any
 
 import torch
 import torch.distributed as dist
@@ -55,8 +57,10 @@ def distributed_mean_tensors(
     return averaged
 
 
-def memory_metrics(device: torch.device) -> dict[str, float]:
-    """Collect local plus node-job aggregate memory without hiding the max rank."""
+def memory_metrics(
+    device: torch.device, *, reset_peak_stats: bool = False
+) -> dict[str, float]:
+    """Collect allocator memory, with unambiguous current and interval-peak ratios."""
 
     world_size = dist.get_world_size() if dist.is_available() and dist.is_initialized() else 1
     if device.type != "cuda":
@@ -79,7 +83,7 @@ def memory_metrics(device: torch.device) -> dict[str, float]:
         dist.all_reduce(maximum, op=dist.ReduceOp.MAX)
         dist.all_reduce(total, op=dist.ReduceOp.SUM)
     mib = 1024**2
-    return {
+    metrics = {
         "gpu_memory_allocated_mb": round(local[0].item() / mib, 2),
         "gpu_memory_reserved_mb": round(local[1].item() / mib, 2),
         "gpu_peak_memory_allocated_mb": round(local[2].item() / mib, 2),
@@ -90,11 +94,174 @@ def memory_metrics(device: torch.device) -> dict[str, float]:
         "gpu_memory_reserved_mb_total": round(total[1].item() / mib, 2),
         "gpu_memory_capacity_mb_max": round(maximum[3].item() / mib, 2),
         "gpu_memory_capacity_mb_total": round(total[3].item() / mib, 2),
-        "gpu_memory_utilization_percent_max": round(
+        "gpu_memory_current_percent_max": round(
             100 * maximum[0].item() / max(maximum[3].item(), 1), 2
+        ),
+        "gpu_memory_reserved_percent_max": round(
+            100 * maximum[1].item() / max(maximum[3].item(), 1), 2
+        ),
+        "gpu_memory_peak_percent_max": round(
+            100 * maximum[2].item() / max(maximum[3].item(), 1), 2
         ),
         "monitored_world_size": world_size,
     }
+    if reset_peak_stats:
+        torch.cuda.reset_peak_memory_stats(device)
+    return metrics
+
+
+class GpuUtilizationMonitor:
+    """Continuously sample the CUDA device through NVML without stalling training.
+
+    A point query at log time commonly lands between kernels and reports 0%.  The
+    background sampler preserves the distribution observed throughout each log
+    interval.  Every distributed rank samples its own physical device; callers
+    combine the local summaries with :func:`distributed_gpu_utilization`.
+    """
+
+    def __init__(self, device: torch.device, *, sample_interval_seconds: float = 0.2) -> None:
+        self.device = device
+        self.sample_interval_seconds = sample_interval_seconds
+        self._nvml: Any | None = None
+        self._handle: Any | None = None
+        self._stop = threading.Event()
+        self._lock = threading.Lock()
+        self._thread: threading.Thread | None = None
+        self._samples: list[tuple[float, float]] = []
+
+    @property
+    def available(self) -> bool:
+        return self._handle is not None
+
+    @staticmethod
+    def _normalize_uuid(value: object) -> str:
+        if isinstance(value, bytes):
+            value = value.decode("ascii")
+        return str(value).lower().removeprefix("gpu-").replace("-", "")
+
+    def start(self) -> None:
+        if self.device.type != "cuda" or self._thread is not None:
+            return
+        try:
+            import pynvml
+        except ImportError:
+            return
+        try:
+            pynvml.nvmlInit()
+            target_uuid = self._normalize_uuid(
+                torch.cuda.get_device_properties(self.device).uuid
+            )
+            for index in range(pynvml.nvmlDeviceGetCount()):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(index)
+                if self._normalize_uuid(pynvml.nvmlDeviceGetUUID(handle)) == target_uuid:
+                    self._handle = handle
+                    break
+            if self._handle is None:
+                pynvml.nvmlShutdown()
+                return
+            self._nvml = pynvml
+            self._sample()
+            self._thread = threading.Thread(
+                target=self._run,
+                name=f"minitrain-nvml-{self.device.index}",
+                daemon=True,
+            )
+            self._thread.start()
+        except (pynvml.NVMLError, RuntimeError, OSError, AttributeError):
+            self._nvml = None
+            self._handle = None
+
+    def _sample(self) -> None:
+        if self._nvml is None or self._handle is None:
+            return
+        try:
+            rates = self._nvml.nvmlDeviceGetUtilizationRates(self._handle)
+        except self._nvml.NVMLError:
+            return
+        with self._lock:
+            self._samples.append((float(rates.gpu), float(rates.memory)))
+
+    def _run(self) -> None:
+        while not self._stop.wait(self.sample_interval_seconds):
+            self._sample()
+
+    def read_interval(self) -> dict[str, float]:
+        """Return this rank's interval distribution and begin a fresh interval."""
+
+        self._sample()
+        with self._lock:
+            samples, self._samples = self._samples, []
+        if not samples:
+            return {}
+        compute = [sample[0] for sample in samples]
+        memory = [sample[1] for sample in samples]
+        return {
+            "gpu_compute_utilization_percent_local_min": min(compute),
+            "gpu_compute_utilization_percent_local_mean": sum(compute) / len(compute),
+            "gpu_compute_utilization_percent_local_max": max(compute),
+            "gpu_memory_controller_utilization_percent_local_min": min(memory),
+            "gpu_memory_controller_utilization_percent_local_mean": sum(memory) / len(memory),
+            "gpu_memory_controller_utilization_percent_local_max": max(memory),
+            "gpu_utilization_samples_local": float(len(samples)),
+        }
+
+    def close(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=max(1.0, 2 * self.sample_interval_seconds))
+        if self._nvml is not None:
+            try:
+                self._nvml.nvmlShutdown()
+            except self._nvml.NVMLError:
+                pass
+        self._thread = None
+        self._handle = None
+        self._nvml = None
+
+
+def distributed_gpu_utilization(
+    local: dict[str, float], device: torch.device
+) -> dict[str, float]:
+    """Combine per-rank NVML interval summaries into job-wide min/mean/max."""
+
+    reduction_device = _distributed_device(device)
+    available = torch.tensor(
+        int(bool(local)), dtype=torch.int32, device=reduction_device
+    )
+    if dist.is_available() and dist.is_initialized():
+        dist.all_reduce(available, op=dist.ReduceOp.MIN)
+    if not bool(available.item()):
+        return {"gpu_utilization_available": 0}
+    output: dict[str, float] = {}
+    for prefix in ("gpu_compute_utilization_percent", "gpu_memory_controller_utilization_percent"):
+        local_values = torch.tensor(
+            [
+                local[f"{prefix}_local_min"],
+                local[f"{prefix}_local_mean"],
+                local[f"{prefix}_local_max"],
+            ],
+            dtype=torch.float64,
+            device=reduction_device,
+        )
+        minimum = local_values[0].clone()
+        mean = local_values[1].clone()
+        maximum = local_values[2].clone()
+        if dist.is_available() and dist.is_initialized():
+            dist.all_reduce(minimum, op=dist.ReduceOp.MIN)
+            dist.all_reduce(mean, op=dist.ReduceOp.SUM)
+            mean /= dist.get_world_size()
+            dist.all_reduce(maximum, op=dist.ReduceOp.MAX)
+        output[f"{prefix}_min"] = round(minimum.item(), 2)
+        output[f"{prefix}_mean"] = round(mean.item(), 2)
+        output[f"{prefix}_max"] = round(maximum.item(), 2)
+    sample_count = torch.tensor(
+        local["gpu_utilization_samples_local"], dtype=torch.float64, device=reduction_device
+    )
+    if dist.is_available() and dist.is_initialized():
+        dist.all_reduce(sample_count, op=dist.ReduceOp.MIN)
+    output["gpu_utilization_samples_per_rank_min"] = int(sample_count.item())
+    output["gpu_utilization_available"] = 1
+    return output
 
 
 @dataclass

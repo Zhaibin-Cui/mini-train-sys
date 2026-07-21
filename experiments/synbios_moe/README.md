@@ -52,8 +52,8 @@ NPROC=8 bash scripts/bash/synbios_moe.sh single fsdp
 `model.pt`。最新 checkpoint 不可用时，用 `RESUME=safety` 启动同一命令即可从安全锚点
 恢复完整模型、Adam、scheduler 和 RNG。
 
-当前每卡 batch=8、无梯度累计。运行时以论文 global batch 96 为 reference 线性缩放
-LR/warmup，epoch 不变。
+正式配置无梯度累计。硬件允许时可提高每卡 batch，但固定使用论文的 LR `1e-3`、
+warmup 1,000 step 与 cosine floor `1e-4`，不再按实际 global batch 线性放大。
 
 ## 训练后阶段
 
