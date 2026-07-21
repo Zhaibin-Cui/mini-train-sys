@@ -635,3 +635,28 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `artifacts/logs/cloze_probe_gate_validation_20260721-1433.log`.
 - Push result: commit `bb93aaa` (`feat(probe): gate pipeline on strict biography cloze`) was
   pushed to `origin/train`; local/remote divergence was verified as `0 0` afterward.
+
+## 2026-07-21 14:48 — Paper-format README and complete Git-safe result snapshot
+
+- Status: documentation/export validation in progress.
+- Purpose: place all currently available server training, engineering-validation, cloze-validation,
+  capacity, scaling, failure-control, and experiment-status results directly in `README.md` using
+  a paper-style Abstract/Methods/Results/Limitations structure.
+- Reporting boundary: the README explicitly distinguishes the completed `single` 540-epoch run,
+  its full training-corpus cloze recall, checkpoint/preflight validation, and the rejected high-LR
+  run from unexecuted formal P/Q held-out validation, router analysis, and `multi5_permute` work.
+- Evidence was re-derived from the exported JSONL/JSON rather than copied from console memory:
+  17,280 steps, total loss 10.946440 to 0.193221 (minimum 0.192083), 3.9636B scheduled
+  tokens, 12,668.67 seconds, 312,868 tok/s, mean logged NVML compute 97.02%, and 100% strict
+  exact recall for all 600,000 fields in 100,000 original training biographies.
+- README artifact links were checked against the working tree with zero missing relative targets.
+- Result export: `bash scripts/bash/export_test_results.sh` produced 299 content-hashed Git-safe
+  evidence files totaling 65 MiB. SHA256 verification passed, and rsync dry-runs found no pending
+  files in server logs, formal run events, cloze results, or SynBioS operation logs.
+- Deliberate payload exclusions: 12,362,146,587 bytes across 16 DCP/model tensor files and
+  132,521,340 bytes across seven raw/tokenized dataset payload files. Their manifests, hashes,
+  paths, `COMMITTED` markers, runtime/RNG metadata, metrics, and TensorBoard events are exported.
+- Full validation tmux/log: `minitrain-readme-results-verify-20260721` and
+  `artifacts/logs/readme_results_validation_20260721-1452.log`. Result: 75 tests passed in 11.51
+  seconds with the five expected single-process DCP warnings; Ruff passed for `minitrain`,
+  `experiments`, `scripts`, and `tests`.
