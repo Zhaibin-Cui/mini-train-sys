@@ -37,6 +37,19 @@ def test_synbios_4gpu_formal_checkpoint_and_logging_policy():
     assert cfg.checkpoint.export_model
     assert cfg.checkpoint.export_model_every_epochs == 50
 
+    augmented = experiment_config_from_dict(
+        load_yaml_dict("configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml")
+    )
+    assert augmented.train.epochs == 108
+    assert augmented.train.batch_size == 112
+    assert augmented.train.log_interval == 20
+    assert augmented.checkpoint.every_epochs == 2
+    assert augmented.checkpoint.keep_last == 2
+    assert augmented.checkpoint.keep_safety == 1
+    assert augmented.checkpoint.safety_every_epochs == 10
+    assert augmented.checkpoint.export_model
+    assert augmented.checkpoint.export_model_every_epochs == 10
+
 
 def test_synbios_paper_optimizer_schedule_is_not_batch_scaled():
     payload = load_yaml_dict("configs/synbios_moe/runs/single_ddp.yaml")

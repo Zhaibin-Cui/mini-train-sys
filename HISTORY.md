@@ -662,3 +662,22 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `experiments`, `scripts`, and `tests`.
 - Push result: Conventional Commit `8b39e6a` (`docs(readme): publish formal server experiment
   report`) was pushed to `origin/train`; local/remote divergence was `0 0` afterward.
+
+## 2026-07-21 15:04 — Launch multi5+permute 4-GPU FSDP pretraining
+
+- Status: pre-launch validation in progress.
+- Decision basis: the completed `single` run establishes stable optimization and 100% strict
+  training-corpus recall. This is sufficient to validate the training implementation/configuration
+  before starting the augmentation condition, while remaining explicitly distinct from unseen
+  person/template generalization.
+- Requested condition: `multi5+permute`, 100,000 identical person profiles, five independently
+  rendered/permuted biographies per person, four RTX 4090 GPUs, FSDP full shard, BF16.
+- The augmented data is not yet present and will be generated deterministically with seed 1337;
+  the launcher will byte-compare its `profiles.jsonl` against `single` before training.
+- Formal config correction before launch: the generic FSDP default local batch 8 was replaced by
+  the already validated same-model/same-sequence local batch 112 (global 448). The five-times
+  larger corpus uses 108 epochs and token-equivalent log/checkpoint periods: log every 20 steps,
+  DCP+Adam every 2 epochs, safety/model export every 10 epochs. Peak LR remains `1e-3`, warmup
+  1,000 steps, cosine floor `1e-4`, with no batch LR scaling.
+- Pre-launch resources: all four GPUs idle at 0 MiB/0% utilization; `/data` has 30 GiB free;
+  local and `origin/train` are synchronized at `0 0`; only TensorBoard tmux is active.

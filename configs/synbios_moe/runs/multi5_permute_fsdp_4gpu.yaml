@@ -1,3 +1,21 @@
 extends: multi5_permute_fsdp.yaml
 run: {name: synbios_moe_multi5_permute_fsdp_4gpu}
 parallel: {expected_world_size: 4}
+train:
+  # The model/sequence shape is identical to the validated single run, so use
+  # its full forward+backward+AdamW capacity result on the same four 4090s.
+  batch_size: 112
+  batch_size_scaling: none
+  # One augmented epoch contains five times as many biographies; keep eight
+  # progress records per epoch, matching the single run's logging density.
+  log_interval: 20
+checkpoint:
+  # Two augmented epochs equal ten single epochs in biography exposure. This
+  # preserves the validated recovery/export cadence in token-equivalent units.
+  every_epochs: 2
+  keep_last: 2
+  keep_safety: 1
+  safety_every_epochs: 10
+  export_model: true
+  export_model_every_epochs: 10
+  keep_model_exports: 1
