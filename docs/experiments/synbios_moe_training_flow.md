@@ -185,7 +185,7 @@ RESUME=safety NPROC=8 bash scripts/bash/synbios_moe.sh single ddp
 
 每个预训练模型执行：
 
-- 1 次 teacher-forced attribute-token evaluate，先确认 biography 事实确实学会；
+- 1 次原始 biography progressive-cloze gate，先确认模型能直接生成被挖掉的真实事实；
 - 11 个 P-probe：六个 first-token 加五个 whole-value，观察事实何时可读；
 - 11 个 Q-probe：只给姓名，检查 person→fact 是否已编码；
 - 6 个 router analysis：统计 expert load、entropy 和属性/expert NMI。
@@ -205,8 +205,8 @@ python scripts/synbios_moe.py cache-probes \
   --require-coverage
 ```
 
-随后按 `smoke(500) → pilot(3000) → formal(30000)` 运行。每一阶段先检查预训练
-attribute-token accuracy，再把相互独立的任务放入单机设备队列；一张卡同样使用该队列，
+随后按 `smoke(500) → pilot(3000) → formal(30000)` 运行。每一阶段先在原始 biography
+上逐步挖空生成并检查 strict field accuracy，再把相互独立的任务放入单机设备队列；一张卡同样使用该队列，
 只是并发度为1。训练落盘后由 `validate-probe` 重新加载权重，在人物级 held-out split 上
 复算结果，最后生成 tidy CSV/JSON。
 

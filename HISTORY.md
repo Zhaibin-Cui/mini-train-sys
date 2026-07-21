@@ -610,3 +610,26 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `HEAD...origin/train` was `0 0` before creating the new snapshot.
 - Push result: commit `596bffb` (`feat(eval): add progressive biography cloze recall`) was pushed
   successfully to `origin/train`; local and remote divergence was verified as `0 0` afterward.
+
+## 2026-07-21 14:25 — Replace the P/Q pretraining gate with original-bio cloze
+
+- Status: completed and validated.
+- Clarified scope: P/Q probe training, held-out validation, task scheduling, and result comparison
+  remain unchanged. Only their pretraining-readiness gate changes.
+- Requested gate: remove the six exact fact spans from original biographies, restore them
+  progressively in source order with the frozen checkpoint, and gate on strict generated field
+  accuracy instead of teacher-forced attribute-token next-token accuracy.
+- Implementation: the P/Q pipeline now evaluates up to 10,000 original biographies with the same
+  token-aligned progressive cloze evaluator and gates on strict `micro_field_accuracy >= 0.90`.
+  Fuzzy similarity is retained in the gate JSON but cannot cause a pass.
+- Cache safety: only results carrying the progressive-cloze protocol, matching common pipeline
+  identity, and a numeric strict field metric can be reused. Pipeline protocol version increased
+  from 2 to 3 so pre-change stages cannot silently satisfy the new gate.
+- Default gate configuration: first 10,000 original biographies, batch 128, greedy generation up
+  to 16 tokens per field, and strict field threshold 0.90. The completed full-corpus evaluation
+  already establishes that this checkpoint scores strict 100% on that subset; fuzzy thresholds
+  are never consulted by the gate decision.
+- Validation: 75 repository tests passed in 11.87 seconds with only the five expected
+  single-process DCP warnings; Ruff passed across `minitrain`, `experiments`, `scripts`, and
+  `tests`. tmux/log: `minitrain-cloze-gate-verify-20260721` and
+  `artifacts/logs/cloze_probe_gate_validation_20260721-1433.log`.

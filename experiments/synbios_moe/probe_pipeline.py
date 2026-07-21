@@ -21,7 +21,8 @@ import yaml
 from experiments.synbios_moe.probe_data import paper_probe_tasks
 
 
-PIPELINE_PROTOCOL_VERSION = 2
+PIPELINE_PROTOCOL_VERSION = 3
+CLOZE_GATE_PROTOCOL = "progressive_original_biography_cloze_greedy"
 
 
 class PipelineEventLogger(Protocol):
@@ -153,6 +154,18 @@ def common_pipeline_identity(identity: dict[str, object]) -> dict[str, object]:
 
     stage_fields = {"stage", "steps", "jobs"}
     return {key: value for key, value in identity.items() if key not in stage_fields}
+
+
+def reusable_cloze_gate(
+    candidate: dict[str, object], identity: dict[str, object]
+) -> bool:
+    """Return whether a cached gate uses the current strict generation protocol."""
+
+    return (
+        candidate.get("protocol") == CLOZE_GATE_PROTOCOL
+        and candidate.get("identity") == common_pipeline_identity(identity)
+        and isinstance(candidate.get("micro_field_accuracy"), (int, float))
+    )
 
 
 def require_matching_identity(

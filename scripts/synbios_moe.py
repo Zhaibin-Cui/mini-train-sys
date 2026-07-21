@@ -38,6 +38,7 @@ from experiments.synbios_moe.probe_pipeline import (
     load_pipeline_config,
     probe_train_command_builder,
     probe_validation_command_builder,
+    reusable_cloze_gate,
     require_matching_identity,
     resolve_devices,
     schedule_jobs,
@@ -464,18 +465,22 @@ def _command_probe_pipeline(
         gate_path = output_root / "pretrain_gate.json"
         if gate_path.is_file() and not args.force_gate:
             candidate = json.loads(gate_path.read_text(encoding="utf-8"))
-            if candidate.get("identity") == common_pipeline_identity(identity):
+            if reusable_cloze_gate(candidate, identity):
                 gate_result = candidate
         if gate_result is None:
             gate_cfg = config.get("gate", {})
             device = torch.device(devices[0])
             model = load_model(args.model_config, args.checkpoint, device)
-            gate_result = evaluate_attribute_tokens(
+            gate_result = evaluate_progressive_biography_cloze(
                 model,
                 args.data,
                 device=device,
                 max_biographies=int(gate_cfg.get("examples", 10_000)),
                 batch_size=int(gate_cfg.get("batch_size", 8)),
+                max_new_tokens=int(gate_cfg.get("max_new_tokens", 16)),
+                sample_biographies=int(gate_cfg.get("sample_biographies", 12)),
+                logger=logger,
+                log_interval=args.log_interval,
             )
             gate_result["checkpoint"] = requested_checkpoint
             gate_result["identity"] = common_pipeline_identity(identity)
@@ -488,9 +493,10 @@ def _command_probe_pipeline(
             if args.gate_threshold is not None
             else config.get("gate", {}).get("threshold", 0.9)
         )
-        if float(gate_result["micro_accuracy"]) < threshold:
+        gate_accuracy = float(gate_result["micro_field_accuracy"])
+        if gate_accuracy < threshold:
             raise SystemExit(
-                f"pretrain gate failed: micro_accuracy={gate_result['micro_accuracy']:.4f} "
+                f"pretrain cloze gate failed: micro_field_accuracy={gate_accuracy:.4f} "
                 f"< threshold={threshold:.4f}"
             )
 

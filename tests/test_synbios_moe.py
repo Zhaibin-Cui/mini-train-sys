@@ -25,13 +25,16 @@ from experiments.synbios_moe.probe_data import (
     validate_probe_cache,
 )
 from experiments.synbios_moe.probe_pipeline import (
+    CLOZE_GATE_PROTOCOL,
     JobCommand,
     ProbeJob,
     build_pipeline_identity,
+    common_pipeline_identity,
     jobs_for_stage,
     load_pipeline_config,
     require_matching_identity,
     resolve_devices,
+    reusable_cloze_gate,
     schedule_jobs,
     summarize_probe_results,
 )
@@ -279,6 +282,44 @@ def test_pipeline_identity_binds_every_durable_input(tmp_path):
         checkpoint=checkpoint,
     )
     assert rebuilt["checkpoint_model_sha256"] != identity["checkpoint_model_sha256"]
+
+
+def test_probe_gate_reuses_only_strict_progressive_cloze_results(tmp_path):
+    data = tmp_path / "data"
+    cache = tmp_path / "cache"
+    checkpoint = tmp_path / "checkpoint"
+    data.mkdir()
+    cache.mkdir()
+    checkpoint.mkdir()
+    (data / "manifest.json").write_text('{"dataset": 1}', encoding="utf-8")
+    (cache / "manifest.json").write_text('{"cache": 1}', encoding="utf-8")
+    model_config = tmp_path / "model.yaml"
+    model_config.write_text("model: {}\n", encoding="utf-8")
+    (checkpoint / "model.pt").write_bytes(b"model")
+    identity = build_pipeline_identity(
+        stage="smoke",
+        steps=1,
+        jobs=[ProbeJob("p", "birth_city", "whole")],
+        seed=7,
+        data=data,
+        cache=cache,
+        model_config=model_config,
+        checkpoint=checkpoint,
+    )
+    current = {
+        "protocol": CLOZE_GATE_PROTOCOL,
+        "micro_field_accuracy": 0.95,
+        "identity": common_pipeline_identity(identity),
+    }
+
+    assert reusable_cloze_gate(current, identity)
+    assert not reusable_cloze_gate(
+        {**current, "protocol": "teacher_forced_attribute_tokens"}, identity
+    )
+    assert not reusable_cloze_gate(
+        {key: value for key, value in current.items() if key != "micro_field_accuracy"},
+        identity,
+    )
 
 
 def test_probe_training_emits_health_metrics():

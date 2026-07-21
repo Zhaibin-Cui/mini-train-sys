@@ -96,7 +96,14 @@ python scripts/synbios_moe.py validate-probe-cache \
 | `pilot` | 全部 22 个任务 | 3,000 | smoke 完成 |
 | `formal` | 全部 22 个任务 | 30,000 | pilot 完成 |
 
-每个阶段开始前，pipeline 在最多 10,000 篇 biography 上运行 teacher-forced attribute-token evaluation。默认要求 micro accuracy 不低于 0.90，避免在未学会事实的 checkpoint 上浪费 probe 预算。可用 `--gate-threshold` 修改；仅调试调用链时才用 `--skip-gate`。
+每个阶段开始前，pipeline 在最多 10,000 篇原始 biography 上运行 progressive cloze
+门禁：精确删除六个真实属性 span，按原文顺序 greedy 填回，并把较早预测放回后续上下文。
+默认要求严格 `micro_field_accuracy` 不低于 0.90，避免在主模型尚不能直接生成事实时浪费
+P/Q probe 预算。模糊字符相似度会记录但不参与放行。可用 `--gate-threshold` 修改；仅调试
+调用链时才用 `--skip-gate`。
+
+门禁缓存仍为 `<output>/pretrain_gate.json`。旧 teacher-forced 门禁不会被复用；pipeline
+protocol version 已更新，因此旧 stage 也不会被误认为满足新门禁。
 
 阶段成功标志是：
 
