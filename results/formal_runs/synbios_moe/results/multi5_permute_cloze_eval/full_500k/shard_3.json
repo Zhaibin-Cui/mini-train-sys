@@ -1,0 +1,321 @@
+{
+  "protocol": "progressive_original_biography_cloze_greedy",
+  "protocol_note": "the six source fact spans are removed and generated in their original text order; earlier predictions replace earlier holes before later fields are generated",
+  "start_index": 375000,
+  "biographies": 125000,
+  "fields": 750000,
+  "attribute_accuracy": {
+    "birth_date": 0.999976,
+    "birth_city": 0.99996,
+    "university": 0.99996,
+    "major": 0.99968,
+    "company": 0.999984,
+    "company_city": 0.999984
+  },
+  "attribute_mean_character_similarity": {
+    "birth_date": 0.999988911764706,
+    "birth_city": 0.9999747665667666,
+    "university": 0.9999844,
+    "major": 0.9997279471710898,
+    "company": 0.9999917362637363,
+    "company_city": 0.9999880000000001
+  },
+  "mean_character_similarity": 0.9999426269610497,
+  "fuzzy_accuracy_by_threshold": {
+    "0.5": {
+      "birth_date": 0.999984,
+      "birth_city": 0.999968,
+      "university": 1.0,
+      "major": 0.99968,
+      "company": 0.999992,
+      "company_city": 0.999984
+    },
+    "0.8": {
+      "birth_date": 0.999976,
+      "birth_city": 0.99996,
+      "university": 0.99996,
+      "major": 0.99968,
+      "company": 0.999984,
+      "company_city": 0.999984
+    },
+    "0.9": {
+      "birth_date": 0.999976,
+      "birth_city": 0.99996,
+      "university": 0.99996,
+      "major": 0.99968,
+      "company": 0.999984,
+      "company_city": 0.999984
+    }
+  },
+  "micro_fuzzy_accuracy_by_threshold": {
+    "0.5": 0.9999346666666666,
+    "0.8": 0.999924,
+    "0.9": 0.999924
+  },
+  "micro_field_accuracy": 0.999924,
+  "biography_all_fields_accuracy": 0.999616,
+  "mean_correct_fields_per_biography": 5.999544,
+  "biography_correct_field_count_histogram": {
+    "0": 1,
+    "1": 1,
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 46,
+    "6": 124952
+  },
+  "correct_fields": {
+    "birth_date": 124997,
+    "birth_city": 124995,
+    "university": 124995,
+    "major": 124960,
+    "company": 124998,
+    "company_city": 124998
+  },
+  "total_fields": {
+    "birth_date": 125000,
+    "birth_city": 125000,
+    "university": 125000,
+    "major": 125000,
+    "company": 125000,
+    "company_city": 125000
+  },
+  "unterminated_fields": 0,
+  "elapsed_seconds": 2439.405292780997,
+  "biographies_per_second": 51.24199753518455,
+  "model_tokens_processed": 168033787,
+  "samples": [
+    {
+      "person_id": 75000,
+      "original_text": "Public records show Aidan8 Taylor4 Hart22 graduated from Dallas7 University. It is recorded that They contributed expertise to Kenny7 Group. They worked in Denver6, WA. Historically, They specialized in Finance1. In life, They's birthday is August 13, 1910. Historically, They grew up in Boston6, NY.",
+      "filled_text": "Public records show Aidan8 Taylor4 Hart22 graduated from Dallas7 University. It is recorded that They contributed expertise to Kenny7 Group. They worked in Denver6, WA. Historically, They specialized in Finance1. In life, They's birthday is August 13, 1910. Historically, They grew up in Boston6, NY.",
+      "expected": {
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1",
+        "birth_date": "August 13, 1910",
+        "birth_city": "Boston6, NY"
+      },
+      "predicted": {
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1",
+        "birth_date": "August 13, 1910",
+        "birth_city": "Boston6, NY"
+      },
+      "correct": {
+        "university": true,
+        "company": true,
+        "company_city": true,
+        "major": true,
+        "birth_date": true,
+        "birth_city": true
+      },
+      "character_similarity": {
+        "university": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "birth_date": 1.0,
+        "birth_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "The profile states Aidan8 Taylor4 Hart22 owes early roots to Boston6, NY. In particular, They's birthday is August 13, 1910. It is recorded that They graduated from Dallas7 University. Biographical notes say They had a professional role at Kenny7 Group. Notably, They pursued a career in Denver6, WA. Public records show They studied Finance1.",
+      "filled_text": "The profile states Aidan8 Taylor4 Hart22 owes early roots to Boston6, NY. In particular, They's birthday is August 13, 1910. It is recorded that They graduated from Dallas7 University. Biographical notes say They had a professional role at Kenny7 Group. Notably, They pursued a career in Denver6, WA. Public records show They studied Finance1.",
+      "expected": {
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1"
+      },
+      "predicted": {
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1"
+      },
+      "correct": {
+        "birth_city": true,
+        "birth_date": true,
+        "university": true,
+        "company": true,
+        "company_city": true,
+        "major": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "Public records show Aidan8 Taylor4 Hart22 pursued a career in Denver6, WA. Notably, They's birthday is August 13, 1910. It is recorded that They received mentorship at Dallas7 University. Notably, They calls Boston6, NY a birthplace. According to records, They focused on Finance1. Biographical notes say They joined Kenny7 Group.",
+      "filled_text": "Public records show Aidan8 Taylor4 Hart22 pursued a career in Denver6, WA. Notably, They's birthday is August 13, 1910. It is recorded that They received mentorship at Dallas7 University. Notably, They calls Boston6, NY a birthplace. According to records, They focused on Finance1. Biographical notes say They joined Kenny7 Group.",
+      "expected": {
+        "company_city": "Denver6, WA",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "predicted": {
+        "company_city": "Denver6, WA",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_date": true,
+        "university": true,
+        "birth_city": true,
+        "major": true,
+        "company": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "It is recorded that Aidan8 Taylor4 Hart22 focused on Finance1. The profile states They graduated from Dallas7 University. According to records, They was employed in Denver6, WA. They had a professional role at Kenny7 Group. In life, They owes early roots to Boston6, NY. Public records show They entered the world on August 13, 1910.",
+      "filled_text": "It is recorded that Aidan8 Taylor4 Hart22 focused on Finance1. The profile states They graduated from Dallas7 University. According to records, They was employed in Denver6, WA. They had a professional role at Kenny7 Group. In life, They owes early roots to Boston6, NY. Public records show They entered the world on August 13, 1910.",
+      "expected": {
+        "major": "Finance1",
+        "university": "Dallas7 University",
+        "company_city": "Denver6, WA",
+        "company": "Kenny7 Group",
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910"
+      },
+      "predicted": {
+        "major": "Finance1",
+        "university": "Dallas7 University",
+        "company_city": "Denver6, WA",
+        "company": "Kenny7 Group",
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910"
+      },
+      "correct": {
+        "major": true,
+        "university": true,
+        "company_city": true,
+        "company": true,
+        "birth_city": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "major": 1.0,
+        "university": 1.0,
+        "company_city": 1.0,
+        "company": 1.0,
+        "birth_city": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "Notably, Aidan8 Taylor4 Hart22 celebrates a birthday on August 13, 1910. It is recorded that They was employed in Denver6, WA. Biographical notes say They studied at Dallas7 University. Notably, They calls Boston6, NY a birthplace. In life, They specialized in Finance1. The profile states They joined Kenny7 Group.",
+      "filled_text": "Notably, Aidan8 Taylor4 Hart22 celebrates a birthday on August 13, 1910. It is recorded that They was employed in Denver6, WA. Biographical notes say They studied at Dallas7 University. Notably, They calls Boston6, NY a birthplace. In life, They specialized in Finance1. The profile states They joined Kenny7 Group.",
+      "expected": {
+        "birth_date": "August 13, 1910",
+        "company_city": "Denver6, WA",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "predicted": {
+        "birth_date": "August 13, 1910",
+        "company_city": "Denver6, WA",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "correct": {
+        "birth_date": true,
+        "company_city": true,
+        "university": true,
+        "birth_city": true,
+        "major": true,
+        "company": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "company_city": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    }
+  ],
+  "monitoring": {
+    "event": "cloze_evaluate",
+    "step": 977,
+    "batch": 977,
+    "batches_total": 977,
+    "progress_percent": 100.0,
+    "elapsed_seconds": 2439.402,
+    "eta_seconds": 0.0,
+    "items_processed": 125000,
+    "items_per_sec": 51.242,
+    "tokens_processed": 168033787,
+    "tokens_per_sec": 68883.194,
+    "field_accuracy_running": 0.999924,
+    "all_fields_accuracy_running": 0.999616,
+    "gpu_memory_allocated_mb": 1128.74,
+    "gpu_memory_reserved_mb": 2128.0,
+    "gpu_peak_memory_allocated_mb": 1475.55,
+    "gpu_memory_allocated_mb_max": 1128.74,
+    "gpu_memory_reserved_mb_max": 2128.0,
+    "gpu_peak_memory_allocated_mb_max": 1475.55,
+    "gpu_memory_allocated_mb_total": 1128.74,
+    "gpu_memory_reserved_mb_total": 2128.0,
+    "gpu_memory_capacity_mb_max": 24217.31,
+    "gpu_memory_capacity_mb_total": 24217.31,
+    "gpu_memory_current_percent_max": 4.66,
+    "gpu_memory_reserved_percent_max": 8.79,
+    "gpu_memory_peak_percent_max": 6.09,
+    "monitored_world_size": 1
+  },
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "provenance": {
+    "python_version": "3.10.12",
+    "torch_version": "2.5.1+cu118",
+    "cuda_runtime": "11.8",
+    "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+    "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+    "git_revision": "1b682e7a0fc7a8a7d0147a70f6e1315abda75989",
+    "git_branch": "train",
+    "git_dirty": false,
+    "world_size": 1
+  },
+  "log_dir": "artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/operation_logs/synbios_cloze_evaluate_shard_3/20260721-181213"
+}

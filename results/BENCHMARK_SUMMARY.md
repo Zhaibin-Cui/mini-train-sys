@@ -96,3 +96,25 @@ are only diagnostics because approximate string matching can over-credit semanti
 matches. This training-set test demonstrates exact in-distribution recall, not generalization to
 unseen people or templates. See `../reports/synbios_single_cloze_100k.md` for protocol, examples,
 limitations, and result paths.
+
+## Multi5+permute pretraining and progressive cloze recall
+
+The augmentation condition used the same 100,000 person profiles as `single`, but rendered five
+independently worded and field-permuted biographies per person (500,000 biographies and 37,046,556
+tokens). The same model, FSDP4, BF16, global batch 448, and LR schedule completed 108 epochs / 17,388
+steps / 3,988,389,888 scheduled tokens. Loss fell from 10.948931 to 0.296150 (minimum logged
+0.293688), final grad norm was 0.06513, no experts were dead, no routes were dropped, end-to-end
+time was 12,148.31 seconds, and average throughput was 328,308 tok/s.
+
+The final checkpoint was evaluated with the identical progressive original-biography cloze
+protocol on all 500,000 training texts. It restored 2,999,746/3,000,000 fields exactly
+(99.991533%) and all six fields in 499,813/500,000 biographies (99.9626%). Per-field exact
+accuracies were 99.9968% birth date, 99.9966% birth city, 99.9952% university, 99.9710% major,
+99.9946% company, and 99.9950% company city. Fuzzy accuracy at threshold 0.90 was 99.991633%,
+three fields higher than strict matching, so strict exact remains authoritative.
+
+This validates optimization and near-complete augmented-training-corpus recall. It does not show
+held-out improvement over `single`, whose strict training-corpus score was 100%. Document packing
+uses a 1,024-document shuffle window: documents remain intact, but the order is a bounded shuffle,
+not a uniform global permutation over all 500,000 rows. Full methods and examples are in
+`../reports/synbios_multi5_permute_cloze_500k.md`.

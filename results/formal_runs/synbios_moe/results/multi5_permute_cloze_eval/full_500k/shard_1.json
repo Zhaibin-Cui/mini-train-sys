@@ -1,0 +1,321 @@
+{
+  "protocol": "progressive_original_biography_cloze_greedy",
+  "protocol_note": "the six source fact spans are removed and generated in their original text order; earlier predictions replace earlier holes before later fields are generated",
+  "start_index": 125000,
+  "biographies": 125000,
+  "fields": 750000,
+  "attribute_accuracy": {
+    "birth_date": 0.999976,
+    "birth_city": 0.999976,
+    "university": 0.99996,
+    "major": 0.99968,
+    "company": 0.999944,
+    "company_city": 0.99996
+  },
+  "attribute_mean_character_similarity": {
+    "birth_date": 0.9999910176470588,
+    "birth_city": 0.9999822783882784,
+    "university": 0.9999862806106175,
+    "major": 0.9997282590887373,
+    "company": 0.9999756383616384,
+    "company_city": 0.9999719567099566
+  },
+  "mean_character_similarity": 0.9999392384677145,
+  "fuzzy_accuracy_by_threshold": {
+    "0.5": {
+      "birth_date": 0.999992,
+      "birth_city": 0.999976,
+      "university": 1.0,
+      "major": 0.99968,
+      "company": 0.999992,
+      "company_city": 0.99996
+    },
+    "0.8": {
+      "birth_date": 0.999984,
+      "birth_city": 0.999976,
+      "university": 0.99996,
+      "major": 0.99968,
+      "company": 0.999944,
+      "company_city": 0.99996
+    },
+    "0.9": {
+      "birth_date": 0.999976,
+      "birth_city": 0.999976,
+      "university": 0.99996,
+      "major": 0.99968,
+      "company": 0.999944,
+      "company_city": 0.99996
+    }
+  },
+  "micro_fuzzy_accuracy_by_threshold": {
+    "0.5": 0.9999333333333333,
+    "0.8": 0.9999173333333333,
+    "0.9": 0.999916
+  },
+  "micro_field_accuracy": 0.999916,
+  "biography_all_fields_accuracy": 0.999592,
+  "mean_correct_fields_per_biography": 5.999496,
+  "biography_correct_field_count_histogram": {
+    "0": 0,
+    "1": 0,
+    "2": 2,
+    "3": 2,
+    "4": 2,
+    "5": 45,
+    "6": 124949
+  },
+  "correct_fields": {
+    "birth_date": 124997,
+    "birth_city": 124997,
+    "university": 124995,
+    "major": 124960,
+    "company": 124993,
+    "company_city": 124995
+  },
+  "total_fields": {
+    "birth_date": 125000,
+    "birth_city": 125000,
+    "university": 125000,
+    "major": 125000,
+    "company": 125000,
+    "company_city": 125000
+  },
+  "unterminated_fields": 0,
+  "elapsed_seconds": 2443.2217452119985,
+  "biographies_per_second": 51.16195459743411,
+  "model_tokens_processed": 168180266,
+  "samples": [
+    {
+      "person_id": 25000,
+      "original_text": "According to records, Felix16 Alexa11 Price26 completed university at Fresno8 University. She was employed by Gray11 Group. It is recorded that She has an annual celebration on December 5, 1965. She grew up in Albany2, GA. Public records show She was professionally based in Cambridge, NY. In particular, She focused on Sociology4.",
+      "filled_text": "According to records, Felix16 Alexa11 Price26 completed university at Fresno8 University. She was employed by Gray11 Group. It is recorded that She has an annual celebration on December 5, 1965. She grew up in Albany2, GA. Public records show She was professionally based in Cambridge, NY. In particular, She focused on Sociology4.",
+      "expected": {
+        "university": "Fresno8 University",
+        "company": "Gray11 Group",
+        "birth_date": "December 5, 1965",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "major": "Sociology4"
+      },
+      "predicted": {
+        "university": "Fresno8 University",
+        "company": "Gray11 Group",
+        "birth_date": "December 5, 1965",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "major": "Sociology4"
+      },
+      "correct": {
+        "university": true,
+        "company": true,
+        "birth_date": true,
+        "birth_city": true,
+        "company_city": true,
+        "major": true
+      },
+      "character_similarity": {
+        "university": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. In particular, She owes early roots to Albany2, GA. It is recorded that She was born on December 5, 1965. Historically, She had a professional role at Gray11 Group. According to records, She received mentorship at Fresno8 University. Notably, She majored in Sociology4.",
+      "filled_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. In particular, She owes early roots to Albany2, GA. It is recorded that She was born on December 5, 1965. Historically, She had a professional role at Gray11 Group. According to records, She received mentorship at Fresno8 University. Notably, She majored in Sociology4.",
+      "expected": {
+        "company_city": "Cambridge, NY",
+        "birth_city": "Albany2, GA",
+        "birth_date": "December 5, 1965",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "major": "Sociology4"
+      },
+      "predicted": {
+        "company_city": "Cambridge, NY",
+        "birth_city": "Albany2, GA",
+        "birth_date": "December 5, 1965",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "major": "Sociology4"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_city": true,
+        "birth_date": true,
+        "company": true,
+        "university": true,
+        "major": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "university": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "Public records show Felix16 Alexa11 Price26 completed university at Fresno8 University. Notably, She spent early years in Albany2, GA. Public records show She worked for Gray11 Group. It is recorded that She majored in Sociology4. In life, She gained work experience in Cambridge, NY. Biographical notes say She's birthday is December 5, 1965.",
+      "filled_text": "Public records show Felix16 Alexa11 Price26 completed university at Fresno8 University. Notably, She spent early years in Albany2, GA. Public records show She worked for Gray11 Group. It is recorded that She majored in Sociology4. In life, She gained work experience in Cambridge, NY. Biographical notes say She's birthday is December 5, 1965.",
+      "expected": {
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group",
+        "major": "Sociology4",
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965"
+      },
+      "predicted": {
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group",
+        "major": "Sociology4",
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965"
+      },
+      "correct": {
+        "university": true,
+        "birth_city": true,
+        "company": true,
+        "major": true,
+        "company_city": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "university": 1.0,
+        "birth_city": 1.0,
+        "company": 1.0,
+        "major": 1.0,
+        "company_city": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "According to records, Felix16 Alexa11 Price26 studied Sociology4. Historically, She grew up in Albany2, GA. Public records show She pursued a career in Cambridge, NY. The profile states She was employed by Gray11 Group. The profile states She attended Fresno8 University. Notably, She celebrates a birthday on December 5, 1965.",
+      "filled_text": "According to records, Felix16 Alexa11 Price26 studied Sociology4. Historically, She grew up in Albany2, GA. Public records show She pursued a career in Cambridge, NY. The profile states She was employed by Gray11 Group. The profile states She attended Fresno8 University. Notably, She celebrates a birthday on December 5, 1965.",
+      "expected": {
+        "major": "Sociology4",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "birth_date": "December 5, 1965"
+      },
+      "predicted": {
+        "major": "Sociology4",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "birth_date": "December 5, 1965"
+      },
+      "correct": {
+        "major": true,
+        "birth_city": true,
+        "company_city": true,
+        "company": true,
+        "university": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "major": 1.0,
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "company": 1.0,
+        "university": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. Biographical notes say She was born on December 5, 1965. Historically, She specialized in Sociology4. It is recorded that She completed university at Fresno8 University. She calls Albany2, GA a birthplace. Biographical notes say She contributed expertise to Gray11 Group.",
+      "filled_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. Biographical notes say She was born on December 5, 1965. Historically, She specialized in Sociology4. It is recorded that She completed university at Fresno8 University. She calls Albany2, GA a birthplace. Biographical notes say She contributed expertise to Gray11 Group.",
+      "expected": {
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965",
+        "major": "Sociology4",
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group"
+      },
+      "predicted": {
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965",
+        "major": "Sociology4",
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_date": true,
+        "major": true,
+        "university": true,
+        "birth_city": true,
+        "company": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_date": 1.0,
+        "major": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    }
+  ],
+  "monitoring": {
+    "event": "cloze_evaluate",
+    "step": 977,
+    "batch": 977,
+    "batches_total": 977,
+    "progress_percent": 100.0,
+    "elapsed_seconds": 2443.218,
+    "eta_seconds": 0.0,
+    "items_processed": 125000,
+    "items_per_sec": 51.162,
+    "tokens_processed": 168180266,
+    "tokens_per_sec": 68835.547,
+    "field_accuracy_running": 0.999916,
+    "all_fields_accuracy_running": 0.999592,
+    "gpu_memory_allocated_mb": 1128.74,
+    "gpu_memory_reserved_mb": 2234.0,
+    "gpu_peak_memory_allocated_mb": 1477.9,
+    "gpu_memory_allocated_mb_max": 1128.74,
+    "gpu_memory_reserved_mb_max": 2234.0,
+    "gpu_peak_memory_allocated_mb_max": 1477.9,
+    "gpu_memory_allocated_mb_total": 1128.74,
+    "gpu_memory_reserved_mb_total": 2234.0,
+    "gpu_memory_capacity_mb_max": 24217.31,
+    "gpu_memory_capacity_mb_total": 24217.31,
+    "gpu_memory_current_percent_max": 4.66,
+    "gpu_memory_reserved_percent_max": 9.22,
+    "gpu_memory_peak_percent_max": 6.1,
+    "monitored_world_size": 1
+  },
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "provenance": {
+    "python_version": "3.10.12",
+    "torch_version": "2.5.1+cu118",
+    "cuda_runtime": "11.8",
+    "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+    "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+    "git_revision": "1b682e7a0fc7a8a7d0147a70f6e1315abda75989",
+    "git_branch": "train",
+    "git_dirty": false,
+    "world_size": 1
+  },
+  "log_dir": "artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/operation_logs/synbios_cloze_evaluate_shard_1/20260721-181213"
+}

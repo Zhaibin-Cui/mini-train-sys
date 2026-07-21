@@ -1,0 +1,321 @@
+{
+  "protocol": "progressive_original_biography_cloze_greedy",
+  "protocol_note": "the six source fact spans are removed and generated in their original text order; earlier predictions replace earlier holes before later fields are generated",
+  "start_index": 0,
+  "biographies": 125000,
+  "fields": 750000,
+  "attribute_accuracy": {
+    "birth_date": 0.999944,
+    "birth_city": 0.99996,
+    "university": 0.999944,
+    "major": 0.999704,
+    "company": 0.999928,
+    "company_city": 0.999928
+  },
+  "attribute_mean_character_similarity": {
+    "birth_date": 0.9999643120879121,
+    "birth_city": 0.9999866666666669,
+    "university": 0.9999781753474598,
+    "major": 0.9997490842828668,
+    "company": 0.9999662564102564,
+    "company_city": 0.9999506666666668
+  },
+  "mean_character_similarity": 0.9999325269103049,
+  "fuzzy_accuracy_by_threshold": {
+    "0.5": {
+      "birth_date": 0.999952,
+      "birth_city": 0.999984,
+      "university": 1.0,
+      "major": 0.999704,
+      "company": 0.999992,
+      "company_city": 0.999928
+    },
+    "0.8": {
+      "birth_date": 0.999952,
+      "birth_city": 0.999984,
+      "university": 0.999944,
+      "major": 0.999704,
+      "company": 0.999928,
+      "company_city": 0.999928
+    },
+    "0.9": {
+      "birth_date": 0.999944,
+      "birth_city": 0.999984,
+      "university": 0.999944,
+      "major": 0.999704,
+      "company": 0.999928,
+      "company_city": 0.999928
+    }
+  },
+  "micro_fuzzy_accuracy_by_threshold": {
+    "0.5": 0.9999266666666666,
+    "0.8": 0.9999066666666667,
+    "0.9": 0.9999053333333333
+  },
+  "micro_field_accuracy": 0.9999013333333333,
+  "biography_all_fields_accuracy": 0.999608,
+  "mean_correct_fields_per_biography": 5.999408,
+  "biography_correct_field_count_histogram": {
+    "0": 3,
+    "1": 0,
+    "2": 1,
+    "3": 2,
+    "4": 3,
+    "5": 40,
+    "6": 124951
+  },
+  "correct_fields": {
+    "birth_date": 124993,
+    "birth_city": 124995,
+    "university": 124993,
+    "major": 124963,
+    "company": 124991,
+    "company_city": 124991
+  },
+  "total_fields": {
+    "birth_date": 125000,
+    "birth_city": 125000,
+    "university": 125000,
+    "major": 125000,
+    "company": 125000,
+    "company_city": 125000
+  },
+  "unterminated_fields": 0,
+  "elapsed_seconds": 2450.638818124,
+  "biographies_per_second": 51.007108463126904,
+  "model_tokens_processed": 168177986,
+  "samples": [
+    {
+      "person_id": 0,
+      "original_text": "The profile states Jonah15 Blair13 Carter36's birthday is October 24, 2046. In life, He owes early roots to Tacoma9, NC. According to records, He joined Brooks9 Group. In particular, He received mentorship at Chicago8 University. It is recorded that He was professionally based in Albany3, GA. The profile states He developed a foundation in Political Science2.",
+      "filled_text": "The profile states Jonah15 Blair13 Carter36's birthday is October 24, 2046. In life, He owes early roots to Tacoma9, NC. According to records, He joined Brooks9 Group. In particular, He received mentorship at Chicago8 University. It is recorded that He was professionally based in Albany3, GA. The profile states He developed a foundation in Political Science2.",
+      "expected": {
+        "birth_date": "October 24, 2046",
+        "birth_city": "Tacoma9, NC",
+        "company": "Brooks9 Group",
+        "university": "Chicago8 University",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2"
+      },
+      "predicted": {
+        "birth_date": "October 24, 2046",
+        "birth_city": "Tacoma9, NC",
+        "company": "Brooks9 Group",
+        "university": "Chicago8 University",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "company": true,
+        "university": true,
+        "company_city": true,
+        "major": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "company": 1.0,
+        "university": 1.0,
+        "company_city": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "In life, Jonah15 Blair13 Carter36 spent early years in Tacoma9, NC. He developed a foundation in Political Science2. Biographical notes say He worked in Albany3, GA. In particular, He received mentorship at Chicago8 University. Biographical notes say He joined Brooks9 Group. The profile states He celebrates a birthday on October 24, 2046.",
+      "filled_text": "In life, Jonah15 Blair13 Carter36 spent early years in Tacoma9, NC. He developed a foundation in Political Science2. Biographical notes say He worked in Albany3, GA. In particular, He received mentorship at Chicago8 University. Biographical notes say He joined Brooks9 Group. The profile states He celebrates a birthday on October 24, 2046.",
+      "expected": {
+        "birth_city": "Tacoma9, NC",
+        "major": "Political Science2",
+        "company_city": "Albany3, GA",
+        "university": "Chicago8 University",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046"
+      },
+      "predicted": {
+        "birth_city": "Tacoma9, NC",
+        "major": "Political Science2",
+        "company_city": "Albany3, GA",
+        "university": "Chicago8 University",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046"
+      },
+      "correct": {
+        "birth_city": true,
+        "major": true,
+        "company_city": true,
+        "university": true,
+        "company": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company_city": 1.0,
+        "university": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "Jonah15 Blair13 Carter36 gained work experience in Albany3, GA. According to records, He majored in Political Science2. Notably, He graduated from Chicago8 University. He was born on October 24, 2046. Public records show He had a professional role at Brooks9 Group. Biographical notes say He owes early roots to Tacoma9, NC.",
+      "filled_text": "Jonah15 Blair13 Carter36 gained work experience in Albany3, GA. According to records, He majored in Political Science2. Notably, He graduated from Chicago8 University. He was born on October 24, 2046. Public records show He had a professional role at Brooks9 Group. Biographical notes say He owes early roots to Tacoma9, NC.",
+      "expected": {
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "university": "Chicago8 University",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "birth_city": "Tacoma9, NC"
+      },
+      "predicted": {
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "university": "Chicago8 University",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "birth_city": "Tacoma9, NC"
+      },
+      "correct": {
+        "company_city": true,
+        "major": true,
+        "university": true,
+        "birth_date": true,
+        "company": true,
+        "birth_city": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "major": 1.0,
+        "university": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "birth_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "It is recorded that Jonah15 Blair13 Carter36 was professionally based in Albany3, GA. Historically, He owes early roots to Tacoma9, NC. According to records, He celebrates a birthday on October 24, 2046. Biographical notes say He joined Brooks9 Group. Public records show He studied Political Science2. Notably, He studied at Chicago8 University.",
+      "filled_text": "It is recorded that Jonah15 Blair13 Carter36 was professionally based in Albany3, GA. Historically, He owes early roots to Tacoma9, NC. According to records, He celebrates a birthday on October 24, 2046. Biographical notes say He joined Brooks9 Group. Public records show He studied Political Science2. Notably, He studied at Chicago8 University.",
+      "expected": {
+        "company_city": "Albany3, GA",
+        "birth_city": "Tacoma9, NC",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "major": "Political Science2",
+        "university": "Chicago8 University"
+      },
+      "predicted": {
+        "company_city": "Albany3, GA",
+        "birth_city": "Tacoma9, NC",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "major": "Political Science2",
+        "university": "Chicago8 University"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_city": true,
+        "birth_date": true,
+        "company": true,
+        "major": true,
+        "university": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "major": 1.0,
+        "university": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "Public records show Jonah15 Blair13 Carter36 calls Tacoma9, NC a birthplace. Biographical notes say He worked in Albany3, GA. Public records show He specialized in Political Science2. According to records, He was employed by Brooks9 Group. Notably, He's birthday is October 24, 2046. It is recorded that He studied at Chicago8 University.",
+      "filled_text": "Public records show Jonah15 Blair13 Carter36 calls Tacoma9, NC a birthplace. Biographical notes say He worked in Albany3, GA. Public records show He specialized in Political Science2. According to records, He was employed by Brooks9 Group. Notably, He's birthday is October 24, 2046. It is recorded that He studied at Chicago8 University.",
+      "expected": {
+        "birth_city": "Tacoma9, NC",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046",
+        "university": "Chicago8 University"
+      },
+      "predicted": {
+        "birth_city": "Tacoma9, NC",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046",
+        "university": "Chicago8 University"
+      },
+      "correct": {
+        "birth_city": true,
+        "company_city": true,
+        "major": true,
+        "company": true,
+        "birth_date": true,
+        "university": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0
+      },
+      "exact_fields": 6
+    }
+  ],
+  "monitoring": {
+    "event": "cloze_evaluate",
+    "step": 977,
+    "batch": 977,
+    "batches_total": 977,
+    "progress_percent": 100.0,
+    "elapsed_seconds": 2450.636,
+    "eta_seconds": 0.0,
+    "items_processed": 125000,
+    "items_per_sec": 51.007,
+    "tokens_processed": 168177986,
+    "tokens_per_sec": 68626.274,
+    "field_accuracy_running": 0.9999013333333333,
+    "all_fields_accuracy_running": 0.999608,
+    "gpu_memory_allocated_mb": 1128.74,
+    "gpu_memory_reserved_mb": 2162.0,
+    "gpu_peak_memory_allocated_mb": 1475.55,
+    "gpu_memory_allocated_mb_max": 1128.74,
+    "gpu_memory_reserved_mb_max": 2162.0,
+    "gpu_peak_memory_allocated_mb_max": 1475.55,
+    "gpu_memory_allocated_mb_total": 1128.74,
+    "gpu_memory_reserved_mb_total": 2162.0,
+    "gpu_memory_capacity_mb_max": 24217.31,
+    "gpu_memory_capacity_mb_total": 24217.31,
+    "gpu_memory_current_percent_max": 4.66,
+    "gpu_memory_reserved_percent_max": 8.93,
+    "gpu_memory_peak_percent_max": 6.09,
+    "monitored_world_size": 1
+  },
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "provenance": {
+    "python_version": "3.10.12",
+    "torch_version": "2.5.1+cu118",
+    "cuda_runtime": "11.8",
+    "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+    "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+    "git_revision": "1b682e7a0fc7a8a7d0147a70f6e1315abda75989",
+    "git_branch": "train",
+    "git_dirty": false,
+    "world_size": 1
+  },
+  "log_dir": "artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/operation_logs/synbios_cloze_evaluate_shard_0/20260721-181213"
+}

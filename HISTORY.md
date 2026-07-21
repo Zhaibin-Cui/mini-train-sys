@@ -705,3 +705,38 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `1e-6 → 4e-5`, grad norm fell `17.113 → 7.030`, steady throughput reached 353k–364k tok/s,
   compute utilization was about 97.5%–98.2%, and interval peak allocated memory was 20.39/23.65
   GiB (the validated 86.2%). No NaN/Inf, OOM, dead process, or data stall was observed.
+
+## 2026-07-21 18:56 — Complete multi5+permute training and full 500k cloze validation
+
+- Status: pretraining, validation, result export, and repository verification completed
+  successfully; publication push is pending.
+- Pretraining completed 108/108 epochs and 17,388/17,388 optimizer steps, processing
+  3,988,389,888 scheduled tokens. Total loss fell from 10.948931 to 0.296150 (minimum logged
+  0.293688); final LM cross-entropy was 0.285855, MoE regularization 0.010295, grad norm 0.06513,
+  expert-load CV 0.02924, with zero dead experts and zero dropped routes.
+- End-to-end training time was 12,148.31 seconds with 328,308 tok/s average throughput. The final
+  atomically committed checkpoint is
+  `artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388/`,
+  including DCP+Adam and a model export (5,006,353,550 total bytes).
+- Final validation reused the `single` progressive original-biography cloze protocol unchanged:
+  exact BPE fact spans removed, source-order greedy fill, earlier predictions inserted before later
+  fills, 16-token field cap, and strict case-sensitive exact equality as the primary metric.
+- Four disjoint ranges (0–124,999, 125,000–249,999, 250,000–374,999, and 375,000–499,999) ran on
+  four RTX 4090 GPUs. The range-aware aggregator verified full contiguous coverage without gaps or
+  overlap.
+- Result: 2,999,746/3,000,000 strict fields exact (99.991533%); 499,813/500,000 biographies had
+  6/6 fields exact (99.9626%); no generation reached the token cap. Field accuracies were birth
+  date 99.9968%, birth city 99.9966%, university 99.9952%, major 99.9710%, company 99.9946%, and
+  company city 99.9950%.
+- Fuzzy accuracy was 99.993433% / 99.991733% / 99.991633% at thresholds 0.50 / 0.80 / 0.90. The
+  0.90 score credits three non-exact fields, so strict accuracy remains the paper headline.
+- Parallel validation wall time was 2,450.64 seconds (204.03 biographies/s). Machine summary:
+  `artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json`; human report:
+  `reports/synbios_multi5_permute_cloze_500k.md`.
+- Interpretation: optimization and augmented training-corpus recall are successful. This is not
+  held-out validation, and the near-perfect score does not establish an augmentation-driven
+  generalization gain over the 100%-exact `single` training-corpus result.
+- Repository verification: 75 tests passed with five expected single-process DCP warnings; Ruff
+  passed. Persistent log: `artifacts/logs/multi5_results_validation_20260721.log`. The final export
+  includes training JSONL/TensorBoard events, validation JSON/TensorBoard/events, console logs,
+  data manifests, and checkpoint metadata, with `results/MANIFEST.sha256` regenerated.

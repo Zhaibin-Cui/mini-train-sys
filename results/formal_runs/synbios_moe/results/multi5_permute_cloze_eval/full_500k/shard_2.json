@@ -1,0 +1,321 @@
+{
+  "protocol": "progressive_original_biography_cloze_greedy",
+  "protocol_note": "the six source fact spans are removed and generated in their original text order; earlier predictions replace earlier holes before later fields are generated",
+  "start_index": 250000,
+  "biographies": 125000,
+  "fields": 750000,
+  "attribute_accuracy": {
+    "birth_date": 0.999976,
+    "birth_city": 0.999968,
+    "university": 0.999944,
+    "major": 0.999776,
+    "company": 0.999928,
+    "company_city": 0.999928
+  },
+  "attribute_mean_character_similarity": {
+    "birth_date": 0.9999842619047619,
+    "birth_city": 0.9999796363636362,
+    "university": 0.9999806385964912,
+    "major": 0.9998130308430303,
+    "company": 0.99997133999334,
+    "company_city": 0.9999477575757576
+  },
+  "mean_character_similarity": 0.9999461108795029,
+  "fuzzy_accuracy_by_threshold": {
+    "0.5": {
+      "birth_date": 0.999976,
+      "birth_city": 0.999976,
+      "university": 1.0,
+      "major": 0.999776,
+      "company": 0.999992,
+      "company_city": 0.999936
+    },
+    "0.8": {
+      "birth_date": 0.999976,
+      "birth_city": 0.999968,
+      "university": 0.999944,
+      "major": 0.999776,
+      "company": 0.999936,
+      "company_city": 0.999928
+    },
+    "0.9": {
+      "birth_date": 0.999976,
+      "birth_city": 0.999968,
+      "university": 0.999944,
+      "major": 0.999776,
+      "company": 0.999928,
+      "company_city": 0.999928
+    }
+  },
+  "micro_fuzzy_accuracy_by_threshold": {
+    "0.5": 0.9999426666666666,
+    "0.8": 0.9999213333333333,
+    "0.9": 0.99992
+  },
+  "micro_field_accuracy": 0.99992,
+  "biography_all_fields_accuracy": 0.999688,
+  "mean_correct_fields_per_biography": 5.99952,
+  "biography_correct_field_count_histogram": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 3,
+    "4": 3,
+    "5": 30,
+    "6": 124961
+  },
+  "correct_fields": {
+    "birth_date": 124997,
+    "birth_city": 124996,
+    "university": 124993,
+    "major": 124972,
+    "company": 124991,
+    "company_city": 124991
+  },
+  "total_fields": {
+    "birth_date": 125000,
+    "birth_city": 125000,
+    "university": 125000,
+    "major": 125000,
+    "company": 125000,
+    "company_city": 125000
+  },
+  "unterminated_fields": 0,
+  "elapsed_seconds": 2424.622090236,
+  "biographies_per_second": 51.5544259467805,
+  "model_tokens_processed": 167961885,
+  "samples": [
+    {
+      "person_id": 50000,
+      "original_text": "Jonah17 Alexa12 Lane5 had a professional role at Ward9 Group. Notably, She studied History2. In life, She was born on April 9, 1982. It is recorded that She calls Madison7, PA a birthplace. Public records show She received mentorship at Denver8 University. In particular, She was professionally based in Albany5, GA.",
+      "filled_text": "Jonah17 Alexa12 Lane5 had a professional role at Ward9 Group. Notably, She studied History2. In life, She was born on April 9, 1982. It is recorded that She calls Madison7, PA a birthplace. Public records show She received mentorship at Denver8 University. In particular, She was professionally based in Albany5, GA.",
+      "expected": {
+        "company": "Ward9 Group",
+        "major": "History2",
+        "birth_date": "April 9, 1982",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA"
+      },
+      "predicted": {
+        "company": "Ward9 Group",
+        "major": "History2",
+        "birth_date": "April 9, 1982",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA"
+      },
+      "correct": {
+        "company": true,
+        "major": true,
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "company": 1.0,
+        "major": 1.0,
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "Jonah17 Alexa12 Lane5 owes early roots to Madison7, PA. Public records show She has an annual celebration on April 9, 1982. Biographical notes say She attended Denver8 University. Notably, She was professionally based in Albany5, GA. Notably, She had a professional role at Ward9 Group. In particular, She developed a foundation in History2.",
+      "filled_text": "Jonah17 Alexa12 Lane5 owes early roots to Madison7, PA. Public records show She has an annual celebration on April 9, 1982. Biographical notes say She attended Denver8 University. Notably, She was professionally based in Albany5, GA. Notably, She had a professional role at Ward9 Group. In particular, She developed a foundation in History2.",
+      "expected": {
+        "birth_city": "Madison7, PA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA",
+        "company": "Ward9 Group",
+        "major": "History2"
+      },
+      "predicted": {
+        "birth_city": "Madison7, PA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA",
+        "company": "Ward9 Group",
+        "major": "History2"
+      },
+      "correct": {
+        "birth_city": true,
+        "birth_date": true,
+        "university": true,
+        "company_city": true,
+        "company": true,
+        "major": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "company_city": 1.0,
+        "company": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "Biographical notes say Jonah17 Alexa12 Lane5 developed a foundation in History2. It is recorded that She grew up in Madison7, PA. It is recorded that She worked in Albany5, GA. Notably, She studied at Denver8 University. In life, She worked for Ward9 Group. Notably, She celebrates a birthday on April 9, 1982.",
+      "filled_text": "Biographical notes say Jonah17 Alexa12 Lane5 developed a foundation in History2. It is recorded that She grew up in Madison7, PA. It is recorded that She worked in Albany5, GA. Notably, She studied at Denver8 University. In life, She worked for Ward9 Group. Notably, She celebrates a birthday on April 9, 1982.",
+      "expected": {
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "company_city": "Albany5, GA",
+        "university": "Denver8 University",
+        "company": "Ward9 Group",
+        "birth_date": "April 9, 1982"
+      },
+      "predicted": {
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "company_city": "Albany5, GA",
+        "university": "Denver8 University",
+        "company": "Ward9 Group",
+        "birth_date": "April 9, 1982"
+      },
+      "correct": {
+        "major": true,
+        "birth_city": true,
+        "company_city": true,
+        "university": true,
+        "company": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "major": 1.0,
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "university": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "In particular, Jonah17 Alexa12 Lane5 was professionally based in Albany5, GA. In particular, She has an annual celebration on April 9, 1982. The profile states She studied at Denver8 University. Biographical notes say She was born in Madison7, PA. Public records show She specialized in History2. Public records show She was employed by Ward9 Group.",
+      "filled_text": "In particular, Jonah17 Alexa12 Lane5 was professionally based in Albany5, GA. In particular, She has an annual celebration on April 9, 1982. The profile states She studied at Denver8 University. Biographical notes say She was born in Madison7, PA. Public records show She specialized in History2. Public records show She was employed by Ward9 Group.",
+      "expected": {
+        "company_city": "Albany5, GA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "birth_city": "Madison7, PA",
+        "major": "History2",
+        "company": "Ward9 Group"
+      },
+      "predicted": {
+        "company_city": "Albany5, GA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "birth_city": "Madison7, PA",
+        "major": "History2",
+        "company": "Ward9 Group"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_date": true,
+        "university": true,
+        "birth_city": true,
+        "major": true,
+        "company": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "It is recorded that Jonah17 Alexa12 Lane5 was born on April 9, 1982. It is recorded that She was employed by Ward9 Group. Biographical notes say She gained work experience in Albany5, GA. In particular, She studied History2. It is recorded that She was born in Madison7, PA. Notably, She attended Denver8 University.",
+      "filled_text": "It is recorded that Jonah17 Alexa12 Lane5 was born on April 9, 1982. It is recorded that She was employed by Ward9 Group. Biographical notes say She gained work experience in Albany5, GA. In particular, She studied History2. It is recorded that She was born in Madison7, PA. Notably, She attended Denver8 University.",
+      "expected": {
+        "birth_date": "April 9, 1982",
+        "company": "Ward9 Group",
+        "company_city": "Albany5, GA",
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University"
+      },
+      "predicted": {
+        "birth_date": "April 9, 1982",
+        "company": "Ward9 Group",
+        "company_city": "Albany5, GA",
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University"
+      },
+      "correct": {
+        "birth_date": true,
+        "company": true,
+        "company_city": true,
+        "major": true,
+        "birth_city": true,
+        "university": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0
+      },
+      "exact_fields": 6
+    }
+  ],
+  "monitoring": {
+    "event": "cloze_evaluate",
+    "step": 977,
+    "batch": 977,
+    "batches_total": 977,
+    "progress_percent": 100.0,
+    "elapsed_seconds": 2424.618,
+    "eta_seconds": 0.0,
+    "items_processed": 125000,
+    "items_per_sec": 51.555,
+    "tokens_processed": 167961885,
+    "tokens_per_sec": 69273.537,
+    "field_accuracy_running": 0.99992,
+    "all_fields_accuracy_running": 0.999688,
+    "gpu_memory_allocated_mb": 1128.74,
+    "gpu_memory_reserved_mb": 2110.0,
+    "gpu_peak_memory_allocated_mb": 1479.43,
+    "gpu_memory_allocated_mb_max": 1128.74,
+    "gpu_memory_reserved_mb_max": 2110.0,
+    "gpu_peak_memory_allocated_mb_max": 1479.43,
+    "gpu_memory_allocated_mb_total": 1128.74,
+    "gpu_memory_reserved_mb_total": 2110.0,
+    "gpu_memory_capacity_mb_max": 24217.31,
+    "gpu_memory_capacity_mb_total": 24217.31,
+    "gpu_memory_current_percent_max": 4.66,
+    "gpu_memory_reserved_percent_max": 8.71,
+    "gpu_memory_peak_percent_max": 6.11,
+    "monitored_world_size": 1
+  },
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "provenance": {
+    "python_version": "3.10.12",
+    "torch_version": "2.5.1+cu118",
+    "cuda_runtime": "11.8",
+    "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+    "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+    "git_revision": "1b682e7a0fc7a8a7d0147a70f6e1315abda75989",
+    "git_branch": "train",
+    "git_dirty": false,
+    "world_size": 1
+  },
+  "log_dir": "artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/operation_logs/synbios_cloze_evaluate_shard_2/20260721-181213"
+}
