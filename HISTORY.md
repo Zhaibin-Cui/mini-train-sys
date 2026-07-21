@@ -633,3 +633,5 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   single-process DCP warnings; Ruff passed across `minitrain`, `experiments`, `scripts`, and
   `tests`. tmux/log: `minitrain-cloze-gate-verify-20260721` and
   `artifacts/logs/cloze_probe_gate_validation_20260721-1433.log`.
+- Push result: commit `bb93aaa` (`feat(probe): gate pipeline on strict biography cloze`) was
+  pushed to `origin/train`; local/remote divergence was verified as `0 0` afterward.
