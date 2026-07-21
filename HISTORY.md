@@ -446,7 +446,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 
 ## 2026-07-21 13:33 — Completed formal-run GitHub snapshot
 
-- Status: validation completed; snapshot commit/push pending.
+- Status: completed; payload pushed to `origin/train`.
 - Local/UTC start: 2026-07-21 13:33 Asia/Shanghai / 2026-07-21 05:33 UTC.
 - Purpose: export and push every Git-safe server result and process artifact after the successful
   540-epoch SynBioS run, especially complete TensorBoard/JSONL metrics, console/test/service logs,
@@ -478,3 +478,6 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   raw generated logs/events retain their original formatting as provenance.
 - Remote preflight: `git fetch origin` completed and `HEAD...origin/train` was `0 0` before the
   snapshot commit. TensorBoard remains available in tmux `minitrain-tensorboard` on TCP 6006.
+- Push result: completed at 2026-07-21 13:37 Asia/Shanghai / 2026-07-21 05:37 UTC. Payload commit
+  `aef675c` (`feat(server): persist completed SynBioS formal run`) was pushed successfully;
+  local and `origin/train` were verified at `0 0` divergence immediately afterward.
