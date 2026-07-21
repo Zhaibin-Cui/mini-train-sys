@@ -83,3 +83,16 @@ mixed into the successful TensorBoard directory.
 
 Raw evidence is under `benchmarks/`, `validation/`, and `logs/`; exact commands and stopped/failed
 runs are preserved in `../HISTORY.md`.
+
+## Single-biography progressive cloze recall
+
+The final `single` checkpoint was evaluated on all 100,000 original training biographies by
+removing their six ground-truth fact spans and greedily restoring them in source-text order. Each
+earlier model prediction was inserted into the context used for later fields. Across 600,000
+fields, strict case-sensitive exact accuracy was 100% for birth date, birth city, university,
+major, company, and company city; all 100,000 biographies restored all six fields exactly.
+Normalized Levenshtein character similarity and its 50%/80%/90% thresholds were also 100%, but
+are only diagnostics because approximate string matching can over-credit semantically wrong near
+matches. This training-set test demonstrates exact in-distribution recall, not generalization to
+unseen people or templates. See `../reports/synbios_single_cloze_100k.md` for protocol, examples,
+limitations, and result paths.

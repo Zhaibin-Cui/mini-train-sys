@@ -481,3 +481,130 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Push result: completed at 2026-07-21 13:37 Asia/Shanghai / 2026-07-21 05:37 UTC. Payload commit
   `aef675c` (`feat(server): persist completed SynBioS formal run`) was pushed successfully;
   local and `origin/train` were verified at `0 0` divergence immediately afterward.
+
+## 2026-07-21 13:46 — Single-bio progressive cloze evaluation pilot
+
+- Status: running.
+- Local/UTC start: 2026-07-21 13:46 Asia/Shanghai / 2026-07-21 05:46 UTC.
+- Purpose: measure the completed `single` model by removing the six actual fact spans from each
+  original biography and greedily filling them in original textual order. Generated earlier facts
+  replace earlier holes before later facts are predicted; only the source's non-fact text is kept.
+- Git at launch: `a117d336c84ebd24b588c8a4f572b10896825ee1`; dirty only with the new cloze
+  evaluator, CLI entry, and its passing unit test.
+- Backbone checkpoint:
+  `artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`
+  (`COMMITTED`, final `model.pt`, 540 epochs / 17,280 optimizer steps).
+- Data: the first 1,000 of 100,000 deterministic `single` biographies; six fields per biography,
+  exact case-sensitive value match, greedy decoding until the original sentence period, maximum
+  16 generated tokens per field. This pilot calibrates throughput before the full-data run.
+- Hardware: one RTX 4090 (`CUDA_VISIBLE_DEVICES=0`), inference-only frozen backbone, batch 16.
+- tmux: `minitrain-single-cloze-1k`; log:
+  `artifacts/logs/single_cloze_pilot_1000_20260721-1346.log`.
+- Command:
+
+  ```bash
+  CUDA_VISIBLE_DEVICES=0 python scripts/synbios_moe.py cloze-evaluate \
+    --data artifacts/synbios_moe/single \
+    --model-config configs/synbios_moe/model.yaml \
+    --checkpoint artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280 \
+    --device cuda --examples 1000 --batch-size 16 --max-new-tokens 16 \
+    --sample-biographies 20 \
+    --output artifacts/synbios_moe/results/single_cloze_eval/pilot_1000.json \
+    --log-dir artifacts/synbios_moe/results/single_cloze_eval/operation_logs \
+    --log-interval 5 --tensorboard
+  ```
+- First attempt status: stopped during the second batch after the first 16 biographies exposed an
+  invalid string-level GPT-2 BPE boundary (`0%` was discarded, not a model result). Splitting at a
+  fact's first character retokenized a trained token such as `" July"` into a standalone space;
+  a generated EOS also made the reconstructed string non-encodable. No result JSON was published.
+- Corrected protocol: remove the exact contiguous fact token spans from the original training BPE
+  sequence, keep all original non-fact tokens unchanged, insert generated token IDs progressively,
+  and score both strict exact match and normalized Levenshtein character similarity (mean and
+  >=50%/80%/90% rates). Retry tmux/log: `minitrain-single-cloze-1k-r2` and
+  `artifacts/logs/single_cloze_pilot_1000_20260721-1346-r2.log`.
+- Retry r2 verified the corrected metric on its first 80 biographies: strict field accuracy was
+  95.625% and six-field biography accuracy was 73.75%. It was intentionally stopped because the
+  progress reporter received cumulative rather than per-batch item/token counts, inflating only
+  its throughput counters (not accuracy). That bookkeeping was fixed and revalidated with 18/18
+  SynBioS tests plus Ruff. Final retry tmux/log: `minitrain-single-cloze-1k-r3` and
+  `artifacts/logs/single_cloze_pilot_1000_20260721-1346-r3.log`.
+- Retry r3 completed 1,000 biographies in 80.40 seconds and demonstrated 100% exact recall for
+  birth date, university, major, company, and company city. Its apparent 78.5% birth-city score
+  was a scoring-boundary artifact: the `calls {value} a birthplace.` template caused correct
+  generations such as `Oakland4, MA a birthplace` to be compared against only `Oakland4, MA`.
+  The result is retained as `pilot_1000_period_delimiter_r3.json`, not used as the final metric.
+- Final r4 stops generation at each hole's actual right-hand literal delimiter (usually `.`, or
+  ` a birthplace.` for that template), while still withholding the delimiter from the causal
+  prompt. This scores only text belonging inside the original hole. Final tmux/log:
+  `minitrain-single-cloze-1k-r4` and
+  `artifacts/logs/single_cloze_pilot_1000_20260721-1346-r4.log`.
+- Pilot final result: completed at 2026-07-21 13:55 Asia/Shanghai in 79.13 seconds. All 6,000
+  fields were exact, normalized character similarity was 100%, all >=50%/80%/90% fuzzy rates
+  were 100%, all 1,000 biographies had 6/6 correct, and no generation hit the token limit.
+  Final JSON: `artifacts/synbios_moe/results/single_cloze_eval/pilot_1000.json`; TensorBoard/JSONL:
+  `artifacts/synbios_moe/results/single_cloze_eval/operation_logs/`.
+
+## 2026-07-21 13:57 — Full 100k single-bio progressive cloze evaluation
+
+- Status: completed successfully at 2026-07-21 14:08 Asia/Shanghai.
+- Local/UTC start: 2026-07-21 13:57 Asia/Shanghai / 2026-07-21 05:57 UTC.
+- Purpose/protocol: extend the validated pilot unchanged to all 100,000 original `single`
+  biographies (600,000 progressively filled fact holes), using four disjoint contiguous shards.
+- Code/checkpoint/data provenance is identical to the pilot entry above; only `--start-index`,
+  `--examples 25000`, and `--batch-size 128` differ. Each process owns one RTX 4090 and one frozen
+  model replica; no gradients, checkpoint writes, or inter-process aggregation affect inference.
+- tmux sessions: `minitrain-cloze-full-gpu0` through `minitrain-cloze-full-gpu3`.
+- Outputs/logs:
+  `artifacts/synbios_moe/results/single_cloze_eval/full_100k/shard_{0,1,2,3}.json` and
+  `artifacts/logs/single_cloze_full_gpu{0,1,2,3}_20260721-1357.log`.
+- Per-shard command template:
+
+  ```bash
+  CUDA_VISIBLE_DEVICES=<gpu> python scripts/synbios_moe.py cloze-evaluate \
+    --data artifacts/synbios_moe/single \
+    --model-config configs/synbios_moe/model.yaml \
+    --checkpoint artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280 \
+    --device cuda --start-index <0|25000|50000|75000> --examples 25000 \
+    --batch-size 128 --max-new-tokens 16 --sample-biographies 5 \
+    --output artifacts/synbios_moe/results/single_cloze_eval/full_100k/shard_<gpu>.json \
+    --log-dir artifacts/synbios_moe/results/single_cloze_eval/full_100k/operation_logs \
+    --log-interval 20 --tensorboard
+  ```
+- First full-run attempt: all four processes completed with 100% exact accuracy, but the aggregate
+  range validator correctly rejected the outputs because CLI wiring had passed `--start-index` to
+  the legacy evaluator rather than the new cloze evaluator. All four therefore covered 0–24,999.
+  GPU0's shard remains valid; GPU1–3 duplicate JSON/logs were renamed with
+  `_duplicate_range0_r1` and retained as non-independent evidence, never counted toward 100k.
+- Range fix: moved `start_index=args.start_index` to `command_cloze_evaluate`, reran 18/18 SynBioS
+  tests and Ruff, and confirmed the CLI exposes the option. GPU1–3 are relaunched as tmux sessions
+  `minitrain-cloze-full-gpu{1,2,3}-r2` with the same commands/ranges and logs suffixed `-r2`.
+- Final validated ranges were exactly 0–24,999, 25,000–49,999, 50,000–74,999, and
+  75,000–99,999. The range-aware aggregator rejected overlaps/gaps before publishing the summary.
+- Final result: all 600,000 fields were strict case-sensitive exact matches, every field type was
+  100%, all 100,000 biographies restored 6/6 fields, no generation hit the token limit, mean
+  normalized Levenshtein character similarity was 100%, and fuzzy rates at 50%/80%/90% were all
+  100%. Parallel wall time was 419.48 seconds (238.39 biographies/s across four GPUs).
+- Machine-readable summary:
+  `artifacts/synbios_moe/results/single_cloze_eval/full_100k/summary.json`; human conclusion with
+  two worked progressive-fill examples and fuzzy-metric caveats:
+  `reports/synbios_single_cloze_100k.md`.
+- Interpretation: the final checkpoint learned the intended training corpus extremely well and
+  can exactly recall every recorded fact under its original template/context. This is strong
+  evidence that optimization was effective, but because the evaluated people and templates are
+  the training set it is not evidence of unseen-person or unseen-template generalization.
+
+## 2026-07-21 14:09 — Progressive-cloze validation and result export
+
+- Status: completed; ready for the repository snapshot.
+- Full regression: 74 tests passed with zero failures in 12.20 seconds; the five emitted warnings
+  are the expected single-process `torch.distributed.checkpoint` fallbacks. Ruff passed.
+- tmux/log: `minitrain-cloze-verify-20260721` and
+  `artifacts/logs/cloze_full_validation_20260721-1409.log`; exit status was zero.
+- Export command: `bash scripts/bash/export_test_results.sh`. The exporter now includes
+  `artifacts/synbios_moe/results/`, so aggregate/shard JSON, rejected-attempt evidence, JSONL
+  progress, and TensorBoard event files are retained under
+  `results/formal_runs/synbios_moe/results/` rather than existing only on the mounted volume.
+- Exported cloze evidence: 32 files totaling 648 KiB. `results/MANIFEST.sha256` verifies every
+  exported file, source/documentation diff checks pass, and no exported file exceeds 90 MiB.
+- Remote preflight at 14:19 Asia/Shanghai: `git fetch origin` succeeded and
+  `HEAD...origin/train` was `0 0` before creating the new snapshot.

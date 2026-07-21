@@ -61,6 +61,7 @@ done
 # Persist formal metrics and recovery metadata, never multi-gigabyte tensor
 # payloads. COMMITTED/runtime/RNG files prove a checkpoint was publishable.
 copy_tree "$ROOT/artifacts/synbios_moe/runs" "$DEST/formal_runs/synbios_moe/runs"
+copy_tree "$ROOT/artifacts/synbios_moe/results" "$DEST/formal_runs/synbios_moe/results"
 copy_tree \
   "$ROOT/artifacts/synbios_moe/operation_logs" \
   "$DEST/formal_runs/synbios_moe/operation_logs"

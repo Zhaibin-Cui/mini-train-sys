@@ -20,6 +20,10 @@ from torch.utils.data import DataLoader
 from torch.torch_version import TorchVersion
 
 from experiments.synbios_moe.data import ATTRIBUTES, write_dataset
+from experiments.synbios_moe.cloze_evaluation import (
+    evaluate_progressive_biography_cloze,
+    summarize_progressive_cloze_results,
+)
 from experiments.synbios_moe.evaluation import evaluate_attribute_tokens
 from experiments.synbios_moe.probe_data import (
     CachedProbeDataset,
@@ -601,6 +605,47 @@ def command_evaluate(args: argparse.Namespace) -> None:
         print(json.dumps(result))
 
 
+def command_cloze_evaluate(args: argparse.Namespace) -> None:
+    """Progressively fill the six removed facts in each original biography."""
+
+    device = torch.device(args.device)
+    with command_monitor(args, "cloze_evaluate") as (logger, log_dir):
+        model = load_model(args.model_config, args.checkpoint, device, logger=logger)
+        result = evaluate_progressive_biography_cloze(
+            model,
+            args.data,
+            device=device,
+            start_index=args.start_index,
+            max_biographies=args.examples,
+            batch_size=args.batch_size,
+            max_new_tokens=args.max_new_tokens,
+            sample_biographies=args.sample_biographies,
+            logger=logger,
+            log_interval=args.log_interval,
+        )
+        result.update(
+            {
+                "checkpoint": str(Path(args.checkpoint).resolve()),
+                "provenance": collect_provenance(ROOT),
+                "log_dir": str(log_dir) if log_dir is not None else None,
+            }
+        )
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(result))
+
+
+def command_summarize_cloze(args: argparse.Namespace) -> None:
+    """Merge disjoint progressive-cloze result shards."""
+
+    result = summarize_progressive_cloze_results(args.run)
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"biographies": result["biographies"], "fields": result["fields"]}))
+
+
 def build_parser() -> argparse.ArgumentParser:
     def add_monitoring_arguments(command: argparse.ArgumentParser) -> None:
         command.add_argument("--log-dir")
@@ -692,6 +737,25 @@ def build_parser() -> argparse.ArgumentParser:
     validate_probe.add_argument("--output", required=True)
     add_monitoring_arguments(validate_probe)
     validate_probe.set_defaults(func=command_validate_probe)
+
+    cloze = commands.add_parser("cloze-evaluate")
+    cloze.add_argument("--data", required=True)
+    cloze.add_argument("--model-config", required=True)
+    cloze.add_argument("--checkpoint", required=True)
+    cloze.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    cloze.add_argument("--output", required=True)
+    cloze.add_argument("--examples", type=int, default=1_000)
+    cloze.add_argument("--start-index", type=int, default=0)
+    cloze.add_argument("--batch-size", type=int, default=16)
+    cloze.add_argument("--max-new-tokens", type=int, default=16)
+    cloze.add_argument("--sample-biographies", type=int, default=12)
+    add_monitoring_arguments(cloze)
+    cloze.set_defaults(func=command_cloze_evaluate)
+
+    summarize_cloze = commands.add_parser("summarize-cloze")
+    summarize_cloze.add_argument("--run", action="append", required=True)
+    summarize_cloze.add_argument("--output", required=True)
+    summarize_cloze.set_defaults(func=command_summarize_cloze)
 
     pipeline = commands.add_parser("probe-pipeline")
     pipeline.add_argument("--data", required=True)

@@ -13,6 +13,10 @@ from experiments.synbios_moe.data import (
     render_biography,
     write_dataset,
 )
+from experiments.synbios_moe.cloze_evaluation import (
+    biography_cloze_fields,
+    character_similarity,
+)
 from experiments.synbios_moe.evaluation import _attribute_target_positions
 from experiments.synbios_moe.probe_data import (
     CachedProbeDataset,
@@ -89,6 +93,48 @@ def test_bios_uses_full_name_only_in_the_final_first_sentence():
 
     fullname = render_biography(profile, variant="single+fullname", sample=0, seed=7)
     assert fullname.text.count(profile.full_name) == len(ATTRIBUTES)
+
+
+def test_progressive_cloze_uses_original_fact_order_and_spans():
+    profile = generate_profiles(1, 19)[0]
+    biography = render_biography(profile, variant="single+permute1", sample=0, seed=23)
+    row = {
+        "text": biography.text,
+        "attribute_spans": biography.attribute_spans,
+    }
+
+    fields = biography_cloze_fields(row)
+
+    assert len(fields) == len(ATTRIBUTES)
+    assert [field.start for field in fields] == sorted(field.start for field in fields)
+    assert {field.attribute for field in fields} == set(ATTRIBUTES)
+    for field in fields:
+        assert biography.text[field.start : field.end] == getattr(profile, field.attribute)
+
+    calls_biography = next(
+        render_biography(profile, variant="single", sample=0, seed=seed)
+        for seed in range(100)
+        if " a birthplace." in render_biography(
+            profile, variant="single", sample=0, seed=seed
+        ).text
+    )
+    city = next(
+        field
+        for field in biography_cloze_fields(
+            {
+                "text": calls_biography.text,
+                "attribute_spans": calls_biography.attribute_spans,
+            }
+        )
+        if field.attribute == "birth_city"
+    )
+    assert calls_biography.text[city.end :].startswith(" a birthplace.")
+
+
+def test_cloze_character_similarity_is_normalized_and_partial():
+    assert character_similarity("New York, NY", "new   york, ny") == 1.0
+    assert character_similarity("New York", "New York, NY") == pytest.approx(8 / 12)
+    assert character_similarity("", "Boston, MA") == 0.0
 
 
 def test_p_probe_positions_and_frozen_backbone(tmp_path):
