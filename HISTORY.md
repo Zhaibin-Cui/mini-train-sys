@@ -660,3 +660,5 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `artifacts/logs/readme_results_validation_20260721-1452.log`. Result: 75 tests passed in 11.51
   seconds with the five expected single-process DCP warnings; Ruff passed for `minitrain`,
   `experiments`, `scripts`, and `tests`.
+- Push result: Conventional Commit `8b39e6a` (`docs(readme): publish formal server experiment
+  report`) was pushed to `origin/train`; local/remote divergence was `0 0` afterward.
