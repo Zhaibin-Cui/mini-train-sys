@@ -708,8 +708,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 
 ## 2026-07-21 18:56 — Complete multi5+permute training and full 500k cloze validation
 
-- Status: pretraining, validation, result export, and repository verification completed
-  successfully; publication push is pending.
+- Status: pretraining, validation, result export, repository verification, and publication push
+  completed successfully.
 - Pretraining completed 108/108 epochs and 17,388/17,388 optimizer steps, processing
   3,988,389,888 scheduled tokens. Total loss fell from 10.948931 to 0.296150 (minimum logged
   0.293688); final LM cross-entropy was 0.285855, MoE regularization 0.010295, grad norm 0.06513,
@@ -740,3 +740,5 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   passed. Persistent log: `artifacts/logs/multi5_results_validation_20260721.log`. The final export
   includes training JSONL/TensorBoard events, validation JSON/TensorBoard/events, console logs,
   data manifests, and checkpoint metadata, with `results/MANIFEST.sha256` regenerated.
+- Push result: Conventional Commit `1361173` (`docs(results): publish multi5 training and
+  validation`) was pushed successfully to `origin/train`.
