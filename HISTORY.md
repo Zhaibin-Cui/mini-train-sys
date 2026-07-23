@@ -1682,3 +1682,19 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Local/UTC end: 2026-07-24 01:38 Asia/Shanghai / 2026-07-23 17:38 UTC.
 - Result: GitHub accepted `0473f6f..bc61fdc` on `origin/train`; a post-push fetch/revision
   check confirmed the remote branch at the exact snapshot commit.
+
+## 2026-07-24 01:42 — Promote SynBioS evidence snapshot to default branch
+
+- Status: completed.
+- Local/UTC time: 2026-07-24 01:42 Asia/Shanghai / 2026-07-23 17:42 UTC.
+- Purpose: make the already-published Git-safe SynBioS formal results visible on GitHub's default
+  `main` branch; the initial publication had updated only the active server branch `train`.
+- Safety check: `origin/main` (`7c34608`) was a direct ancestor of `origin/train` (`09f8e4b`);
+  the promotion was a conflict-free fast-forward with zero main-only commits.
+- Exact command: `git push origin train:main`.
+- tmux/log:
+  `minitrain-synbios-main-push-20260724-0148` /
+  `artifacts/logs/synbios_main_push_20260724_0148.log`.
+- Result: GitHub accepted `7c34608..09f8e4b` on `main`; post-push fetch confirmed both
+  `origin/main` and `origin/train` at
+  `09f8e4b4e8a58f54e977ac19741841984f4dadde`.
