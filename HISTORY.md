@@ -1656,7 +1656,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 
 ## 2026-07-24 01:35 — Git-safe full SynBioS server evidence snapshot
 
-- Status: running.
+- Status: completed.
 - Local/UTC start: 2026-07-24 01:35 Asia/Shanghai / 2026-07-23 17:35 UTC.
 - Purpose: publish all current server evidence that is appropriate for the remote repository:
   source/config changes, formal and diagnostic reports, figures, machine-readable summaries,
@@ -1672,3 +1672,13 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Export tmux/log:
   `minitrain-synbios-push-export-20260724-0135` /
   `artifacts/logs/synbios_push_export_20260724_0135.log`.
+- Snapshot commit:
+  `bc61fdcda009bf405ceb5b5b1365a7fafbad0f47`
+  (`feat(synbios): publish formal probe study and diagnostics`).
+- Push tmux/log:
+  `minitrain-synbios-push-20260724-0140` /
+  `artifacts/logs/synbios_git_push_20260724_0140.log`.
+- Exact push command: `git push origin train`.
+- Local/UTC end: 2026-07-24 01:38 Asia/Shanghai / 2026-07-23 17:38 UTC.
+- Result: GitHub accepted `0473f6f..bc61fdc` on `origin/train`; a post-push fetch/revision
+  check confirmed the remote branch at the exact snapshot commit.
