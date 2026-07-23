@@ -1698,3 +1698,25 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Result: GitHub accepted `7c34608..09f8e4b` on `main`; post-push fetch confirmed both
   `origin/main` and `origin/train` at
   `09f8e4b4e8a58f54e977ac19741841984f4dadde`.
+
+> Superseded at 2026-07-24 01:45: this default-branch promotion was unintended and was
+> explicitly reverted at the user's request. The `train` publication remains valid.
+
+## 2026-07-24 01:45 — Restore default branch after unintended promotion
+
+- Status: completed.
+- Local/UTC time: 2026-07-24 01:45 Asia/Shanghai / 2026-07-23 17:45 UTC.
+- Purpose: undo only the preceding unintended `main` promotion while preserving all published
+  SynBioS evidence on `train`.
+- Precondition: fetched `origin/main` was exactly
+  `ffd6d74d5d9aaab1fcce0cd9a0932f87c1e8b075`; restore target was its verified ancestor
+  `7c34608863c18c3e47f1f50223f95449321aba5b`.
+- Safety mechanism: an exact `--force-with-lease` bound the update to the fetched remote SHA, so
+  the command would reject any intervening third-party update.
+- Exact command:
+  `git push --force-with-lease=refs/heads/main:ffd6d74d5d9aaab1fcce0cd9a0932f87c1e8b075 origin 7c34608863c18c3e47f1f50223f95449321aba5b:refs/heads/main`.
+- tmux/log:
+  `minitrain-restore-main-20260724-0155` /
+  `artifacts/logs/restore_main_20260724_0155.log`.
+- Result: GitHub accepted the forced update `ffd6d74...7c34608`; post-push fetch confirmed
+  `origin/main` at `7c34608` and `origin/train` unchanged at `ffd6d74`.
