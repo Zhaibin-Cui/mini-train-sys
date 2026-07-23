@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import struct
+import threading
 import time
 import warnings
 import zlib
@@ -106,7 +107,18 @@ def format_console_event(payload: dict[str, object]) -> str:
                 capacity = float(payload.get("worker_gpu_memory_capacity_mb_max", 0)) / 1024
                 worker += f" gpu {used:.2f}/{capacity:.2f} GiB"
             parts.append(worker)
-        parts.append(f"ETA {_duration(payload.get('eta_seconds'))}")
+        if payload.get("pipeline_step") is not None:
+            parts.append(
+                f"overall {payload.get('pipeline_step')}/"
+                f"{payload.get('pipeline_steps_total', '?')} "
+                f"{_number(payload, 'pipeline_progress_percent', 1)}%"
+            )
+        phase_eta = payload.get("phase_eta_seconds", payload.get("eta_seconds"))
+        parts.append(f"phase ETA {_duration(phase_eta)}")
+        if "pipeline_eta_seconds" in payload:
+            parts.append(f"pipeline ETA {_duration(payload.get('pipeline_eta_seconds'))}")
+        if payload.get("estimated_completion_local"):
+            parts.append(f"done {payload['estimated_completion_local']}")
         return " | ".join(parts)
     if event in {
         "train",
@@ -188,13 +200,22 @@ class JsonlLogger:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.handle = self.path.open("a", encoding="utf-8")
+        self._lock = threading.Lock()
 
     def log_event(self, payload: dict[str, object]) -> None:
-        self.handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
-        self.handle.flush()
+        with self._lock:
+            if self.handle.closed:
+                return
+            self.handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
+            self.handle.flush()
 
     def close(self) -> None:
-        self.handle.close()
+        # Worker completion and the owning pipeline can both attempt cleanup.
+        # Closing an already-closed stream must be harmless so a final event
+        # cannot crash the scheduler during normal teardown.
+        with self._lock:
+            if not self.handle.closed:
+                self.handle.close()
 
 
 class TensorBoardLogger:

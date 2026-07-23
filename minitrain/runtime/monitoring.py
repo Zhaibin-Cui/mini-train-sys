@@ -287,6 +287,10 @@ class ProgressReporter:
         self.processed_tokens = 0
         self.last_payload: dict[str, object] = {}
         if self.device.type == "cuda":
+            # The memory-stat API does not reliably lazy-initialize an explicitly
+            # indexed CUDA device. Probe workers construct their reporter before
+            # loading the model, so make the requested device current first.
+            torch.cuda.set_device(self.device)
             torch.cuda.reset_peak_memory_stats(self.device)
         elif not tracemalloc.is_tracing():
             tracemalloc.start()

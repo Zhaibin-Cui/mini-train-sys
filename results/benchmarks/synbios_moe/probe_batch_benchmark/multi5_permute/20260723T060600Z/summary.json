@@ -1,0 +1,212 @@
+{
+  "boundary_recommendations": [],
+  "insufficient_replicas": [],
+  "missing_matrix": [],
+  "missing_recommendations": [],
+  "ready_for_formal": true,
+  "recommendations": {
+    "p": {
+      "paper_batch_safe_on_all": false,
+      "paper_training_batch_size": 50,
+      "recommended_training_batch_size": 128,
+      "recommended_validation_batch_size": 512,
+      "training_recommended_is_search_boundary": false,
+      "training_replicas": 2,
+      "training_safe_candidates": [
+        {
+          "batch_size": 96,
+          "examples_per_second_mean": 574.8209999999999,
+          "peak_memory_percent_max": 33.22
+        },
+        {
+          "batch_size": 128,
+          "examples_per_second_mean": 580.5445,
+          "peak_memory_percent_max": 43.37
+        },
+        {
+          "batch_size": 160,
+          "examples_per_second_mean": 579.1765,
+          "peak_memory_percent_max": 52.6
+        },
+        {
+          "batch_size": 192,
+          "examples_per_second_mean": 552.044,
+          "peak_memory_percent_max": 62.06
+        },
+        {
+          "batch_size": 224,
+          "examples_per_second_mean": 551.5609999999999,
+          "peak_memory_percent_max": 70.7
+        },
+        {
+          "batch_size": 256,
+          "examples_per_second_mean": 552.4425,
+          "peak_memory_percent_max": 80.2
+        },
+        {
+          "batch_size": 288,
+          "examples_per_second_mean": 559.7835,
+          "peak_memory_percent_max": 89.24
+        }
+      ],
+      "validation_recommended_is_search_boundary": false,
+      "validation_replicas": 2,
+      "validation_safe_candidates": [
+        {
+          "batch_size": 192,
+          "examples_per_second_mean": 1432.5365,
+          "peak_memory_percent_max": 7.02
+        },
+        {
+          "batch_size": 256,
+          "examples_per_second_mean": 1450.1779999999999,
+          "peak_memory_percent_max": 7.73
+        },
+        {
+          "batch_size": 384,
+          "examples_per_second_mean": 1484.7255,
+          "peak_memory_percent_max": 9.18
+        },
+        {
+          "batch_size": 512,
+          "examples_per_second_mean": 1502.8470000000002,
+          "peak_memory_percent_max": 10.6
+        },
+        {
+          "batch_size": 768,
+          "examples_per_second_mean": 1443.7145,
+          "peak_memory_percent_max": 13.53
+        },
+        {
+          "batch_size": 1024,
+          "examples_per_second_mean": 1349.5304999999998,
+          "peak_memory_percent_max": 16.4
+        },
+        {
+          "batch_size": 1536,
+          "examples_per_second_mean": 1266.3415,
+          "peak_memory_percent_max": 22.2
+        },
+        {
+          "batch_size": 2048,
+          "examples_per_second_mean": 1209.6515,
+          "peak_memory_percent_max": 27.94
+        }
+      ]
+    },
+    "q": {
+      "paper_batch_safe_on_all": false,
+      "paper_training_batch_size": 200,
+      "recommended_training_batch_size": 768,
+      "recommended_validation_batch_size": 6144,
+      "training_recommended_is_search_boundary": false,
+      "training_replicas": 2,
+      "training_safe_candidates": [
+        {
+          "batch_size": 384,
+          "examples_per_second_mean": 3280.2365,
+          "peak_memory_percent_max": 19.72
+        },
+        {
+          "batch_size": 512,
+          "examples_per_second_mean": 3714.79,
+          "peak_memory_percent_max": 24.94
+        },
+        {
+          "batch_size": 768,
+          "examples_per_second_mean": 3938.2835,
+          "peak_memory_percent_max": 35.37
+        },
+        {
+          "batch_size": 1024,
+          "examples_per_second_mean": 3800.9435,
+          "peak_memory_percent_max": 45.16
+        },
+        {
+          "batch_size": 1280,
+          "examples_per_second_mean": 3836.5860000000002,
+          "peak_memory_percent_max": 55.51
+        },
+        {
+          "batch_size": 1536,
+          "examples_per_second_mean": 3820.893,
+          "peak_memory_percent_max": 65.14
+        },
+        {
+          "batch_size": 1792,
+          "examples_per_second_mean": 3840.8509999999997,
+          "peak_memory_percent_max": 75.54
+        },
+        {
+          "batch_size": 2048,
+          "examples_per_second_mean": 3843.58,
+          "peak_memory_percent_max": 84.84
+        }
+      ],
+      "validation_recommended_is_search_boundary": false,
+      "validation_replicas": 2,
+      "validation_safe_candidates": [
+        {
+          "batch_size": 768,
+          "examples_per_second_mean": 9429.685,
+          "peak_memory_percent_max": 5.99
+        },
+        {
+          "batch_size": 1024,
+          "examples_per_second_mean": 9931.4135,
+          "peak_memory_percent_max": 6.34
+        },
+        {
+          "batch_size": 1536,
+          "examples_per_second_mean": 10121.702,
+          "peak_memory_percent_max": 7.13
+        },
+        {
+          "batch_size": 2048,
+          "examples_per_second_mean": 10285.4585,
+          "peak_memory_percent_max": 7.91
+        },
+        {
+          "batch_size": 3072,
+          "examples_per_second_mean": 10441.423,
+          "peak_memory_percent_max": 9.46
+        },
+        {
+          "batch_size": 4096,
+          "examples_per_second_mean": 10595.544,
+          "peak_memory_percent_max": 11.03
+        },
+        {
+          "batch_size": 6144,
+          "examples_per_second_mean": 10699.5485,
+          "peak_memory_percent_max": 14.86
+        },
+        {
+          "batch_size": 8192,
+          "examples_per_second_mean": 10307.8525,
+          "peak_memory_percent_max": 18.22
+        },
+        {
+          "batch_size": 12288,
+          "examples_per_second_mean": 9626.285,
+          "peak_memory_percent_max": 23.59
+        },
+        {
+          "batch_size": 16384,
+          "examples_per_second_mean": 9427.761999999999,
+          "peak_memory_percent_max": 29.81
+        }
+      ]
+    }
+  },
+  "runs": [
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/p_a_training.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/p_b_training.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/q_a_training.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/q_b_training.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/p_a_validation.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/p_b_validation.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/q_a_validation.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/q_b_validation.json"
+  ]
+}

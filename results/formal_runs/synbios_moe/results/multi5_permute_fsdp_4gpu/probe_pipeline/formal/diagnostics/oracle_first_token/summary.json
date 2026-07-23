@@ -1,0 +1,89 @@
+{
+  "attributes": [
+    {
+      "accuracy_after": 0.1292948641206752,
+      "accuracy_before": 0.12919509956502653,
+      "accuracy_delta": 9.976455564866914e-05,
+      "attribute": "birth_city",
+      "baseline_correct": 6475,
+      "baseline_errors": 43643,
+      "examples": 50118,
+      "harm_rate": 0.12478764478764479,
+      "harmed_correct": 808,
+      "recovered_errors": 813,
+      "recovery_rate": 0.018628416928258826
+    },
+    {
+      "accuracy_after": 0.08497944850153638,
+      "accuracy_before": 0.08483977812362824,
+      "accuracy_delta": 0.0001396703779081368,
+      "attribute": "university",
+      "baseline_correct": 4252,
+      "baseline_errors": 45866,
+      "examples": 50118,
+      "harm_rate": 0.12535277516462842,
+      "harmed_correct": 533,
+      "recovered_errors": 540,
+      "recovery_rate": 0.011773426939345048
+    },
+    {
+      "accuracy_after": 0.4970270162416697,
+      "accuracy_before": 0.4732231932638972,
+      "accuracy_delta": 0.023803822977772456,
+      "attribute": "major",
+      "baseline_correct": 23717,
+      "baseline_errors": 26401,
+      "examples": 50118,
+      "harm_rate": 0.05557195260783404,
+      "harmed_correct": 1318,
+      "recovered_errors": 2511,
+      "recovery_rate": 0.09511003371084428
+    },
+    {
+      "accuracy_after": 0.3551817710203919,
+      "accuracy_before": 0.4596751666068079,
+      "accuracy_delta": -0.10449339558641606,
+      "attribute": "company",
+      "baseline_correct": 23038,
+      "baseline_errors": 27080,
+      "examples": 50118,
+      "harm_rate": 0.3363573226842608,
+      "harmed_correct": 7749,
+      "recovered_errors": 2512,
+      "recovery_rate": 0.09276218611521418
+    },
+    {
+      "accuracy_after": 0.537631190390678,
+      "accuracy_before": 0.5103755137874616,
+      "accuracy_delta": 0.02725567660321641,
+      "attribute": "company_city",
+      "baseline_correct": 25579,
+      "baseline_errors": 24539,
+      "examples": 50118,
+      "harm_rate": 0.049532819891317095,
+      "harmed_correct": 1267,
+      "recovered_errors": 2633,
+      "recovery_rate": 0.1072985859244468
+    }
+  ],
+  "backbone_checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+  "intervention": "[EOS, name, true_t1, EOS], read final EOS with unchanged Q-whole head",
+  "overall": {
+    "accuracy_after": 0.3208228580549902,
+    "accuracy_before": 0.3314617502693643,
+    "accuracy_delta": -0.010638892214374078,
+    "baseline_correct": 83061,
+    "baseline_errors": 167529,
+    "examples": 250590,
+    "harm_rate": 0.14055934794909766,
+    "harmed_correct": 11675,
+    "recovered_errors": 9009,
+    "recovery_rate": 0.05377576419604964
+  },
+  "parameters_updated": false,
+  "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+  "probe_dir": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training",
+  "protocol": "q_whole_oracle_first_token_v1",
+  "split": "person-held-out validation"
+}

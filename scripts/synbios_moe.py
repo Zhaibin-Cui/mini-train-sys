@@ -26,11 +26,19 @@ from experiments.synbios_moe.cloze_evaluation import (
     summarize_progressive_cloze_results,
 )
 from experiments.synbios_moe.evaluation import evaluate_attribute_tokens
+from experiments.synbios_moe.diagnostic_report import build_diagnostic_report_artifacts
+from experiments.synbios_moe.formal_report import build_formal_report_artifacts
 from experiments.synbios_moe.probe_data import (
     CachedProbeDataset,
     build_probe_cache,
     validate_probe_cache,
 )
+from experiments.synbios_moe.probe_diagnostics import (
+    WHOLE_ATTRIBUTES,
+    bad_case_route_validation,
+    oracle_first_token_validation,
+)
+from experiments.synbios_moe.repository_audit import build_repository_audit
 from experiments.synbios_moe.probe_checkpoint import save_probe_result
 from experiments.synbios_moe.probe_benchmark import (
     benchmark_probe_batches,
@@ -43,6 +51,7 @@ from experiments.synbios_moe.probe_pipeline import (
     ProbeRuntimeConfig,
     build_pipeline_identity,
     common_pipeline_identity,
+    estimate_phase_durations,
     jobs_for_stage,
     load_pipeline_config,
     probe_train_command_builder,
@@ -550,6 +559,79 @@ def command_analyze(args: argparse.Namespace) -> None:
         print(json.dumps(result))
 
 
+def _diagnostic_attributes(args: argparse.Namespace) -> tuple[str, ...]:
+    return tuple(args.attribute or WHOLE_ATTRIBUTES)
+
+
+def command_validate_probe_oracle_first_token(args: argparse.Namespace) -> None:
+    """Measure Q-whole recovery after an oracle first-token intervention."""
+
+    device = torch.device(args.device)
+    with command_monitor(args, "q_oracle_first_token_validation") as (logger, log_dir):
+        model = load_model(args.model_config, args.checkpoint, device, logger=logger)
+
+        def progress(attribute: str, examples: int) -> None:
+            logger.log_event(
+                {
+                    "event": "probe_diagnostic",
+                    "diagnostic": "oracle_first_token",
+                    "attribute": attribute,
+                    "examples": examples,
+                }
+            )
+
+        result = oracle_first_token_validation(
+            backbone=model,
+            data_root=args.data,
+            cache_root=args.probe_cache,
+            probe_dir=args.probe_dir,
+            output_dir=args.output,
+            device=device,
+            attributes=_diagnostic_attributes(args),
+            batch_size=args.batch_size,
+            max_examples=args.max_examples,
+            backbone_checkpoint=args.checkpoint,
+            progress=progress,
+        )
+        result["log_dir"] = str(log_dir) if log_dir is not None else None
+        print(json.dumps(result, indent=2))
+
+
+def command_validate_probe_bad_case_routes(args: argparse.Namespace) -> None:
+    """Measure t1/t2 route branching on Q-first-correct/Q-whole-wrong cases."""
+
+    device = torch.device(args.device)
+    with command_monitor(args, "q_bad_case_route_validation") as (logger, log_dir):
+        model = load_model(args.model_config, args.checkpoint, device, logger=logger)
+
+        def progress(attribute: str, examples: int) -> None:
+            logger.log_event(
+                {
+                    "event": "probe_diagnostic",
+                    "diagnostic": "bad_case_routes",
+                    "attribute": attribute,
+                    "examples": examples,
+                }
+            )
+
+        result = bad_case_route_validation(
+            backbone=model,
+            data_root=args.data,
+            cache_root=args.probe_cache,
+            probe_dir=args.probe_dir,
+            output_dir=args.output,
+            device=device,
+            attributes=_diagnostic_attributes(args),
+            batch_size=args.batch_size,
+            max_examples=args.max_examples,
+            pair_limit=args.pair_limit,
+            backbone_checkpoint=args.checkpoint,
+            progress=progress,
+        )
+        result["log_dir"] = str(log_dir) if log_dir is not None else None
+        print(json.dumps(result, indent=2))
+
+
 def command_probe_pipeline(args: argparse.Namespace) -> None:
     if args.log_dir is None:
         args.log_dir = str(Path(args.output) / args.stage / "operation_logs")
@@ -599,6 +681,7 @@ def _command_probe_pipeline(args: argparse.Namespace, *, logger, log_dir: Path |
     requested_checkpoint = str(identity["checkpoint"])
     requested_data = str(identity["data"])
     reuse_existing = pipeline_path.is_file()
+    previous = None
     if reuse_existing:
         existing_stage = json.loads(pipeline_path.read_text(encoding="utf-8"))
         try:
@@ -699,6 +782,12 @@ def _command_probe_pipeline(args: argparse.Namespace, *, logger, log_dir: Path |
         base_state=base_state,
         jobs=jobs,
         logger=logger,
+        phase_duration_estimates=estimate_phase_durations(
+            previous,
+            jobs,
+            steps,
+            device_count=len(devices),
+        ),
     )
     state.write("running")
 
@@ -765,6 +854,60 @@ def command_summarize_probes(args: argparse.Namespace) -> None:
         named[name] = Path(path)
     result = summarize_probe_results(named, args.output)
     print(json.dumps({"runs": list(named), "rows": len(result["rows"])}))
+
+
+def command_report_formal_study(args: argparse.Namespace) -> None:
+    """Audit matched formal runs and render the canonical comparison artifacts."""
+
+    result = build_formal_report_artifacts(
+        single_root=args.single,
+        multi_root=args.multi5_permute,
+        single_cloze=args.single_cloze,
+        multi_cloze=args.multi5_permute_cloze,
+        output_dir=args.output,
+    )
+    print(
+        json.dumps(
+            {
+                "status": "completed",
+                "output": str(Path(args.output).resolve()),
+                "headline_metrics": result["headline_metrics"],
+            },
+            indent=2,
+        )
+    )
+
+
+def command_report_probe_diagnostics(args: argparse.Namespace) -> None:
+    """Audit both completed diagnostics and render their canonical report artifacts."""
+
+    result = build_diagnostic_report_artifacts(
+        single_formal_root=args.single_formal,
+        multi_formal_root=args.multi5_permute_formal,
+        diagnostics_root=args.diagnostics,
+        output_dir=args.output,
+    )
+    print(
+        json.dumps(
+            {
+                "status": "completed",
+                "output": str(Path(args.output).resolve()),
+                "oracle_headline": result["oracle_headline"],
+                "route_headline": result["route_headline"],
+            },
+            indent=2,
+        )
+    )
+
+
+def command_audit_synbios_repository(args: argparse.Namespace) -> None:
+    """Validate the canonical data-to-report graph and emit audit catalogs."""
+
+    result = build_repository_audit(
+        repo_root=args.repo_root,
+        output_dir=args.output,
+    )
+    print(json.dumps(result, indent=2))
 
 
 def command_evaluate(args: argparse.Namespace) -> None:
@@ -939,6 +1082,33 @@ def build_parser() -> argparse.ArgumentParser:
     add_monitoring_arguments(validate_probe)
     validate_probe.set_defaults(func=command_validate_probe)
 
+    for name, function in (
+        ("validate-probe-oracle-first-token", command_validate_probe_oracle_first_token),
+        ("validate-probe-bad-case-routes", command_validate_probe_bad_case_routes),
+    ):
+        diagnostic = commands.add_parser(name)
+        diagnostic.add_argument("--data", required=True)
+        diagnostic.add_argument("--probe-cache", required=True)
+        diagnostic.add_argument("--probe-dir", required=True)
+        diagnostic.add_argument("--model-config", required=True)
+        diagnostic.add_argument("--checkpoint", required=True)
+        diagnostic.add_argument(
+            "--attribute",
+            action="append",
+            choices=WHOLE_ATTRIBUTES,
+            help="repeat to select attributes; defaults to all five whole-value tasks",
+        )
+        diagnostic.add_argument("--batch-size", type=int, default=512)
+        diagnostic.add_argument("--max-examples", type=int)
+        diagnostic.add_argument(
+            "--device", default="cuda" if torch.cuda.is_available() else "cpu"
+        )
+        diagnostic.add_argument("--output", required=True)
+        if name == "validate-probe-bad-case-routes":
+            diagnostic.add_argument("--pair-limit", type=int, default=2000)
+        add_monitoring_arguments(diagnostic)
+        diagnostic.set_defaults(func=function)
+
     benchmark_probe = commands.add_parser("benchmark-probe-batches")
     benchmark_probe.add_argument("--data", required=True)
     benchmark_probe.add_argument("--probe-cache", required=True)
@@ -1024,6 +1194,30 @@ def build_parser() -> argparse.ArgumentParser:
     summarize.add_argument("--run", action="append", required=True)
     summarize.add_argument("--output", required=True)
     summarize.set_defaults(func=command_summarize_probes)
+
+    formal_report = commands.add_parser("report-formal-study")
+    formal_report.add_argument("--single", required=True, help="single formal stage directory")
+    formal_report.add_argument(
+        "--multi5-permute",
+        required=True,
+        help="multi5_permute formal stage directory",
+    )
+    formal_report.add_argument("--single-cloze", required=True)
+    formal_report.add_argument("--multi5-permute-cloze", required=True)
+    formal_report.add_argument("--output", required=True)
+    formal_report.set_defaults(func=command_report_formal_study)
+
+    diagnostic_report = commands.add_parser("report-probe-diagnostics")
+    diagnostic_report.add_argument("--single-formal", required=True)
+    diagnostic_report.add_argument("--multi5-permute-formal", required=True)
+    diagnostic_report.add_argument("--diagnostics", required=True)
+    diagnostic_report.add_argument("--output", required=True)
+    diagnostic_report.set_defaults(func=command_report_probe_diagnostics)
+
+    repository_audit = commands.add_parser("audit-synbios-repository")
+    repository_audit.add_argument("--repo-root", default=str(ROOT))
+    repository_audit.add_argument("--output", required=True)
+    repository_audit.set_defaults(func=command_audit_synbios_repository)
     return parser
 
 

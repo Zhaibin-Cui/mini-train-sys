@@ -58,6 +58,49 @@ this repository.
   staged diff for credentials, run the relevant tests, and record the pushed commit in `HISTORY.md`.
   Temporary snapshot commits are valuable provenance and must not be silently rewritten or removed.
 
+## Conclusions and report organization
+
+- Keep conclusions deliberate, structured, and easy to audit. `results/BENCHMARK_SUMMARY.md` is the
+  canonical cross-run index, while `reports/README.md` indexes experiment-specific reports. Update
+  both when a run changes a headline result, accepted configuration, failure boundary, or next step.
+- Organize new reports by experiment, condition, and stage when more than one file is needed, using
+  paths such as `reports/<experiment>/<condition>/<stage>.md`. Preserve existing published paths;
+  do not move historical reports merely to satisfy a newer layout convention.
+- Every conclusion document must state, in order: the question or hypothesis, exact compared
+  conditions, run/checkpoint and dataset identity, primary metrics, supporting artifact paths,
+  interpretation, limitations or threats to validity, and the next decision/action. Clearly label
+  training-set recall, held-out validation, smoke checks, failed runs, and formal results.
+- Put comparison tables and aggregate metrics in the human-readable report, not only in raw JSON,
+  TensorBoard, logs, or notebook cells. Link each headline number to its machine-readable summary
+  and the matching `HISTORY.md` entry. Do not duplicate incompatible headline values across files;
+  if a conclusion is superseded, retain it as historical evidence and mark what supersedes it.
+- Keep raw outputs, intermediate summaries, plots, and final conclusions separate. Raw evidence
+  belongs under `results/`; narrative conclusions belong under `reports/`; commands, lifecycle,
+  failures, and provenance belong in `HISTORY.md`.
+
+## Dataset and derived-data organization
+
+- Treat every dataset condition and derived cache as a versioned experiment input. Large SynBioS
+  payloads remain under `artifacts/synbios_moe/<variant>/` on `/data`; their Git-safe mirrors belong
+  under `results/datasets/synbios_moe/<variant>/`. Keep derived probe data under the owning
+  condition, for example `artifacts/synbios_moe/<variant>/probe_cache/`, rather than in an
+  unlabelled shared directory.
+- Every dataset or cache must have an authoritative manifest recording its format/protocol version,
+  generator command and seed, source/parent dataset identity, sample and token counts, split
+  definition, important preprocessing or augmentation settings, file sizes and SHA256 hashes.
+  Derived manifests must identify the parent manifest hash so lineage is mechanically checkable.
+- Store train/validation/test split semantics explicitly and distinguish person-level splits from
+  document-level or training-corpus evaluation. Never describe a training-corpus recall result as
+  held-out validation. Check for split overlap, missing ranges, duplicate shards, and class
+  coverage before a formal run.
+- Do not mix files from different seeds, variants, protocol versions, tokenizers, or partial reruns
+  in one logical dataset directory. Write new versions to a new path or rebuild atomically; validate
+  the manifest before use. Preserve failed or obsolete manifests as provenance, clearly marked, and
+  never let a pipeline silently reuse them.
+- Do not commit raw dataset payloads or caches. Export their manifests, compact statistics, lineage,
+  checksums, validation results, and retention locations to Git, and include the dataset status in
+  the relevant report and `results/BENCHMARK_SUMMARY.md`.
+
 ## Storage and machine profile
 
 - Keep source code and `.venv` in this checkout on the system disk.

@@ -1,0 +1,37 @@
+{
+  "probe_pipeline": {
+    "config": "configs/synbios_moe/probe_pipeline.yaml",
+    "runtime": {
+      "checkpoint_interval_steps": 1000,
+      "evaluate_train": true,
+      "heartbeat_seconds": 10,
+      "log_interval_steps": 100,
+      "training_batch_sizes": {
+        "p": 128,
+        "q": 768
+      },
+      "validation_batch_sizes": {
+        "p": 512,
+        "q": 6144
+      }
+    }
+  },
+  "training": {
+    "multi5_permute": {
+      "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+      "config": "configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml",
+      "epochs": 108,
+      "local_batch": 112,
+      "resolved_data_manifest": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/token_shards/manifest.json",
+      "world_size": 4
+    },
+    "single": {
+      "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+      "config": "configs/synbios_moe/runs/single_fsdp_4gpu.yaml",
+      "epochs": 540,
+      "local_batch": 112,
+      "resolved_data_manifest": "/data/mini-train-sys/artifacts/synbios_moe/single/token_shards/manifest.json",
+      "world_size": 4
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "allen_zhu_q_reference_macro_means": {
+    "multi5_permute": {
+      "first": 0.9993333333333334,
+      "whole": 0.9258000000000001
+    },
+    "single": {
+      "first": 0.19866666666666666,
+      "whole": 0.028999999999999998
+    }
+  },
+  "delta_multi_minus_single": {
+    "p_first_fixed_order_diagonal_mean": -0.0009863277276356275,
+    "p_first_position0_non_birth_date_mean": 0.91872141584754,
+    "p_whole_position0_five_attribute_macro_mean": 0.2942990605719388,
+    "p_whole_position5_five_attribute_macro_mean": -0.4578706115484238,
+    "q_first_six_attribute_macro_mean": 0.8595980095366637,
+    "q_whole_five_attribute_macro_mean": 0.2997086787596345
+  },
+  "multi5_permute": {
+    "p_first_fixed_order_diagonal_mean": 0.9986977477868398,
+    "p_first_position0_non_birth_date_mean": 0.9863059163093567,
+    "p_whole_position0_five_attribute_macro_mean": 0.32592043429613116,
+    "p_whole_position5_five_attribute_macro_mean": 0.534239998459816,
+    "q_first_six_attribute_macro_mean": 0.9879185060660044,
+    "q_whole_five_attribute_macro_mean": 0.33146174252033234
+  },
+  "single": {
+    "p_first_fixed_order_diagonal_mean": 0.9996840755144755,
+    "p_first_position0_non_birth_date_mean": 0.06758450046181678,
+    "p_whole_position0_five_attribute_macro_mean": 0.03162137372419238,
+    "p_whole_position5_five_attribute_macro_mean": 0.9921106100082397,
+    "q_first_six_attribute_macro_mean": 0.12832049652934074,
+    "q_whole_five_attribute_macro_mean": 0.03175306376069784
+  }
+}

@@ -427,3 +427,60 @@ tensorboard --logdir artifacts/synbios_moe/results/<run>/probe_pipeline \
 `configs/synbios_moe/probe_pipeline_notebook_smoke.yaml`。notebook 把单 probe 训练、独立
 `validate-probe`、两任务 pipeline、状态/事件检查和正式 smoke/pilot/formal 命令拆成不同
 单元格。该配置只有 3 steps，只验证调用与监控契约，不能替代正式预算。
+
+## 11. Q-whole 的两个推理验证
+
+两个诊断都复用已经训练完成的 Q-first/Q-whole 分类头，不更新 backbone、embedding delta
+或分类头。实现集中在 `experiments/synbios_moe/probe_diagnostics.py`，与训练调度代码分离。
+
+### 11.1 Oracle 首 token 干预
+
+基线仍使用训练时的 `[EOS, name, EOS]`，干预组改为
+`[EOS, name, ground_truth_t1, EOS]`，两组都在最后一个 EOS 位置交给同一个 Q-whole
+分类头。该结果衡量“提供真实首 token 后，原有 whole 信息是否更容易被读出”，属于
+oracle 干预，不应报告成正常的 held-out probe accuracy。
+
+```bash
+python scripts/synbios_moe.py validate-probe-oracle-first-token \
+  --data artifacts/synbios_moe/<variant> \
+  --probe-cache artifacts/synbios_moe/<variant>/probe_cache \
+  --probe-dir artifacts/synbios_moe/results/<run>/probe_pipeline/formal/training \
+  --model-config configs/synbios_moe/model.yaml \
+  --checkpoint artifacts/synbios_moe/checkpoints/<run>/<checkpoint> \
+  --device cuda:0 \
+  --output artifacts/synbios_moe/results/<run>/probe_pipeline/formal/diagnostics/oracle_first_token
+```
+
+输出包括逐样本 `records.csv`、逐属性及总体 `summary.json/summary.csv`，以及
+`figures/accuracy_before_after.png`。核心指标是 intervention 前后 whole accuracy、
+accuracy delta、基线错误恢复率和基线正确样本受损率。
+
+### 11.2 bad-case 的跨层 MoE route 分支
+
+先用 Q-first/Q-whole 头筛出 `first_correct && !whole_correct` 且真实属性至少包含两个
+token 的 held-out 样本。随后对真实 `t1,t2` 做 teacher forcing，并用不含 probe
+embedding delta 的冻结 backbone 记录每层 top-2 expert。比较同属性、同 `t1` 的样本对：
+
+- `same_t2` 是稳定性对照；
+- `different_t2` 是分支组；
+- `branching_score = t1_route_overlap - t2_route_overlap`。
+
+正的 branching score 只支持“到第二个 token 时 route 更分化”；它本身不能证明 expert
+存储了事实，也不能排除姓名、token 频率等混杂因素。
+
+```bash
+python scripts/synbios_moe.py validate-probe-bad-case-routes \
+  --data artifacts/synbios_moe/<variant> \
+  --probe-cache artifacts/synbios_moe/<variant>/probe_cache \
+  --probe-dir artifacts/synbios_moe/results/<run>/probe_pipeline/formal/training \
+  --model-config configs/synbios_moe/model.yaml \
+  --checkpoint artifacts/synbios_moe/checkpoints/<run>/<checkpoint> \
+  --device cuda:0 \
+  --pair-limit 2000 \
+  --output artifacts/synbios_moe/results/<run>/probe_pipeline/formal/diagnostics/bad_case_routes
+```
+
+原始 bad case、逐层 route、配对聚合和 token-route NMI 分别写入
+`bad_cases.csv`、`route_records.csv`、`pairwise_branching.csv` 和
+`token_route_nmi.csv`。三张图分别展示跨层 route overlap、branching score 热图和
+t1/t2 expert load。零 bad case 或零可配对组会生成明确的空报告与占位图，而不是静默失败。

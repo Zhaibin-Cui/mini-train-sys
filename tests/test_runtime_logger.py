@@ -92,12 +92,22 @@ def test_probe_console_surfaces_health_and_pipeline_state():
             "worker_eta_seconds": 360,
             "worker_loss": 0.25,
             "eta_seconds": 60,
+            "phase_eta_seconds": 60,
+            "pipeline_eta_seconds": 180,
+            "pipeline_step": 3,
+            "pipeline_steps_total": 44,
+            "pipeline_progress_percent": 6.8,
+            "estimated_completion_local": "2026-07-23T18:00:00+08:00",
         }
     )
     assert "tasks 3/22" in pipeline
     assert "running 4" in pipeline
     assert "p_major_first on cuda:0" in pipeline
     assert "worker 1200/30000 4.0% ETA 0:06:00 loss 0.25000" in pipeline
+    assert "overall 3/44 6.8%" in pipeline
+    assert "phase ETA 0:01:00" in pipeline
+    assert "pipeline ETA 0:03:00" in pipeline
+    assert "done 2026-07-23T18:00:00+08:00" in pipeline
 
 
 def test_tensorboard_records_full_numeric_state(tmp_path):
@@ -190,3 +200,20 @@ def test_progress_reporter_uses_standard_batch_plural():
     assert logger.payload["batch"] == 1
     assert logger.payload["batches_total"] == 2
     assert "batchs_total" not in logger.payload
+
+
+def test_progress_reporter_initializes_indexed_cuda_before_reset(monkeypatch):
+    calls = []
+    monkeypatch.setattr(torch.cuda, "set_device", lambda device: calls.append(("set", device)))
+    monkeypatch.setattr(
+        torch.cuda,
+        "reset_peak_memory_stats",
+        lambda device: calls.append(("reset", device)),
+    )
+
+    ProgressReporter("load", 1, object(), torch.device("cuda:2"), unit="step")
+
+    assert calls == [
+        ("set", torch.device("cuda:2")),
+        ("reset", torch.device("cuda:2")),
+    ]

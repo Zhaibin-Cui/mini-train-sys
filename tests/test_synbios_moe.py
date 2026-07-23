@@ -30,9 +30,11 @@ from experiments.synbios_moe.probe_pipeline import (
     CLOZE_GATE_PROTOCOL,
     JobCommand,
     ProbeJob,
+    ProbePipelineState,
     ProbeRuntimeConfig,
     build_pipeline_identity,
     common_pipeline_identity,
+    estimate_phase_durations,
     jobs_for_stage,
     load_pipeline_config,
     probe_train_command_builder,
@@ -286,8 +288,10 @@ def test_probe_cache_validation_rejects_semantic_position_corruption(tmp_path):
 def test_probe_stage_config_and_device_resolution():
     config = load_pipeline_config("configs/synbios_moe/probe_pipeline.yaml")
     runtime = ProbeRuntimeConfig.from_config(config)
-    assert runtime.p_batch_size == 50
-    assert runtime.q_batch_size == 200
+    assert runtime.p_batch_size == 128
+    assert runtime.q_batch_size == 768
+    assert runtime.p_validation_batch_size == 512
+    assert runtime.q_validation_batch_size == 6_144
     assert runtime.heartbeat_seconds == 10
     assert runtime.with_overrides(p_batch_size=96).p_batch_size == 96
     with pytest.raises(ValueError, match="must be positive"):
@@ -300,7 +304,12 @@ def test_probe_stage_config_and_device_resolution():
     assert len(smoke_jobs) == 2
     assert required is None
     formal_steps, formal_jobs, required = jobs_for_stage(config, "formal")
-    assert formal_steps == 30_000
+    assert formal_steps == {
+        "p_first": 4_000,
+        "p_whole": 12_000,
+        "q_first": 4_000,
+        "q_whole": 12_000,
+    }
     assert len(formal_jobs) == 22
     assert required == "pilot"
     assert resolve_devices("0,3") == ("cuda:0", "cuda:3")
@@ -331,7 +340,12 @@ def test_probe_train_command_uses_independent_runtime_controls(tmp_path):
         model_config=tmp_path / "model.yaml",
         checkpoint=tmp_path / "model.pt",
         output_dir=tmp_path / "formal",
-        steps=30_000,
+        steps={
+            "p_first": 4_000,
+            "p_whole": 12_000,
+            "q_first": 4_000,
+            "q_whole": 12_000,
+        },
         seed=42,
         quiet=False,
         log_interval=25,
@@ -344,6 +358,7 @@ def test_probe_train_command_uses_independent_runtime_controls(tmp_path):
     )
     spec = builder(ProbeJob("p", "major", "first"), "cuda:2")
     command = spec.command
+    assert command[command.index("--steps") + 1] == "4000"
     assert command[command.index("--batch-size") + 1] == "96"
     assert command[command.index("--evaluation-batch-size") + 1] == "128"
     assert command[command.index("--checkpoint-interval-steps") + 1] == "750"
@@ -352,6 +367,66 @@ def test_probe_train_command_uses_independent_runtime_controls(tmp_path):
     assert command[command.index("--checkpoint-model-sha256") + 1] == "abc123"
     assert command[command.index("--device") + 1] == "cuda:2"
     assert spec.events_root == tmp_path / "formal/training/operation_logs"
+
+    q_command = builder(ProbeJob("q", "major", "first"), "cuda:3").command
+    assert q_command[q_command.index("--steps") + 1] == "4000"
+    q_whole_command = builder(ProbeJob("q", "major", "whole"), "cuda:3").command
+    assert q_whole_command[q_whole_command.index("--steps") + 1] == "12000"
+
+
+def test_pipeline_estimates_and_reports_full_training_plus_validation_eta(tmp_path, monkeypatch):
+    jobs = (ProbeJob("p", "major", "first"), ProbeJob("q", "major", "first"))
+    previous = {
+        "identity": {"steps": 3_000},
+        "training": [
+            {"job": jobs[0].key, "status": "completed", "seconds": 30.0},
+            {"job": jobs[1].key, "status": "completed", "seconds": 15.0},
+        ],
+        "validation": [
+            {"job": jobs[0].key, "status": "completed", "seconds": 8.0},
+            {"job": jobs[1].key, "status": "completed", "seconds": 4.0},
+        ],
+    }
+    estimates = estimate_phase_durations(
+        previous,
+        jobs,
+        {
+            "p_first": 4_000,
+            "p_whole": 12_000,
+            "q_first": 4_000,
+            "q_whole": 12_000,
+        },
+        device_count=2,
+    )
+    assert estimates["training"] == pytest.approx(30.0)
+    assert estimates["validation"] == pytest.approx(6.0)
+
+    events = []
+    state = ProbePipelineState(
+        pipeline_path=tmp_path / "pipeline.json",
+        events_path=tmp_path / "events.jsonl",
+        base_state={},
+        jobs=jobs,
+        logger=type("Logger", (), {"log_event": events.append})(),
+        phase_duration_estimates=estimates,
+    )
+    clock = iter((100.0, 110.0))
+    monkeypatch.setattr(probe_pipeline_module.time, "monotonic", lambda: next(clock))
+    monitor = state.monitor_phase("training")
+    monitor(
+        {
+            "job": jobs[0].key,
+            "action": "finished",
+            "status": "completed",
+            "device": "cuda:0",
+        }
+    )
+    event = events[-1]
+    assert event["phase_eta_seconds"] == pytest.approx(10.0)
+    assert event["pipeline_eta_seconds"] == pytest.approx(16.0)
+    assert event["pipeline_step"] == 1
+    assert event["pipeline_steps_total"] == 4
+    assert event["pipeline_progress_percent"] == pytest.approx(25.0)
 
 
 def test_pipeline_identity_binds_every_durable_input(tmp_path):

@@ -1,0 +1,47 @@
+{
+  "documents": 500000,
+  "files": [
+    {
+      "bytes": 2670,
+      "path": "manifest.json",
+      "sha256": "0f589d4def4ddf1a2ac6f774cd28d8343ea168eb07b3199b9e6e5209444f1547"
+    },
+    {
+      "bytes": 8000000,
+      "path": "train/documents.idx",
+      "sha256": "825d35a8f0a632b3d62b33e651b9ebadd5880db3b05c2f6590c1b5f925bd8384"
+    },
+    {
+      "bytes": 19999898,
+      "path": "train/shard_00000.bin",
+      "sha256": "c6f1d0cdd14a900d6425245f790529a75b1376c4e4de3bceb4a97e8b094b1ff6"
+    },
+    {
+      "bytes": 19999960,
+      "path": "train/shard_00001.bin",
+      "sha256": "b9902852d4dba38314c1c371de1799cf53ecf65a5b8378c26c9080f1390f8c5e"
+    },
+    {
+      "bytes": 19999970,
+      "path": "train/shard_00002.bin",
+      "sha256": "32881af887dec2cc60297f22d181d4180818868f87929ec2581ed0e314736843"
+    },
+    {
+      "bytes": 14093284,
+      "path": "train/shard_00003.bin",
+      "sha256": "cde298808904405983c126547d98e12b93f5c3e37d5f889102a8638325de89c8"
+    },
+    {
+      "bytes": 0,
+      "path": "validation/documents.idx",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "format_version": 1,
+  "manifest_sha256": "0f589d4def4ddf1a2ac6f774cd28d8343ea168eb07b3199b9e6e5209444f1547",
+  "parent_manifest_sha256": "31b99dd8d415007c34e00e3b32440014be4b34c27b7c3c1a80f7e1319019566e",
+  "path": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/token_shards",
+  "split_semantics": "all generated biographies are pretraining train documents",
+  "tokens": 37046556,
+  "variant": "multi5_permute"
+}

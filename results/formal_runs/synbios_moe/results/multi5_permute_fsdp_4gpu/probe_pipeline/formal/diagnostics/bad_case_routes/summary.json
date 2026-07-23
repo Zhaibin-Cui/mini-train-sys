@@ -1,0 +1,22 @@
+{
+  "attributes": {
+    "birth_city": 43369,
+    "company": 25786,
+    "company_city": 23448,
+    "major": 23769,
+    "university": 45672
+  },
+  "backbone_checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "case_definition": "Q-first correct, Q-whole wrong, whole value has >=2 tokens",
+  "data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+  "examples": 162044,
+  "experts": 8,
+  "layers": 12,
+  "parameters_updated": false,
+  "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+  "probe_dir": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training",
+  "protocol": "q_bad_case_t1_t2_route_branching_v1",
+  "route_model": "frozen pretrained backbone without probe embedding delta",
+  "split": "person-held-out validation",
+  "top_k": 2
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import datetime, timedelta
 import hashlib
 import json
 import os
@@ -23,6 +24,7 @@ from experiments.synbios_moe.probe_data import paper_probe_tasks
 
 PIPELINE_PROTOCOL_VERSION = 4
 CLOZE_GATE_PROTOCOL = "progressive_original_biography_cloze_greedy"
+ProbeStepSchedule = int | dict[str, int]
 
 
 class PipelineEventLogger(Protocol):
@@ -141,14 +143,49 @@ def load_pipeline_config(path: str | Path) -> dict:
     return payload
 
 
-def jobs_for_stage(config: dict, stage: str) -> tuple[int, tuple[ProbeJob, ...], str | None]:
+def _normalize_step_schedule(value: object) -> ProbeStepSchedule:
+    if isinstance(value, dict):
+        keys = set(value)
+        valid_key_sets = (
+            {"p", "q"},
+            {"p_first", "p_whole", "q_first", "q_whole"},
+        )
+        if keys not in valid_key_sets:
+            raise ValueError(
+                "stage steps mapping must contain exactly p/q or "
+                "p_first/p_whole/q_first/q_whole"
+            )
+        schedule = {str(key): int(value[key]) for key in value}
+        if any(steps <= 0 for steps in schedule.values()):
+            raise ValueError("stage steps must be positive")
+        return schedule
+    steps = int(value)
+    if steps <= 0:
+        raise ValueError("stage steps must be positive")
+    return steps
+
+
+def steps_for_job(schedule: ProbeStepSchedule, job: ProbeJob | str) -> int:
+    """Resolve a uniform or per-kind schedule for one probe job."""
+
+    if not isinstance(schedule, dict):
+        return schedule
+    kind = job.kind if isinstance(job, ProbeJob) else str(job)
+    if kind in schedule:
+        return schedule[kind]
+    if not isinstance(job, ProbeJob):
+        raise ValueError("target-specific step schedule requires a ProbeJob")
+    return schedule[f"{job.kind}_{job.target}"]
+
+
+def jobs_for_stage(
+    config: dict, stage: str
+) -> tuple[ProbeStepSchedule, tuple[ProbeJob, ...], str | None]:
     try:
         stage_cfg = config["stages"][stage]
     except KeyError as exc:
         raise ValueError(f"unknown probe stage: {stage}") from exc
-    steps = int(stage_cfg["steps"])
-    if steps <= 0:
-        raise ValueError("stage steps must be positive")
+    steps = _normalize_step_schedule(stage_cfg["steps"])
     selected = stage_cfg.get("tasks", "all")
     if selected == "all":
         jobs = all_probe_jobs()
@@ -183,7 +220,7 @@ def _sha256_file(path: Path) -> str:
 def build_pipeline_identity(
     *,
     stage: str,
-    steps: int,
+    steps: ProbeStepSchedule,
     jobs: Iterable[ProbeJob],
     seed: int,
     data: str | Path,
@@ -211,7 +248,7 @@ def build_pipeline_identity(
     identity = {
         "protocol_version": PIPELINE_PROTOCOL_VERSION,
         "stage": stage,
-        "steps": int(steps),
+        "steps": steps,
         "jobs": [job.key for job in jobs],
         "seed": int(seed),
         "data": str(data_root),
@@ -281,12 +318,14 @@ class ProbePipelineState:
         base_state: dict[str, object],
         jobs: Iterable[ProbeJob],
         logger: PipelineEventLogger,
+        phase_duration_estimates: dict[str, float] | None = None,
     ) -> None:
         self.pipeline_path = Path(pipeline_path)
         self.events_path = Path(events_path)
         self.base_state = dict(base_state)
         self.jobs = tuple(jobs)
         self.logger = logger
+        self.phase_duration_estimates = dict(phase_duration_estimates or {})
 
     def write(self, status: str, **fields: object) -> None:
         write_json_atomic(
@@ -299,6 +338,8 @@ class ProbePipelineState:
     ) -> Callable[[dict[str, object]], None]:
         started = time.monotonic()
         task_status = {job.key: "queued" for job in self.jobs}
+        task_progress = {job.key: 0.0 for job in self.jobs}
+        task_eta = {job.key: None for job in self.jobs}
         total = len(task_status)
 
         def monitor(event: dict[str, object]) -> None:
@@ -306,8 +347,25 @@ class ProbePipelineState:
             action = str(event["action"])
             if action == "started":
                 task_status[job] = "running"
+                task_progress[job] = 0.0
+            elif action == "heartbeat":
+                worker_progress = event.get("worker_progress_percent")
+                worker_event = event.get("worker_event")
+                if (
+                    isinstance(worker_progress, (int, float))
+                    and worker_event in {None, "probe_train", "probe_validation"}
+                ):
+                    task_progress[job] = max(0.0, min(100.0, float(worker_progress)))
+                worker_eta = event.get("worker_eta_seconds")
+                if isinstance(worker_eta, (int, float)) and worker_eta >= 0:
+                    task_eta[job] = float(worker_eta)
             elif action == "finished":
                 task_status[job] = str(event["status"])
+                task_progress[job] = 100.0 if task_status[job] in {
+                    "completed",
+                    "failed",
+                    "skipped_existing",
+                } else task_progress[job]
             completed = sum(
                 status in {"completed", "failed", "skipped_existing"}
                 for status in task_status.values()
@@ -315,7 +373,40 @@ class ProbePipelineState:
             running = sum(status == "running" for status in task_status.values())
             failed = sum(status == "failed" for status in task_status.values())
             elapsed = time.monotonic() - started
-            eta = elapsed / completed * (total - completed) if completed else None
+            phase_units = sum(task_progress.values()) / 100.0
+            if completed:
+                # Once at least one task has completed, the observed task wall time is
+                # more stable than a near-zero fractional progress denominator.
+                eta = elapsed / completed * (total - completed)
+            else:
+                active_etas = [
+                    value
+                    for key, value in task_eta.items()
+                    if task_status[key] == "running" and value is not None
+                ]
+                # Before the first completion, estimate the queued work from the
+                # active-worker ETA and the known scheduler concurrency.
+                eta = (
+                    sum(active_etas) / len(active_etas) * total / max(running, 1)
+                    if active_etas
+                    else None
+                )
+            phase_offset = total if phase == "validation" else 0
+            pipeline_completed = phase_offset + phase_units
+            pipeline_total = total * 2
+            future_seconds = (
+                self.phase_duration_estimates.get("validation", 0.0)
+                if phase == "training"
+                else 0.0
+            )
+            pipeline_eta = eta + future_seconds if eta is not None else None
+            estimated_completion = (
+                (datetime.now().astimezone() + timedelta(seconds=pipeline_eta)).isoformat(
+                    timespec="seconds"
+                )
+                if pipeline_eta is not None
+                else None
+            )
             payload = {
                 "event": "probe_pipeline",
                 "phase": phase,
@@ -330,7 +421,15 @@ class ProbePipelineState:
                 "tasks_failed": failed,
                 "elapsed_seconds": elapsed,
                 "eta_seconds": eta,
-                "progress_percent": 100.0 * completed / max(total, 1),
+                "phase_eta_seconds": eta,
+                "pipeline_eta_seconds": pipeline_eta,
+                "progress_percent": 100.0 * phase_units / max(total, 1),
+                "pipeline_step": pipeline_completed,
+                "pipeline_steps_total": pipeline_total,
+                "pipeline_progress_percent": 100.0
+                * pipeline_completed
+                / max(pipeline_total, 1),
+                "estimated_completion_local": estimated_completion,
             }
             payload.update(
                 {
@@ -585,6 +684,49 @@ def schedule_jobs(
     return sorted(results, key=lambda item: str(item["job"]))
 
 
+def estimate_phase_durations(
+    previous: dict[str, object] | None,
+    jobs: Iterable[ProbeJob],
+    steps: ProbeStepSchedule,
+    *,
+    device_count: int,
+) -> dict[str, float]:
+    """Estimate formal phase wall times from a complete prerequisite stage."""
+
+    if not previous or device_count <= 0:
+        return {}
+    expected = {job.key: job for job in jobs}
+    previous_identity = previous.get("identity")
+    if not isinstance(previous_identity, dict):
+        return {}
+    try:
+        previous_steps = _normalize_step_schedule(previous_identity["steps"])
+    except (KeyError, TypeError, ValueError):
+        return {}
+    estimates: dict[str, float] = {}
+    for phase in ("training", "validation"):
+        records = previous.get(phase)
+        if not isinstance(records, list):
+            continue
+        by_job = {
+            str(record.get("job")): record
+            for record in records
+            if isinstance(record, dict)
+            and record.get("status") in {"completed", "skipped_existing"}
+            and isinstance(record.get("seconds"), (int, float))
+        }
+        if set(by_job) != set(expected):
+            continue
+        worker_seconds = 0.0
+        for key, job in expected.items():
+            seconds = float(by_job[key]["seconds"])
+            if phase == "training":
+                seconds *= steps_for_job(steps, job) / steps_for_job(previous_steps, job)
+            worker_seconds += seconds
+        estimates[phase] = worker_seconds / device_count
+    return estimates
+
+
 def probe_train_command_builder(
     *,
     script: Path,
@@ -593,7 +735,7 @@ def probe_train_command_builder(
     model_config: Path,
     checkpoint: Path,
     output_dir: Path,
-    steps: int,
+    steps: ProbeStepSchedule,
     seed: int,
     quiet: bool,
     log_interval: int,
@@ -606,6 +748,7 @@ def probe_train_command_builder(
 ) -> Callable[[ProbeJob, str], JobCommand]:
     def build(job: ProbeJob, device: str) -> JobCommand:
         output = output_dir / "training" / f"{job.key}.json"
+        job_steps = steps_for_job(steps, job)
         command = [
             sys.executable,
             str(script),
@@ -625,7 +768,7 @@ def probe_train_command_builder(
             "--target",
             job.target,
             "--steps",
-            str(steps),
+            str(job_steps),
             "--batch-size",
             str(batch_sizes[job.kind]),
             "--evaluation-batch-size",

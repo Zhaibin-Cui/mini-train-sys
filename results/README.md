@@ -20,5 +20,6 @@ deliberately excluded. DCP `.metadata` remains included because it is small and 
 layout without tensor contents. Excluded payload paths, sizes, manifests, and hashes are retained
 where available.
 
-See `BENCHMARK_SUMMARY.md` for the current conclusions and `../HISTORY.md` for the append-only run
-timeline and exact commands.
+See `BENCHMARK_SUMMARY.md` for the current conclusions, `../reports/synbios_moe/README.md` for the
+canonical SynBioS dataset-to-diagnostics map, and `../HISTORY.md` for the append-only run timeline
+and exact commands.

@@ -52,16 +52,54 @@ for variant in single multi5_permute; do
     mkdir -p "$target_root"
     cp "$source_root/manifest.json" "$target_root/manifest.json"
   fi
+  if [[ -f "$source_root/lineage.json" ]]; then
+    mkdir -p "$target_root"
+    cp "$source_root/lineage.json" "$target_root/lineage.json"
+  fi
   if [[ -f "$source_root/token_shards/manifest.json" ]]; then
     mkdir -p "$target_root/token_shards"
     cp "$source_root/token_shards/manifest.json" "$target_root/token_shards/manifest.json"
   fi
+  if [[ -f "$source_root/token_shards/lineage.json" ]]; then
+    mkdir -p "$target_root/token_shards"
+    cp "$source_root/token_shards/lineage.json" "$target_root/token_shards/lineage.json"
+  fi
+  if [[ -f "$source_root/probe_cache/manifest.json" ]]; then
+    mkdir -p "$target_root/probe_cache"
+    cp "$source_root/probe_cache/manifest.json" "$target_root/probe_cache/manifest.json"
+  fi
+  if [[ -f "$source_root/probe_cache/lineage.json" ]]; then
+    mkdir -p "$target_root/probe_cache"
+    cp "$source_root/probe_cache/lineage.json" "$target_root/probe_cache/lineage.json"
+  fi
 done
+
+# Probe capacity sweeps are benchmarks, not formal probe conclusions.
+copy_tree \
+  "$ROOT/artifacts/synbios_moe/results/probe_batch_benchmark" \
+  "$DEST/benchmarks/synbios_moe/probe_batch_benchmark"
 
 # Persist formal metrics and recovery metadata, never multi-gigabyte tensor
 # payloads. COMMITTED/runtime/RNG files prove a checkpoint was publishable.
 copy_tree "$ROOT/artifacts/synbios_moe/runs" "$DEST/formal_runs/synbios_moe/runs"
-copy_tree "$ROOT/artifacts/synbios_moe/results" "$DEST/formal_runs/synbios_moe/results"
+if [[ -d "$ROOT/artifacts/synbios_moe/results" ]]; then
+  mkdir -p "$DEST/formal_runs/synbios_moe/results"
+  rsync -a \
+    --exclude='probe_batch_benchmark/' \
+    --exclude='*.pt' \
+    --exclude='*/diagnostics/*/records.csv' \
+    --exclude='*/diagnostics/*/bad_cases.csv' \
+    --exclude='*/diagnostics/*/route_records.csv' \
+    "$ROOT/artifacts/synbios_moe/results/" "$DEST/formal_runs/synbios_moe/results/"
+fi
+# Older exports predated the weight-exclusion rule and may still contain probe
+# head tensors because this archive intentionally does not mirror deletions.
+# Keep their JSON identities/hashes, but remove only these Git-inappropriate
+# tensor copies; the authoritative heads remain under artifacts/ on /data.
+find "$DEST/formal_runs/synbios_moe/results" -type f \
+  \( -path '*/probe_pipeline/*/training/*.pt' \
+     -o -path '*/probe_pipeline/*/recovery/*.pt' \) \
+  -delete
 copy_tree \
   "$ROOT/artifacts/synbios_moe/operation_logs" \
   "$DEST/formal_runs/synbios_moe/operation_logs"

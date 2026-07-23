@@ -1,0 +1,116 @@
+{
+  "attribute": "birth_date",
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+  "class_names": [
+    "April",
+    "August",
+    "December",
+    "February",
+    "January",
+    "July",
+    "June",
+    "March",
+    "May",
+    "November",
+    "October",
+    "September"
+  ],
+  "classes": 12,
+  "dataset_manifest": {
+    "attribute_candidates": {
+      "birth_city": 200,
+      "birth_date": 67200,
+      "company": 263,
+      "company_city": 200,
+      "major": 100,
+      "university": 300
+    },
+    "biographies": 100000,
+    "files": {
+      "biographies.jsonl": {
+        "bytes": 55124698,
+        "sha256": "c4fa1b00f1dd82440c46718d0a8b5f81b0259257102b54379a5eeb19d13cc297"
+      },
+      "biographies.txt": {
+        "bytes": 32971919,
+        "sha256": "2ba69a907f9f6df0980e0f6916bda88325b97659c655257a1819f4655ddf1e09"
+      },
+      "profiles.jsonl": {
+        "bytes": 28012501,
+        "sha256": "7d239f046cb5e16ac3d8d7636b6901a2430f2ccb8dc1179063e4eaed92256da1"
+      }
+    },
+    "format_version": 1,
+    "generator": "minitrain.synbios_moe.v1",
+    "num_people": 100000,
+    "seed": 1337,
+    "split_unit": "person",
+    "template_counts": {
+      "birth_city": 49,
+      "birth_date": 46,
+      "company": 47,
+      "company_city": 48,
+      "major": 52,
+      "university": 49
+    },
+    "validation_fraction": 0.5,
+    "variant": "single"
+  },
+  "examples": 50118,
+  "kind": "p",
+  "log_dir": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/validation/operation_logs/synbios_p_probe_validation_p_birth_date_first/20260723-205430",
+  "monitoring": {
+    "accuracy_by_position_running": [
+      1.0,
+      0.9999600648880005,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "accuracy_position_0_running": 1.0,
+    "accuracy_position_1_running": 0.9999600648880005,
+    "accuracy_position_2_running": 1.0,
+    "accuracy_position_3_running": 1.0,
+    "accuracy_position_4_running": 1.0,
+    "accuracy_position_5_running": 1.0,
+    "accuracy_running": 0.9999933242797852,
+    "batch": 98,
+    "batches_total": 98,
+    "elapsed_seconds": 41.111,
+    "eta_seconds": 0.0,
+    "event": "probe_validation",
+    "gpu_memory_allocated_mb": 1129.29,
+    "gpu_memory_allocated_mb_max": 1129.29,
+    "gpu_memory_allocated_mb_total": 1129.29,
+    "gpu_memory_capacity_mb_max": 24217.31,
+    "gpu_memory_capacity_mb_total": 24217.31,
+    "gpu_memory_current_percent_max": 4.66,
+    "gpu_memory_peak_percent_max": 10.12,
+    "gpu_memory_reserved_mb": 3970.0,
+    "gpu_memory_reserved_mb_max": 3970.0,
+    "gpu_memory_reserved_mb_total": 3970.0,
+    "gpu_memory_reserved_percent_max": 16.39,
+    "gpu_peak_memory_allocated_mb": 2449.74,
+    "gpu_peak_memory_allocated_mb_max": 2449.74,
+    "items_per_sec": 1219.096,
+    "items_processed": 50118,
+    "monitored_world_size": 1,
+    "progress_percent": 100.0,
+    "step": 98,
+    "tokens_per_sec": 103512.463,
+    "tokens_processed": 4255480
+  },
+  "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/single/probe_cache",
+  "probe_checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/training/p_birth_date_first.pt",
+  "rank": 2,
+  "target": "first",
+  "validation_accuracy": [
+    1.0,
+    0.9999600648880005,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ]
+}

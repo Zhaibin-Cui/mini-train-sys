@@ -484,7 +484,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 
 ## 2026-07-21 13:46 — Single-bio progressive cloze evaluation pilot
 
-- Status: running.
+- Status: completed successfully at 2026-07-21 13:55 Asia/Shanghai.
 - Local/UTC start: 2026-07-21 13:46 Asia/Shanghai / 2026-07-21 05:46 UTC.
 - Purpose: measure the completed `single` model by removing the six actual fact spans from each
   original biography and greedily filling them in original textual order. Generated earlier facts
@@ -761,3 +761,914 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   committed markers, runtime/RNG state, and DCP layout metadata are retained remotely.
 - Push result: Conventional Commit `0a8c3d2` (`chore(results): sync all server evidence`) was
   pushed successfully to `origin/train`.
+
+## 2026-07-23 13:59 — Probe regression gate and cache preparation
+
+- Status: completed successfully at 2026-07-23 14:02 Asia/Shanghai / 2026-07-23 06:02 UTC;
+  exit code 0.
+- Local/UTC start: 2026-07-23 13:59 Asia/Shanghai / 2026-07-23 05:59 UTC.
+- Purpose: validate the hardened P/Q probe implementation at current HEAD, then generate and
+  validate the complete protocol-v2 probe caches for both `single` and `multi5_permute` before
+  the four-GPU batch-capacity regression.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  user-requested `AGENTS.md` conclusion/dataset organization rules and this appended history entry.
+- Hardware/topology: one node with 4 × RTX 4090 24 GB, all at 0 MiB before launch; cache
+  preparation is CPU/storage work and does not train the backbone.
+- tmux session: `minitrain-probe-preflight-cache-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  python -m pytest -q --junitxml=artifacts/validation/pytest_probe_preflight_20260723.xml
+  python -m ruff check .
+  python scripts/synbios_moe.py cache-probes \
+    --data artifacts/synbios_moe/single \
+    --output artifacts/synbios_moe/single/probe_cache \
+    --require-coverage
+  python scripts/synbios_moe.py validate-probe-cache \
+    --probe-cache artifacts/synbios_moe/single/probe_cache \
+    --data artifacts/synbios_moe/single
+  python scripts/synbios_moe.py cache-probes \
+    --data artifacts/synbios_moe/multi5_permute \
+    --output artifacts/synbios_moe/multi5_permute/probe_cache \
+    --require-coverage
+  python scripts/synbios_moe.py validate-probe-cache \
+    --probe-cache artifacts/synbios_moe/multi5_permute/probe_cache \
+    --data artifacts/synbios_moe/multi5_permute
+  ```
+
+- Log: `artifacts/logs/probe_preflight_cache_20260723_1359.log`.
+- Validation output: `artifacts/validation/pytest_probe_preflight_20260723.xml`.
+- Dataset inputs: `artifacts/synbios_moe/{single,multi5_permute}/`; derived outputs:
+  `artifacts/synbios_moe/{single,multi5_permute}/probe_cache/`.
+- Next gate after successful completion: run the four-GPU P/Q training/validation batch-capacity
+  regression and require a complete, non-boundary `recommended.env` before probe smoke training.
+- Result: current HEAD passed 85 tests with five expected single-process DCP warnings, and full
+  Ruff passed. The `single` protocol-v2 cache contains 100,000 P and 100,000 Q examples and uses
+  41 MiB; the `multi5_permute` cache contains 500,000 P and 100,000 Q examples and uses 168 MiB.
+  Both caches match their source manifests, cover every validation class in the person-level
+  training split, and report no missing validation classes.
+
+## 2026-07-23 14:02 — Multi5 P/Q four-GPU batch-capacity regression
+
+- Status: failed at 2026-07-23 14:03 Asia/Shanghai / 2026-07-23 06:03 UTC; exit code 1.
+- Local/UTC start: 2026-07-23 14:02 Asia/Shanghai / 2026-07-23 06:02 UTC.
+- Purpose: measure real P/Q probe training and held-out validation capacity on the largest
+  `multi5_permute` condition, with two independent GPU replicas per probe kind, and publish
+  non-boundary batch recommendations for the smoke/pilot/formal pipeline.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with
+  `AGENTS.md` organization rules and the current run-history additions.
+- Hardware/topology: 4 × RTX 4090 24 GB, all at 0 MiB and 0% utilization immediately before
+  launch. GPUs 0/2 independently benchmark P and GPUs 1/3 independently benchmark Q.
+- Dataset/cache: `artifacts/synbios_moe/multi5_permute/` and its validated protocol-v2
+  `probe_cache/` (500,000 P examples, 100,000 Q examples, complete train/validation class
+  coverage).
+- Backbone: committed final `multi5_permute` checkpoint
+  `artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388/`.
+- tmux session: `minitrain-probe-capacity-multi5-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  PROBE_BENCHMARK_RUN_ID=20260723T060246Z \
+    bash scripts/bash/synbios_probe_batch_benchmark.sh \
+      multi5_permute \
+      artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388
+  ```
+
+- Candidate batches: P training `32,50,64,80,96`; Q training `128,200,256,320,384`;
+  P validation `64,96,128,160,192`; Q validation `256,384,512,640,768`.
+- Benchmark contract: three warmup and ten measured steps per point, full
+  forward/backward/AdamW for training, forward-only for validation, at most 92% CUDA reserved
+  memory, and recommendation only if both replicas agree on a safe non-right-boundary choice.
+- Console log: `artifacts/logs/probe_capacity_multi5_20260723_1402.log`.
+- Result directory:
+  `artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060246Z/`.
+- Failure result: all four workers failed before model allocation. `ProgressReporter` called
+  `torch.cuda.reset_peak_memory_stats(cuda:N)` before the explicitly indexed device had been
+  initialized, producing `RuntimeError: Invalid device argument` on GPUs 0–3. No capacity point
+  or recommendation was published, all GPUs returned to 0 MiB, and the four failure logs are
+  retained under the result directory.
+- Corrective action: `ProgressReporter` now makes its requested CUDA device current before
+  resetting memory statistics. A regression test covers the ordering; the focused logger suite
+  passes 8 tests and Ruff passes before retry.
+
+## 2026-07-23 14:04 — Multi5 P/Q four-GPU batch-capacity regression retry
+
+- Status: completed but rejected by the formal-readiness gate at 2026-07-23 14:05
+  Asia/Shanghai / 2026-07-23 06:05 UTC; exit code 1 by design.
+- Local/UTC start: 2026-07-23 14:04 Asia/Shanghai / 2026-07-23 06:04 UTC.
+- Purpose/configuration: retry the preceding multi5 P/Q training and validation capacity matrix
+  unchanged after fixing indexed CUDA initialization; retain the first attempt as failure evidence.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with
+  `AGENTS.md`, `HISTORY.md`, the CUDA reporter fix, and its regression test.
+- Preflight: focused logger tests 8/8 passed, focused Ruff passed, and all four RTX 4090 GPUs were
+  idle. Dataset/cache, final checkpoint, candidates, warmup/measurement counts, two-replica
+  topology, and 92% limit are identical to the preceding entry.
+- tmux session: `minitrain-probe-capacity-multi5-r2-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  PROBE_BENCHMARK_RUN_ID=20260723T060430Z \
+    bash scripts/bash/synbios_probe_batch_benchmark.sh \
+      multi5_permute \
+      artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388
+  ```
+
+- Console log: `artifacts/logs/probe_capacity_multi5_r2_20260723_1404.log`.
+- Result directory:
+  `artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060430Z/`.
+- Result: all 40 measurements completed successfully, with both replicas agreeing and no OOM.
+  Recommended points were P training 96 at 33.29% maximum reserved memory, Q training 384 at
+  19.97%, P validation 192 at 7.02%, and Q validation 768 at 5.99%. All four were the largest
+  candidate tested and still improved throughput, so `ready_for_formal=false`; `summary.json` was
+  retained but `recommended.env` was deliberately not published. A wider search is required.
+
+## 2026-07-23 14:06 — Expanded multi5 P/Q batch-capacity regression
+
+- Status: completed successfully at 2026-07-23 14:09 Asia/Shanghai / 2026-07-23 06:09 UTC;
+  exit code 0.
+- Local/UTC start: 2026-07-23 14:06 Asia/Shanghai / 2026-07-23 06:06 UTC.
+- Purpose: extend all four P/Q training/validation candidate ranges beyond the right-boundary
+  recommendations from the preceding complete matrix and locate a true throughput or 92%-memory
+  boundary.
+- Git/code/data/checkpoint/hardware: identical to the preceding retry, including the indexed-CUDA
+  fix; all four GPUs were idle before launch.
+- tmux session: `minitrain-probe-capacity-multi5-r3-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  P_BATCHES=96,128,160,192,224,256,288,320,352,384,416 \
+  Q_BATCHES=384,512,768,1024,1280,1536,1792,2048,2304,2560 \
+  P_VALIDATION_BATCHES=192,256,384,512,768,1024,1536,2048 \
+  Q_VALIDATION_BATCHES=768,1024,1536,2048,3072,4096,6144,8192,12288,16384 \
+  PROBE_BENCHMARK_RUN_ID=20260723T060600Z \
+    bash scripts/bash/synbios_probe_batch_benchmark.sh \
+      multi5_permute \
+      artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388
+  ```
+
+- Benchmark contract remains two independent replicas, three warmup and ten measured steps per
+  candidate, and at most 92% reserved memory.
+- Console log: `artifacts/logs/probe_capacity_multi5_r3_20260723_1406.log`.
+- Result directory:
+  `artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/`.
+- Result: `ready_for_formal=true` with no boundary recommendations. The two-replica throughput
+  optima are P training 128 (580.54 examples/s mean, 43.37% maximum reserved memory), Q training
+  768 (3,938.28 examples/s, 35.37%), P validation 512 (1,502.85 examples/s, 10.60%), and Q
+  validation 6,144 (10,699.55 examples/s, 14.86%). The generated `recommended.env` records those
+  four values. Larger safe candidates on both sides demonstrated that none is a right-boundary
+  artifact; training candidates above the 92% rule were excluded from recommendation.
+- Paper-default evidence: this expanded matrix starts at the previous right boundary and therefore
+  does not repeat P=50/Q=200. Their safety is established by the complete preceding matrix on both
+  replicas (P 19.33%, Q 12.50% maximum reserved memory). Read the two summaries together; the
+  expanded summary's `paper_batch_safe_on_all=false` means “not included in this matrix,” not an
+  observed unsafe result.
+- Persistence step: export the complete raw JSON, worker logs, event logs, summary, and
+  `recommended.env` to `results/benchmarks/synbios_moe/probe_batch_benchmark/`, export both cache
+  manifests to `results/datasets/synbios_moe/<variant>/probe_cache/`, regenerate
+  `results/MANIFEST.sha256`, and update the human-readable benchmark/report indexes before probe
+  smoke training.
+
+## 2026-07-23 14:12 — Single-condition P/Q probe smoke
+
+- Status: completed successfully at 2026-07-23 14:19 Asia/Shanghai / 2026-07-23 06:19 UTC;
+  exit code 0.
+- Local/UTC start: 2026-07-23 14:12 Asia/Shanghai / 2026-07-23 06:12 UTC.
+- Purpose: execute the first end-to-end P/Q probe stage against the completed `single` backbone:
+  strict pretrain gate, 500 training steps each for P/Q `university_whole`, independent
+  person-held-out validation from saved probe checkpoints, pipeline identity checks, event logs,
+  and atomic lightweight recovery.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  user-requested organization rules, experiment history/results/report, indexed-CUDA monitoring
+  fix and test, exporter organization change, and exported benchmark/cache evidence.
+- Preflight gates: current tree 85/85 tests and full Ruff passed before cache generation; focused
+  post-fix logger tests 8/8 and Ruff passed; both probe caches validate with complete class
+  coverage; exported `results/MANIFEST.sha256` verifies; all four GPUs were idle.
+- Hardware/topology: 4 × RTX 4090 24 GB. Probe task parallelism assigns at most one independent
+  probe worker per GPU; it does not DDP-wrap a classifier.
+- Dataset/cache: `artifacts/synbios_moe/single/` and protocol-v2 `probe_cache/`; cache-manifest
+  SHA256 `9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b`.
+- Backbone checkpoint:
+  `artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`;
+  `model.pt` SHA256 `2d154fa14cbd233e71936f1db8f54d2c652c1347f529d2db2e6be8df49039e84`.
+- Capacity input:
+  `artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env`
+  (SHA256 `30f36e9572b66dbcdc9c4272f70bb077a5c774da4790fab4d65444a08723f309`);
+  P/Q training batches 128/768 and validation batches 512/6,144.
+- tmux session: `minitrain-probe-smoke-single-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=smoke NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh single fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_smoke_single_20260723_1412.log`.
+- Output:
+  `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/smoke/`.
+- Promotion rule: do not launch the `single` pilot until this stage has `pipeline.json` status
+  `completed`; run the corresponding `multi5_permute` smoke before any cross-condition pilot.
+- Result: strict 10,000-biography cloze gate passed at 60,000/60,000 fields and 10,000/10,000
+  biographies exact. Both 500-step training jobs and both checkpoint-reloaded held-out validation
+  jobs completed. P `university_whole` validation accuracy across the six left-to-right biography
+  observation positions was `[0.003891, 0.004210, 0.052217, 0.946426, 0.902490, 0.720759]`;
+  Q name-only validation accuracy was `0.003392`. These are smoke diagnostics, not formal
+  Allen-Zhu results. `pipeline.json` is `completed` with seven summary rows and matching protocol
+  identity.
+
+## 2026-07-23 14:20 — Multi5+permute P/Q probe smoke
+
+- Status: completed successfully at 2026-07-23 14:33 Asia/Shanghai / 2026-07-23 06:33 UTC;
+  exit code 0.
+- Local/UTC start: 2026-07-23 14:20 Asia/Shanghai / 2026-07-23 06:20 UTC.
+- Purpose: run the same two-task, 500-step P/Q smoke protocol and independent person-held-out
+  validation against the completed `multi5_permute` backbone, after the `single` smoke completed.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  previously recorded probe experiment implementation/results changes.
+- Hardware/topology: 4 × idle RTX 4090 24 GB; task-parallel probe workers, at most one per GPU.
+- Dataset/cache: `artifacts/synbios_moe/multi5_permute/` and its protocol-v2 cache; cache manifest
+  SHA256 `acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f`.
+- Backbone checkpoint:
+  `artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388/`;
+  `model.pt` SHA256 `e89075289bb3a774825e7fd03cedc2c7c37957583bf3656e8ab32c52ef02f0dd`.
+- Capacity input: expanded formal-ready `recommended.env` SHA256
+  `30f36e9572b66dbcdc9c4272f70bb077a5c774da4790fab4d65444a08723f309`;
+  P/Q training 128/768, validation 512/6,144.
+- tmux session: `minitrain-probe-smoke-multi5-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=smoke NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_smoke_multi5_20260723_1420.log`.
+- Output:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/smoke/`.
+- Promotion rule: require `pipeline.json` status `completed` before either condition enters pilot.
+- Result: the strict 10,000-biography cloze gate restored 59,997/60,000 fields exactly
+  (`99.995%`) and 9,998/10,000 biographies at 6/6, above the 90% gate. Both 500-step training and
+  both checkpoint-reloaded validation jobs completed. P `university_whole` held-out accuracy at
+  the six left-to-right text positions was
+  `[0.076084, 0.078423, 0.079117, 0.079257, 0.079660, 0.079995]`; Q name-only accuracy was
+  `0.005128`. The flattened P position profile is expected to require careful interpretation
+  because `multi5_permute` randomizes attribute order; it is a smoke diagnostic, not the formal
+  comparison. `pipeline.json` is `completed` with matching identity and seven summary rows.
+
+## 2026-07-23 14:34 — Single-condition full-task P/Q probe pilot
+
+- Status: running.
+- Local/UTC start: 2026-07-23 14:34 Asia/Shanghai / 2026-07-23 06:34 UTC.
+- Purpose: train all 22 Allen-Zhu P/Q tasks for 3,000 steps on the completed `single` backbone,
+  evaluate each saved probe on the full probe-train split and independent person-held-out
+  validation split, and validate task scheduling, recovery, summaries, and attribute/position
+  semantics before the 30,000-step formal stage.
+- Prerequisite: the matching `single` smoke has `pipeline.json status=completed`; the
+  `multi5_permute` smoke also completed, so cross-condition smoke gating is satisfied.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  recorded probe implementation, history, reports, and exported evidence changes.
+- Hardware/topology: 4 × idle RTX 4090 24 GB; dynamic task parallelism across four independent
+  workers. Task matrix is 11 label targets × P/Q: six first-token targets and five whole-attribute
+  targets, with no birthday whole-attribute classifier.
+- Inputs and runtime identity: same `single` dataset/cache/model/checkpoint and formal-ready
+  capacity environment as its completed smoke; P/Q train batches 128/768, validation 512/6,144,
+  seed 1337, full train evaluation enabled, 1,000-step atomic recovery interval.
+- tmux session: `minitrain-probe-pilot-single-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=pilot NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh single fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_pilot_single_20260723_1434.log`.
+- Output:
+  `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/`.
+- Promotion rule: require all 22 training and all 22 checkpoint-reloaded validation jobs to
+  complete with a matching `pipeline.json` identity before launching `single` formal.
+- Local/UTC end: 2026-07-23 15:49 Asia/Shanghai / 2026-07-23 07:49 UTC.
+- Status: completed (exit code 0).
+- Result: all 22 training jobs and all 22 checkpoint-reloaded person-held-out validation jobs
+  completed, with zero failed jobs and 77 tidy summary rows. The held-out first-token P results
+  show the expected fixed-order `single` pattern: birth city rises from 6.30% at position 0 to
+  100.00% at its own position; university rises from 5.39%/11.66% to 99.80%; major rises from
+  5.51%/6.72%/7.40% to 100.00%; company rises from 5.23%--6.99% to 100.00%; and company city
+  remains 10.62%--15.30% until reaching 100.00% at its own position. The corresponding held-out
+  Q first-token accuracies remain much lower (5.10%--39.17%, depending on class cardinality), so
+  the pilot supports position-dependent/local storage rather than universal 100% probe accuracy.
+- Retained outputs: `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/`,
+  including `pipeline.json`, 22 training JSON/PT pairs, 22 validation JSON files, recovery
+  checkpoints, per-task logs/events, and `summary/{summary.json,summary.csv}`.
+- Result export: completed in tmux `minitrain-probe-pilot-single-export-20260723` using
+  `bash scripts/bash/export_test_results.sh`; log
+  `artifacts/logs/probe_pilot_single_export_20260723_1549.log`. The exported pilot evidence is
+  under `results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/`, and
+  `sha256sum -c results/MANIFEST.sha256` passed.
+
+## 2026-07-23 15:51 — Multi5+permute full-task P/Q probe pilot
+
+- Status: running.
+- Local/UTC start: 2026-07-23 15:51 Asia/Shanghai / 2026-07-23 07:51 UTC.
+- Purpose: train and independently validate all 22 Allen-Zhu P/Q tasks for 3,000 steps on the
+  completed `multi5_permute` backbone, then compare its early-position P and name-only Q
+  representation with the completed `single` pilot before choosing the formal-run duration.
+- Prerequisites: matching `multi5_permute` smoke completed; matching cache/cloze gate identity
+  passed; `single` pilot completed all 22 training and 22 validation tasks and its result export
+  manifest verified.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  recorded probe implementation, reports/history, and exported reproducibility evidence.
+- Hardware/topology: 4 × RTX 4090 24 GB; dynamic task parallelism across four independent GPU
+  workers.
+- Inputs and runtime identity: `multi5_permute` dataset/cache and committed 4-GPU FSDP backbone
+  checkpoint; P/Q train batches 128/768, validation batches 512/6,144, seed 1337, 3,000 steps,
+  full train evaluation enabled, 1,000-step atomic recovery interval.
+- tmux session: `minitrain-probe-pilot-multi5-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=pilot NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_pilot_multi5_20260723_1551.log`.
+- Output:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/pilot/`.
+- Promotion rule: do not launch formal probes directly after completion. First produce the
+  paper-style cross-condition pilot tables/figures and conclusion document, inspect convergence
+  and train/validation gaps, then choose and record defensible formal steps/equivalent epochs and
+  batch exposure per probe family or task.
+- Local/UTC end: 2026-07-23 17:37 Asia/Shanghai / 2026-07-23 09:37 UTC.
+- Status: completed (exit code 0).
+- Result: all 22 training jobs and all 22 checkpoint-reloaded person-held-out validation jobs
+  completed, with zero failed jobs and 77 tidy summary rows. Multi5 first-token validation is
+  near-saturated from the earliest P position (approximately 97.1%--99.7% across targets) and
+  Q first-token validation is similarly high (approximately 97.2%--99.7% for non-date targets),
+  while whole-attribute tasks remain heterogeneous. This is the expected augmented-memory
+  contrast to the completed single pilot's position-local P and low name-only Q pattern.
+- Retained outputs: `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/pilot/`,
+  including `pipeline.json`, 22 training JSON/PT pairs, 22 validation JSON files, recovery
+  checkpoints, per-task logs/events, and `summary/{summary.json,summary.csv}`.
+
+## 2026-07-23 17:45 — Pilot-driven formal probe budget decision (pre-launch)
+
+- Status: decision recorded; formal training not yet launched.
+- Evidence: both 3,000-step pilots completed all 22 training and 22 held-out validation tasks
+  with zero failures. First-token P/Q shows the decisive single-versus-multi5 contrast; whole
+  probes remain heterogeneous and receive a longer sufficiency budget.
+- Formal task matrix: retain all 22 paper probe tasks (six first-token P, five whole P, six
+  first-token Q, five whole Q; no birthday whole task), with first as the primary endpoint and
+  whole as a secondary diagnostic.
+- Industrial runtime settings from the completed capacity benchmark: P train/validation
+  batches 128/512 and Q train/validation batches 768/6,144. These are the tested throughput
+  settings used for this server, not paper batch sizes.
+- Pilot-driven optimizer budgets: P-first/Q-first 4,000 steps; P-whole/Q-whole 12,000 steps.
+  This is approximately 10.3/2.1 P-first epochs for single/multi5, 61.6 Q-first epochs, and
+  30.8/6.2 P-whole epochs plus 184.8 Q-whole epochs on the corresponding training splits.
+- Paper comparison: Allen-Zhu uses P rank 2, batch 50, 30,000 steps and Q rank 16, batch 200,
+  30,000 steps. Our ranks and task definitions remain paper-faithful; batch and step budgets
+  are explicitly optimized using measured server throughput and pilot convergence.
+- Reports: `reports/synbios_moe/probes/pilot_comparison.md` and
+  `reports/synbios_moe/probes/formal_protocol.md`.
+- Pre-launch gates passed: 26 focused probe/pipeline tests, Ruff, and manifest verification.
+- Export: `bash scripts/bash/export_test_results.sh` completed in tmux
+  `minitrain-probe-final-export-20260723`; log `artifacts/logs/probe_final_export_20260723_1745.log`.
+
+## 2026-07-23 17:44 — Single-condition formal P/Q probe launch
+
+- Status: running.
+- Local/UTC start: 2026-07-23 17:44 Asia/Shanghai / 2026-07-23 09:44 UTC.
+- Purpose: formal Allen-Zhu reproduction on the completed `single` backbone using the complete
+  22-task P/Q matrix. First-token probes are the primary mechanism endpoint; whole probes are a
+  secondary sufficiency diagnostic.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the intentional
+  probe reports, budget schedule, ETA instrumentation, history, and exported evidence changes.
+- Hardware/topology: 4 × RTX 4090 24 GB, FSDP backbone checkpoint, four task-parallel probe
+  workers.
+- Runtime/config: P rank 2, Q rank 16; measured throughput batches P=128/Q=768 and validation
+  P=512/Q=6,144; first budgets 4,000 steps and whole budgets 12,000 steps; seed 1337; atomic
+  recovery every 1,000 steps; full training evaluation enabled. Formal config and identity bind
+  these per-task budgets.
+- tmux session: `minitrain-probe-formal-single-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=formal NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh single fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_formal_single_20260723_1744.log`.
+- Output: `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/`.
+- Promotion/monitoring rule: verify the formal pipeline identity, four workers, per-task step
+  budgets, and task/phase/full-pipeline ETA at launch; after that hand monitoring to the user.
+- Local/UTC end: 2026-07-23 17:51 Asia/Shanghai / 2026-07-23 09:51 UTC.
+- Status: stopped before completion (the tmux session disappeared while training was at the first
+  four tasks; no completed formal result was promoted and no exit code was available). The run is
+  retained as failed/stopped provenance because its initial console output exposed the misleading
+  completed-task-only ETA display.
+- Retained evidence after cleanup: the stopped log and partial formal output were moved to
+  `/data/mini-train-sys/trash/probe_formal_single_20260723_1751/`; backbone checkpoints, pilot
+  outputs, reports, and benchmark evidence were not touched. A corrected restart must receive a
+  new HISTORY entry and a new output directory/identity.
+
+## 2026-07-23 17:52 — Single-condition formal P/Q probe restart
+
+- Status: running.
+- Local/UTC start: 2026-07-23 17:52 Asia/Shanghai / 2026-07-23 09:52 UTC.
+- Purpose: restart the stopped formal single-condition probe after correcting the misleading
+  task-level ETA display. The complete 22-task matrix and pilot-driven P/Q budgets are unchanged.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with intentional
+  monitoring, report, budget, and provenance changes.
+- Hardware/topology: 4 × RTX 4090 24 GB, four task-parallel workers.
+- Runtime/config: P rank 2, Q rank 16; P/Q train batches 128/768; validation batches 512/6,144;
+  first budgets 4,000 steps and whole budgets 12,000 steps; seed 1337; recovery every 1,000
+  steps; full training evaluation enabled. The corrected monitor reports running-task progress
+  in phase and pipeline progress, with task/phase/pipeline ETA fields.
+- tmux session: `minitrain-probe-formal-single-restart-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=formal NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh single fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_formal_single_restart_20260723_1752.log`.
+- Output: `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/`.
+- Local/UTC end: 2026-07-23 17:56 Asia/Shanghai / 2026-07-23 09:56 UTC.
+- Status: stopped before completion (the first corrected-progress restart was stopped after its
+  first heartbeat exposed an unstable near-zero-progress ETA estimator). Partial output/logs were
+  moved to `/data/mini-train-sys/trash/probe_formal_single_20260723_1756/`.
+
+## 2026-07-23 17:57 — Single-condition formal P/Q restart with stable ETA estimator
+
+- Status: running.
+- Local/UTC start: 2026-07-23 17:57 Asia/Shanghai / 2026-07-23 09:57 UTC.
+- Purpose: restart formal training after replacing the near-zero-progress ETA estimate with an
+  active-worker estimate before the first task completes. The scientific matrix, budgets, and
+  batches are unchanged.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with intentional
+  monitoring/provenance changes.
+- Hardware/topology: 4 × RTX 4090 24 GB, four task-parallel workers.
+- Runtime/config: P rank 2, Q rank 16; P/Q train batches 128/768; validation batches 512/6,144;
+  first budgets 4,000 steps and whole budgets 12,000 steps; seed 1337; recovery every 1,000
+  steps; full training evaluation enabled.
+- tmux session: `minitrain-probe-formal-single-final-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=formal NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh single fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_formal_single_final_20260723_1757.log`.
+- Output: `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/`.
+- Local/UTC end: 2026-07-23 21:22 Asia/Shanghai / 2026-07-23 13:22 UTC.
+- Status: completed (exit code 0).
+- Result: all 22 training and all 22 checkpoint-reloaded person-held-out validation tasks
+  completed with zero failures and 77 summary rows. Single P shows the expected positional
+  pattern (first-token position-0 near chance except fixed birth_date, then near 100% at the
+  memorized field position); Q remains near its class prior. Whole P is partially converged and
+  whole Q remains near chance. See `reports/synbios_moe/probes/single_formal.md`.
+- Retained outputs: `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/`,
+  including summary JSON/CSV, 22 training checkpoints/records, 22 validation records, and router
+  analysis. Temporary plot: `.../formal/summary/single_formal_probe_overview.png`.
+- Result export: completed in tmux `minitrain-probe-formal-single-export-20260723`; log
+  `artifacts/logs/probe_formal_single_export_20260723_210112.log`. `sha256sum -c
+  results/MANIFEST.sha256` passed; exported formal evidence is under
+  `results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/`.
+
+## 2026-07-23 17:23 — Cross-condition pilot reduction and formal-duration decision
+
+- Status: completed (exit code 0).
+- Local/UTC start: 2026-07-23 17:23 Asia/Shanghai / 2026-07-23 09:23 UTC.
+- Local/UTC end: 2026-07-23 17:29 Asia/Shanghai / 2026-07-23 09:29 UTC.
+- Purpose: reduce the complete `single` and `multi5_permute` held-out pilots into one tidy
+  comparison, reproduce the paper-style P/Q views, apply the trend promotion gate, and select
+  the fastest formal schedule that retains the Allen-Zhu P/Q sample exposure.
+- Git: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  already recorded probe/runtime/report changes and exported evidence.
+- Command:
+
+  ```bash
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  python scripts/synbios_moe.py summarize-probes \
+    --run single=artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation \
+    --run multi5_permute=artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/pilot/validation \
+    --output artifacts/synbios_moe/results/probe_pilot_comparison
+  ```
+
+- Result: 154 tidy held-out rows and 77 matched deltas. The primary trend gate passed: excluding
+  first-position birth date, mean P position-0 first-token accuracy changed from 6.71% (`single`)
+  to 98.63% (`multi5_permute`), and mean Q first-token accuracy changed from 12.42% to 98.80%.
+  Whole tasks favor augmentation but remain unconverged at pilot exposure, so they are retained
+  as a formal target.
+- Formal decision: retain the throughput-optimal benchmark batches P=128/Q=768 and validation
+  P=512/Q=6,144. Use P=12,000 steps (1.536M examples) and Q=8,000 steps (6.144M examples),
+  closely matching the paper's P=1.5M/Q=6.0M sampled examples while reducing optimizer-step
+  overhead. Equivalent epochs are P single=30.72, P multi5=6.144, and Q=122.88.
+- Reports:
+  `reports/synbios_moe/probes/pilot_analysis.md`,
+  `reports/synbios_moe/probes/formal_training_decision.md`, and
+  `reports/synbios_moe/probes/figures/pilot_{p_first,p_whole,q}.png`.
+- Raw comparison: `artifacts/synbios_moe/results/probe_pilot_comparison/`.
+- Monitoring change: formal stages now accept per-kind step schedules and terminal progress
+  distinguishes task ETA, phase ETA, full-pipeline ETA/overall 44-task progress, and predicted
+  local completion time. Four focused tests and Ruff passed before the full regression.
+
+## 2026-07-23 17:30 — Formal probe configuration and monitoring regression gate
+
+- Status: running.
+- Local/UTC start: 2026-07-23 17:30 Asia/Shanghai / 2026-07-23 09:30 UTC.
+- Purpose: run the complete regression suite after adding the P/Q-specific formal schedule,
+  paper-equivalent exposure configuration, and full-pipeline terminal ETA. This is the final
+  software gate before launching the formal probe.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  recorded configuration, monitoring, tests, reports, and exported pilot evidence.
+- Hardware/topology: CPU regression suite; all four GPUs idle and reserved for the subsequent
+  formal task-parallel probe.
+- tmux session: `minitrain-probe-formal-preflight-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  pytest -q --junitxml=results/validation/pytest_probe_formal_preflight_20260723.xml
+  ruff check .
+  ```
+
+- Console log: `artifacts/logs/probe_formal_preflight_20260723_1730.log`.
+- Outputs: `results/validation/pytest_probe_formal_preflight_20260723.xml` and the console log.
+## 2026-07-23 21:05 — Multi5+permute formal P/Q probe launch
+
+- Status: failed (exit code 1; runtime logger teardown race).
+- Local/UTC start: 2026-07-23 21:05 Asia/Shanghai / 2026-07-23 13:05 UTC.
+- Purpose: matched augmented-data formal probe to test the Allen-Zhu single-vs-augmentation
+  positional-memory contrast after the completed single baseline.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with recorded
+  probe/runtime/report changes and exported single evidence.
+- Hardware/topology: 4 × RTX 4090 24 GB, four task-parallel workers.
+- Runtime/config: variant `multi5_permute`, P rank 2/Q rank 16; P/Q train batches 128/768;
+  validation batches 512/6,144; first 4,000 steps and whole 12,000 steps; seed 1337;
+  recovery every 1,000 steps; full training evaluation enabled.
+- tmux session: `minitrain-probe-formal-multi5-20260723`.
+- Command:
+
+  ```bash
+  cd /home/ubuntu/mini-train-sys
+  source .venv/bin/activate
+  source .minitrain-storage.env
+  STAGE=formal NPROC=4 PROBE_GPUS=4 \
+  PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060600Z/recommended.env \
+    bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
+  ```
+
+- Console log: `artifacts/logs/probe_formal_multi5_20260723_2105.log`.
+- Output: `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/`.
+- End: 2026-07-23 21:35 Asia/Shanghai / 2026-07-23 13:35 UTC. Four initial tasks exited
+  before producing retained formal results; GPUs were idle afterward. The failure was isolated
+  to concurrent logger close/write teardown, fixed in `minitrain/runtime/logger.py`; focused
+  logger tests passed (8 passed). A new launch will be recorded separately.
+
+## 2026-07-23 21:37 — Multi5+permute formal P/Q retry after logger fix
+
+- Status: stopped (interrupted before completion).
+- Local/UTC start: 2026-07-23 21:37 Asia/Shanghai / 2026-07-23 13:37 UTC.
+- Purpose: retry the matched augmented-data formal probe after the logger teardown race fix.
+- Git: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`, dirty with the logger fix.
+- tmux: `minitrain-probe-formal-multi5-retry-20260723`; log:
+  `artifacts/logs/probe_formal_multi5_retry_20260723_2137.log`.
+- Configuration and output are unchanged from the failed launch above.
+
+## 2026-07-23 21:45 — Multi5+permute formal P/Q restart after interruption
+
+- Status: completed.
+- Local/UTC start: 2026-07-23 21:45 Asia/Shanghai / 2026-07-23 13:45 UTC.
+- Purpose: restart the interrupted augmented-data formal probe; prior failed and interrupted
+  attempts remain retained as provenance.
+- Git: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`, dirty with logger race fix.
+- tmux: `minitrain-probe-formal-multi5-restart2-20260723`.
+- Log: `artifacts/logs/probe_formal_multi5_restart2_20260723_2145.log`.
+- Configuration/output: same formal P/Q schedule and output root as the preceding attempt.
+- End: 2026-07-24 00:33 Asia/Shanghai / 2026-07-23 16:33 UTC; exit code 0.
+- Result: all 22 probe heads trained and all 22 held-out person-split validations completed;
+  the pipeline summary contains 77 position-level rows. The subsequent router summaries were
+  retained under the same formal output root.
+
+## 2026-07-24 00:35 — Multi5+permute Q-whole inference diagnostics
+
+- Status: completed (both commands exit code 0).
+- Local/UTC start: 2026-07-24 00:35 Asia/Shanghai / 2026-07-23 16:35 UTC.
+- Purpose: run two inference-only validations on the completed formal probes: (1) compare the
+  unchanged Q-whole head on name-only input versus an oracle ground-truth first-token
+  intervention; (2) test whether Q-first-correct/Q-whole-wrong examples preserve similar
+  top-2 MoE routes at token 1 but branch at token 2.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
+  new diagnostics, tests, documentation, prior formal-run evidence, and unrelated retained
+  experiment changes.
+- Dataset/cache: `/data/mini-train-sys/artifacts/synbios_moe/multi5_permute` and its
+  `probe_cache/` (100,000 profiles; held-out person validation split).
+- Backbone: `/data/mini-train-sys/artifacts/synbios_moe/checkpoints/`
+  `synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388`.
+- Probe checkpoints:
+  `/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/`
+  `probe_pipeline/formal/training/`.
+- Hardware/topology: 4 × RTX 4090 24 GB; two independent inference processes on CUDA 0 and 1.
+- Tests before launch: Ruff passed; 4 diagnostics tests passed; 27 related
+  probe/router/pipeline/logger regression tests passed.
+- tmux/log/output:
+  - `minitrain-probe-diagnostic-oracle-multi5-20260724`;
+    `artifacts/logs/probe_diagnostic_oracle_multi5_20260724_0035.log`;
+    `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/`
+    `diagnostics/oracle_first_token/`.
+  - `minitrain-probe-diagnostic-routes-multi5-20260724`;
+    `artifacts/logs/probe_diagnostic_routes_multi5_20260724_0035.log`;
+    `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/`
+    `diagnostics/bad_case_routes/`.
+- Commands:
+
+  ```bash
+  python scripts/synbios_moe.py validate-probe-oracle-first-token \
+    --data artifacts/synbios_moe/multi5_permute \
+    --probe-cache artifacts/synbios_moe/multi5_permute/probe_cache \
+    --probe-dir artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training \
+    --model-config configs/synbios_moe/model.yaml \
+    --checkpoint artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388 \
+    --batch-size 512 --device cuda:0 \
+    --output artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/oracle_first_token
+
+  python scripts/synbios_moe.py validate-probe-bad-case-routes \
+    --data artifacts/synbios_moe/multi5_permute \
+    --probe-cache artifacts/synbios_moe/multi5_permute/probe_cache \
+    --probe-dir artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training \
+    --model-config configs/synbios_moe/model.yaml \
+    --checkpoint artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388 \
+    --batch-size 512 --pair-limit 2000 --device cuda:1 \
+    --output artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/bad_case_routes
+  ```
+
+- End: oracle 2026-07-24 00:38:18 Asia/Shanghai / 2026-07-23 16:38:18 UTC;
+  routes 2026-07-24 00:38:34 Asia/Shanghai / 2026-07-23 16:38:34 UTC.
+- Result: oracle micro Q-whole accuracy changed from 33.15% to 32.08% (-1.06pp);
+  5.38% of baseline errors recovered while 14.06% of baseline-correct predictions were harmed.
+  The route analysis retained 162,044 eligible bad cases. Weighted branching score was -0.051
+  for same-t2 controls and +0.154 for different-t2 pairs, yielding +0.205
+  difference-in-differences; the contrast was positive in every layer and largest in layers 0-3.
+- Report: `reports/synbios_moe/probes/q_whole_moe_diagnostics.md`.
+
+## 2026-07-24 00:52 — Matched single vs multi5+permute formal-study report
+
+- Status: completed.
+- Local/UTC start: 2026-07-24 00:52 Asia/Shanghai / 2026-07-23 16:52 UTC.
+- Purpose: reconstruct the canonical formal comparison directly from all 44 independent
+  held-out validation JSON files, enforce matched run/data identities, combine the two strict
+  source-text cloze results, and render paper-style numeric heatmaps and project overview figures.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with
+  retained experiment/report changes and the new audited report generator.
+- Inputs:
+  - `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/`
+  - `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/`
+  - `artifacts/synbios_moe/results/single_cloze_eval/full_100k/summary.json`
+  - `artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json`
+- Output: `artifacts/synbios_moe/results/formal_probe_comparison_20260724/`.
+- Hardware/topology: CPU-only report generation; no GPU training or inference.
+- Preflight: Ruff passed; 8 formal-report/diagnostics tests passed.
+- Command:
+
+  ```bash
+  python scripts/synbios_moe.py report-formal-study \
+    --single artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal \
+    --multi5-permute artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal \
+    --single-cloze artifacts/synbios_moe/results/single_cloze_eval/full_100k/summary.json \
+    --multi5-permute-cloze artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json \
+    --output artifacts/synbios_moe/results/formal_probe_comparison_20260724
+  ```
+
+- Local/UTC end: 2026-07-24 01:01 Asia/Shanghai / 2026-07-23 17:01 UTC.
+- Exit code: 0.
+- Result summary:
+  - strict training-corpus source recall was 100.0000% for `single` and 99.9915% for
+    `multi5_permute`;
+  - P first-token position-0 macro accuracy (excluding birth date) rose from 6.76% to 98.63%;
+  - Q first-token macro accuracy rose from 12.83% to 98.79%;
+  - Q whole-attribute macro accuracy rose from 3.18% to 33.15%, but remained far below the
+    92.58% Allen-Zhu bioS multi5+permute reference, so the overall result is a partial rather
+    than exact replication.
+- Retained outputs:
+  - mounted artifact: `artifacts/synbios_moe/results/formal_probe_comparison_20260724/`;
+  - Git-safe export:
+    `results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/`;
+  - narrative: `reports/synbios_moe/probes/formal_comparison.md`;
+  - experiment index: `reports/synbios_moe/probes/README.md`;
+  - generation log: `artifacts/logs/formal_probe_comparison_20260724_0052.log`;
+  - export tmux/log: `minitrain-formal-report-export-20260724-0102` /
+    `artifacts/logs/formal_report_export_20260724_0102.log`.
+- Verification:
+  - Ruff and shell syntax checks passed;
+  - 39 related regression tests passed, 7 deselected;
+  - an independent temporary rebuild matched all 9 JSON/CSV/PNG files byte-for-byte;
+  - `results/MANIFEST.sha256` verified, report-local Markdown links resolved, no exported
+    file exceeded 100 MB, and no weight-like file entered the formal comparison export.
+
+## 2026-07-24 01:12 — Full whole-readout diagnostic report
+
+- Status: failed (exit code 1).
+- Local/UTC start: 2026-07-24 01:12 Asia/Shanghai / 2026-07-23 17:12 UTC.
+- Purpose: strictly audit the two completed `multi5_permute` inference-only Q-whole diagnostics,
+  cross-check the oracle name-only baseline against the original formal Q-whole results, and
+  render a complete five-attribute comparison containing all single/multi P-whole positions,
+  original Q-whole, oracle true-t1 Q-whole, controlled route branching, and Allen-Zhu context.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with
+  retained formal/probe evidence and the new deterministic diagnostic reporting layer.
+- Inputs:
+  - `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/`;
+  - `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/`;
+  - `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/`.
+- Output:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/`.
+- Hardware/topology: CPU-only validation/report generation; no model or probe parameter updates.
+- Preflight: Ruff passed; 12 diagnostic/formal-report tests passed.
+- tmux/log:
+  `minitrain-probe-diagnostic-report-20260724-0112` /
+  `artifacts/logs/probe_diagnostic_report_20260724_0112.log`.
+- Command:
+
+  ```bash
+  python scripts/synbios_moe.py report-probe-diagnostics \
+    --single-formal artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal \
+    --multi5-permute-formal artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal \
+    --diagnostics artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics \
+    --output artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report
+  ```
+
+- End: 2026-07-24 01:13 Asia/Shanghai / 2026-07-23 17:13 UTC.
+- Failure: strict equality compared an integer-count reconstruction with the float32 accuracy
+  retained in the original formal JSON. The first comparison differed by approximately
+  `5.5e-9`; no report artifact was accepted. The retry uses an explicit `1e-7` tolerance only
+  for this float32 boundary while retaining exact count, identity, hash, and matrix checks.
+
+## 2026-07-24 01:13 — Full whole-readout diagnostic report retry
+
+- Status: completed (exit code 0).
+- Local/UTC start: 2026-07-24 01:13 Asia/Shanghai / 2026-07-23 17:13 UTC.
+- Purpose, inputs, outputs, hardware, Git state, tmux/log, and command are identical to the
+  immediately preceding run, except for the documented float32-boundary tolerance.
+- Preflight: Ruff passed; 12 diagnostic/formal-report tests passed.
+- tmux/log:
+  `minitrain-probe-diagnostic-report-r2-20260724-0113` /
+  `artifacts/logs/probe_diagnostic_report_r2_20260724_0113.log`.
+- Local/UTC end: 2026-07-24 01:19 Asia/Shanghai / 2026-07-23 17:19 UTC.
+- Result:
+  - all five whole-value attributes and all six original P positions were included;
+  - oracle Q-whole micro accuracy changed from 33.15% to 32.08% (−1.06pp) across
+    250,590 held-out predictions;
+  - route analysis retained 162,044 bad cases; same-`t2` and different-`t2` branching scores
+    were −0.051 and +0.154, for a +0.205 pair-count-weighted difference-in-differences;
+  - all 12 layer aggregates were positive, with the strongest contrast in layers 0–3;
+  - the complete colored comparison includes single/multi formal P-whole, original Q-whole,
+    oracle `+ true t1`, and Allen-Zhu Figure 7 context.
+- Retained outputs:
+  - mounted:
+    `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/`;
+  - Git-safe:
+    `results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/`;
+  - reports: `reports/synbios_moe/probes/diagnostics/{README.md,oracle_first_token.md,`
+    `bad_case_routes.md}`;
+  - export tmux/log: `minitrain-diagnostic-report-export-20260724-0119` /
+    `artifacts/logs/probe_diagnostic_report_export_20260724_0119.log`.
+- Verification:
+  - 43 related regression tests passed, 7 deselected; Ruff and `git diff --check` passed;
+  - an independent temporary rebuild matched all 9 JSON/CSV/PNG files byte-for-byte;
+  - source and Git-safe report directories match exactly;
+  - `results/MANIFEST.sha256`, report-local Markdown links, file-size limits, and weight
+    exclusions all passed.
+
+## 2026-07-24 01:28 — SynBioS repository path and lineage audit
+
+- Status: completed (exit code 0).
+- Local/UTC start: 2026-07-24 01:28 Asia/Shanghai / 2026-07-23 17:28 UTC.
+- Purpose: validate the complete retained SynBioS graph from raw dataset manifests through token
+  shards, person-level probe caches, formal checkpoints, cloze/probe/diagnostic results, accepted
+  runtime configs, and archived logs; emit mechanically checkable lineage and path catalogs without
+  moving or deleting historical evidence.
+- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with
+  retained experiment evidence, reports, diagnostic tooling, and the repository-audit implementation.
+- Hardware/topology: CPU/storage audit on the persistent four-RTX-4090 host; no GPU training,
+  inference, or parameter updates.
+- Preflight: Ruff passed; 37 focused repository/formal/probe tests passed, 8 deselected.
+- tmux/log:
+  `minitrain-synbios-repository-audit-20260724-0128` /
+  `artifacts/logs/synbios_repository_audit_20260724_0128.log`.
+- Inputs:
+  - `artifacts/synbios_moe/{single,multi5_permute}/`;
+  - `artifacts/synbios_moe/checkpoints/`;
+  - `artifacts/synbios_moe/results/{single_fsdp_4gpu,multi5_permute_fsdp_4gpu}/`;
+  - `configs/synbios_moe/{runs,probe_pipeline.yaml}`;
+  - `artifacts/logs/`.
+- Output:
+  `artifacts/synbios_moe/results/repository_audit_20260724/`, plus versioned `lineage.json`
+  sidecars under each mounted dataset, token-shard, and probe-cache directory.
+- Command:
+
+  ```bash
+  python scripts/synbios_moe.py audit-synbios-repository \
+    --repo-root /home/ubuntu/mini-train-sys \
+    --output artifacts/synbios_moe/results/repository_audit_20260724
+  ```
+
+- Local/UTC end: 2026-07-24 01:29 Asia/Shanghai / 2026-07-23 17:29 UTC.
+- Result:
+  - all raw dataset files, token shards, document indexes, cache arrays, formal checkpoint model
+    exports, and parent identities matched their retained manifests/hashes;
+  - `single` and `multi5_permute` use the same 100,000 profiles and the same deterministic
+    49,882-person probe-train / 50,118-person probe-validation split;
+  - both accepted training configs resolve the intended mounted token manifests, use local batch
+    112 on four GPUs, and retain the intended 540/108 epoch budgets;
+  - probe runtime defaults now exactly match both completed formal identities:
+    P/Q train batch 128/768 and P/Q validation batch 512/6144;
+  - 81 retained logs were hashed and classified; historical paths were preserved.
+- Retained outputs:
+  - `artifacts/synbios_moe/results/repository_audit_20260724/{summary.json,`
+    `dataset_lineage.json,path_contract.json,log_catalog.csv}`;
+  - mounted dataset sidecars:
+    `artifacts/synbios_moe/{single,multi5_permute}/{lineage.json,`
+    `token_shards/lineage.json,probe_cache/lineage.json}`.
+- Git-safe export:
+  - first export:
+    `minitrain-synbios-audit-export-20260724-0131` /
+    `artifacts/logs/synbios_repository_audit_export_20260724_0131.log`;
+  - policy-clean retry:
+    `minitrain-synbios-audit-export-r2-20260724-0134` /
+    `artifacts/logs/synbios_repository_audit_export_r2_20260724_0134.log`;
+  - the retry removed 136 legacy probe-head tensor copies (589,311,663 bytes) only from the
+    Git-safe mirror. Their authoritative `/data` artifacts remain intact; retained JSON identities
+    and hashes still bind the formal results to those heads.
+- Final verification:
+  - full repository suite: 102 passed, 5 expected PyTorch single-process distributed-checkpoint
+    warnings;
+  - test tmux/log:
+    `minitrain-synbios-final-tests-20260724-0136` /
+    `artifacts/logs/synbios_final_pytest_20260724_0136.log`;
+  - final export tmux/log:
+    `minitrain-synbios-final-export-20260724-0138` /
+    `artifacts/logs/synbios_final_export_20260724_0138.log`;
+  - `results/MANIFEST.sha256`, source/export audit-directory equality, shell syntax, Ruff,
+    `git diff --check`, Git-safe weight exclusion, and report links passed.
+
+## 2026-07-24 01:35 — Git-safe full SynBioS server evidence snapshot
+
+- Status: running.
+- Local/UTC start: 2026-07-24 01:35 Asia/Shanghai / 2026-07-23 17:35 UTC.
+- Purpose: publish all current server evidence that is appropriate for the remote repository:
+  source/config changes, formal and diagnostic reports, figures, machine-readable summaries,
+  manifests/lineage, validation evidence, TensorBoard/event logs, and lifecycle logs.
+- Exclusions: raw biography payloads, probe-cache arrays, model/probe weights, optimizer tensors,
+  DCP shards, caches, credentials, and other secrets remain on mounted storage and are not staged.
+- Base revision/branch/remote:
+  `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` / `train` /
+  `origin` (`git@github.com:Zhaibin-Cui/mini-train-sys.git`).
+- Hardware/topology: repository/export checks only; no GPU computation.
+- Pre-push correctness evidence: full repository suite passed (102 tests); Ruff, shell syntax,
+  Markdown links, result manifest, report rebuild identity, and Git-safe tensor exclusion passed.
+- Export tmux/log:
+  `minitrain-synbios-push-export-20260724-0135` /
+  `artifacts/logs/synbios_push_export_20260724_0135.log`.

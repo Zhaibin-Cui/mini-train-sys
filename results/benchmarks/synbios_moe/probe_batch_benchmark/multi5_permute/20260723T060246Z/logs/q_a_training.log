@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 1037, in <module>
+    arguments.func(arguments)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 433, in command_probe_benchmark
+    model = load_model(args.model_config, args.checkpoint, device, logger=logger)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 130, in load_model
+    ProgressReporter("model_load", 1, logger, device, unit="step")
+  File "<string>", line 10, in __init__
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/monitoring.py", line 290, in __post_init__
+    torch.cuda.reset_peak_memory_stats(self.device)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/cuda/memory.py", line 344, in reset_peak_memory_stats
+    return torch._C._cuda_resetPeakMemoryStats(device)
+RuntimeError: Invalid device argument : did you call init?

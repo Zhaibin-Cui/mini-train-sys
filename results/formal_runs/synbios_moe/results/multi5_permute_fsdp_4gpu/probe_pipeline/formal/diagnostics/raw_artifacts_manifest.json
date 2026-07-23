@@ -1,0 +1,21 @@
+{
+  "format_version": 1,
+  "retention": "mounted /data artifact; excluded from Git result export",
+  "artifacts": [
+    {
+      "logical_path": "oracle_first_token/records.csv",
+      "bytes": 41919710,
+      "sha256": "7b72f4b46e1e8ed841395eebbecdd52a327d22953c494a9c81afb5fdcac74095"
+    },
+    {
+      "logical_path": "bad_case_routes/bad_cases.csv",
+      "bytes": 35427725,
+      "sha256": "49704099549787560dfe4805d69f1e44aef4d2e5f8cb1c80dc2bf0640c97ad7f"
+    },
+    {
+      "logical_path": "bad_case_routes/route_records.csv",
+      "bytes": 113662982,
+      "sha256": "2a33ceda133449142a81b6b8fe7da2b7707f2c08c5ead42937e36704f48e7061"
+    }
+  ]
+}

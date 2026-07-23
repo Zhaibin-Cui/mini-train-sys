@@ -9,11 +9,11 @@ gate:
 # 完成后只需更新这里或使用同名 CLI 参数，不需要修改训练代码。
 runtime:
   training_batch_sizes:
-    p: 50
-    q: 200
+    p: 128
+    q: 768
   validation_batch_sizes:
-    p: 50
-    q: 200
+    p: 512
+    q: 6144
   log_interval_steps: 100
   heartbeat_seconds: 10
   checkpoint_interval_steps: 1000
@@ -37,6 +37,14 @@ stages:
     tasks: all
 
   formal:
-    steps: 30000
+    # Pilot-held-out first-token tasks saturated by 3k steps; whole-attribute
+    # tasks retained large generalization gaps. Give first tasks a small safety
+    # margin and whole tasks 4x the pilot training, while keeping the server's
+    # throughput-optimal P=128/Q=768 batches.
+    steps:
+      p_first: 4000
+      p_whole: 12000
+      q_first: 4000
+      q_whole: 12000
     requires: pilot
     tasks: all

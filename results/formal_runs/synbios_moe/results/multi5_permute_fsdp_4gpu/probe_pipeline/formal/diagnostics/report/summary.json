@@ -1,0 +1,97 @@
+{
+  "artifacts": {
+    "figures": [
+      "figures/complete_whole_comparison.png",
+      "figures/diagnostic_study_overview.png",
+      "figures/oracle_intervention_table.png",
+      "figures/route_branching_table.png"
+    ],
+    "formal_whole_metrics": "formal_whole_metrics.csv",
+    "oracle_metrics": "oracle_metrics.csv",
+    "route_attribute_layer_metrics": "route_attribute_layer_metrics.csv",
+    "route_layer_metrics": "route_layer_metrics.csv"
+  },
+  "identity": {
+    "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+    "checkpoint_model_sha256": "e89075289bb3a774825e7fd03cedc2c7c37957583bf3656e8ab32c52ef02f0dd",
+    "condition": "multi5_permute",
+    "data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+    "data_manifest_sha256": "31b99dd8d415007c34e00e3b32440014be4b34c27b7c3c1a80f7e1319019566e",
+    "formal_root": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal",
+    "model_config_sha256": "b2a02c5200d6c039d10cb3a802fd105430c3c103b02516e7a96016a98eb4ed01",
+    "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+    "probe_cache_manifest_sha256": "acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f",
+    "seed": 1337,
+    "single_formal_root": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal",
+    "split": "person-held-out validation"
+  },
+  "oracle_headline": {
+    "accuracy_after": 0.3208228580549902,
+    "accuracy_before": 0.3314617502693643,
+    "accuracy_delta": -0.010638892214374085,
+    "examples": 250590,
+    "harm_rate": 0.14055934794909766,
+    "harmed_correct": 11675,
+    "recovered_errors": 9009,
+    "recovery_rate": 0.05377576419604964
+  },
+  "protocols": {
+    "oracle": "q_whole_oracle_first_token_v1",
+    "routes": "q_bad_case_t1_t2_route_branching_v1"
+  },
+  "raw_artifacts": {
+    "artifacts": [
+      {
+        "bytes": 41919710,
+        "logical_path": "oracle_first_token/records.csv",
+        "sha256": "7b72f4b46e1e8ed841395eebbecdd52a327d22953c494a9c81afb5fdcac74095"
+      },
+      {
+        "bytes": 35427725,
+        "logical_path": "bad_case_routes/bad_cases.csv",
+        "sha256": "49704099549787560dfe4805d69f1e44aef4d2e5f8cb1c80dc2bf0640c97ad7f"
+      },
+      {
+        "bytes": 113662982,
+        "logical_path": "bad_case_routes/route_records.csv",
+        "sha256": "2a33ceda133449142a81b6b8fe7da2b7707f2c08c5ead42937e36704f48e7061"
+      }
+    ],
+    "format_version": 1,
+    "retention": "mounted /data artifact; excluded from Git result export"
+  },
+  "route_headline": {
+    "all_layers_positive": true,
+    "bad_case_examples": 162044,
+    "difference_in_differences": 0.20496894555041056,
+    "groups": {
+      "different_t2": {
+        "branching_score": 0.1544169653524245,
+        "pair_count": 2232000,
+        "t1_route_overlap": 0.5199156212664648,
+        "t2_route_overlap": 0.36549865591404035
+      },
+      "same_t2": {
+        "branching_score": -0.050551980197986075,
+        "pair_count": 2424000,
+        "t1_route_overlap": 0.5299445819582014,
+        "t2_route_overlap": 0.5804965621561877
+      }
+    },
+    "max_t1_nmi_by_attribute": {
+      "birth_city": 0.5091980012287206,
+      "company": 0.5511776711868008,
+      "company_city": 0.5156980388634026,
+      "major": 0.3603539507623515,
+      "university": 0.5075296187992808
+    },
+    "max_t2_nmi_by_attribute": {
+      "birth_city": 0.6054373346686687,
+      "company": 0.577274262152,
+      "company_city": 0.5982242487173725,
+      "major": 0.6514057711959809,
+      "university": 0.5626143540905365
+    }
+  },
+  "status": "completed"
+}

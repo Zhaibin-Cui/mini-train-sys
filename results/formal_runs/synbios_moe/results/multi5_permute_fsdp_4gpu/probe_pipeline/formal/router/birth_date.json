@@ -1,0 +1,212 @@
+{
+  "layers": [
+    {
+      "layer": 0,
+      "load": [
+        20020,
+        20066,
+        17730,
+        21429,
+        16608,
+        31533,
+        30113,
+        18629
+      ],
+      "normalized_load_entropy": 0.9869357419678941,
+      "top1_expert_label_nmi": 0.00036024590553206267
+    },
+    {
+      "layer": 1,
+      "load": [
+        18211,
+        19665,
+        19580,
+        19153,
+        28778,
+        20774,
+        29769,
+        20198
+      ],
+      "normalized_load_entropy": 0.9915308890887472,
+      "top1_expert_label_nmi": 0.001459912951702602
+    },
+    {
+      "layer": 2,
+      "load": [
+        18838,
+        19472,
+        20681,
+        18327,
+        20930,
+        30618,
+        30751,
+        16511
+      ],
+      "normalized_load_entropy": 0.9874899847240747,
+      "top1_expert_label_nmi": 0.00679885255945928
+    },
+    {
+      "layer": 3,
+      "load": [
+        18615,
+        17653,
+        18789,
+        18744,
+        31938,
+        32209,
+        18585,
+        19595
+      ],
+      "normalized_load_entropy": 0.9844671029974094,
+      "top1_expert_label_nmi": 0.004892293949121186
+    },
+    {
+      "layer": 4,
+      "load": [
+        31901,
+        18918,
+        19117,
+        17868,
+        19950,
+        31220,
+        18650,
+        18504
+      ],
+      "normalized_load_entropy": 0.9859069417504328,
+      "top1_expert_label_nmi": 0.01829067980613649
+    },
+    {
+      "layer": 5,
+      "load": [
+        19003,
+        31765,
+        17812,
+        27591,
+        20456,
+        24348,
+        17615,
+        17538
+      ],
+      "normalized_load_entropy": 0.988168972229681,
+      "top1_expert_label_nmi": 0.02901391857588392
+    },
+    {
+      "layer": 6,
+      "load": [
+        18979,
+        18582,
+        18608,
+        19381,
+        21114,
+        19946,
+        27934,
+        31584
+      ],
+      "normalized_load_entropy": 0.9900957511948474,
+      "top1_expert_label_nmi": 0.02885434380064374
+    },
+    {
+      "layer": 7,
+      "load": [
+        17023,
+        20619,
+        18614,
+        29730,
+        18521,
+        19896,
+        31385,
+        20340
+      ],
+      "normalized_load_entropy": 0.988048584374077,
+      "top1_expert_label_nmi": 0.005790028551315985
+    },
+    {
+      "layer": 8,
+      "load": [
+        18215,
+        18297,
+        19123,
+        31499,
+        30151,
+        20224,
+        21264,
+        17355
+      ],
+      "normalized_load_entropy": 0.987311466732479,
+      "top1_expert_label_nmi": 0.016286498866481067
+    },
+    {
+      "layer": 9,
+      "load": [
+        18376,
+        17914,
+        31948,
+        15059,
+        21923,
+        20703,
+        19278,
+        30927
+      ],
+      "normalized_load_entropy": 0.984310140164722,
+      "top1_expert_label_nmi": 0.010106333393234296
+    },
+    {
+      "layer": 10,
+      "load": [
+        20640,
+        20189,
+        32457,
+        30982,
+        16923,
+        17294,
+        18671,
+        18972
+      ],
+      "normalized_load_entropy": 0.9847803407321809,
+      "top1_expert_label_nmi": 0.007964088837273404
+    },
+    {
+      "layer": 11,
+      "load": [
+        31994,
+        20620,
+        16942,
+        33592,
+        17269,
+        18864,
+        17897,
+        18950
+      ],
+      "normalized_load_entropy": 0.9816922202532883,
+      "top1_expert_label_nmi": 0.0018228441247069773
+    }
+  ],
+  "monitoring": {
+    "event": "analyze",
+    "step": 1,
+    "batch": 1,
+    "batches_total": 1,
+    "progress_percent": 100.0,
+    "elapsed_seconds": 1.398,
+    "eta_seconds": 0.0,
+    "items_processed": 1024,
+    "items_per_sec": 732.594,
+    "tokens_processed": 88064,
+    "tokens_per_sec": 63003.081,
+    "gpu_memory_allocated_mb": 1128.74,
+    "gpu_memory_reserved_mb": 3718.0,
+    "gpu_peak_memory_allocated_mb": 3451.47,
+    "gpu_memory_allocated_mb_max": 1128.74,
+    "gpu_memory_reserved_mb_max": 3718.0,
+    "gpu_peak_memory_allocated_mb_max": 3451.47,
+    "gpu_memory_allocated_mb_total": 1128.74,
+    "gpu_memory_reserved_mb_total": 3718.0,
+    "gpu_memory_capacity_mb_max": 24217.31,
+    "gpu_memory_capacity_mb_total": 24217.31,
+    "gpu_memory_current_percent_max": 4.66,
+    "gpu_memory_reserved_percent_max": 15.35,
+    "gpu_memory_peak_percent_max": 14.25,
+    "monitored_world_size": 1
+  },
+  "log_dir": "artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/router/operation_logs/synbios_analyze_birth_date/20260724-003339"
+}

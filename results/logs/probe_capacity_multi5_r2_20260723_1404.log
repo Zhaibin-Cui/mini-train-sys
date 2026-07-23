@@ -1,0 +1,13 @@
+{
+  "valid": true,
+  "cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+  "source_data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+  "profiles": 100000,
+  "p_examples": 500000,
+  "q_examples": 100000,
+  "coverage_complete": true,
+  "missing_validation_class_counts": {},
+  "missing_validation_classes": {}
+}
+probe batch search is not ready for formal use; inspect/expand candidates: {"boundary_recommendations": ["p/training", "p/validation", "q/training", "q/validation"]}
+probe benchmark directory: artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/20260723T060430Z

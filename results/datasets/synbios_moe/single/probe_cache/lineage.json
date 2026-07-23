@@ -1,0 +1,59 @@
+{
+  "coverage_complete": true,
+  "files": [
+    {
+      "bytes": 34012,
+      "path": "manifest.json",
+      "sha256": "9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b"
+    },
+    {
+      "bytes": 800136,
+      "path": "p_offsets.npy",
+      "sha256": "3715f63686e13aabd1da5c24b16f17214c954ebc3e76db1c0ccba095a9d2158b"
+    },
+    {
+      "bytes": 2400128,
+      "path": "p_positions.npy",
+      "sha256": "faac96798827de7c82fe8ba63e5d210d7d650c5cc7bec13bd63fed681531a3ff"
+    },
+    {
+      "bytes": 400128,
+      "path": "p_profile_indices.npy",
+      "sha256": "cfde5c26aa4e70f10752d84ffc9f788139ef3f2ada502d09515b0e69ef19ea7b"
+    },
+    {
+      "bytes": 29620408,
+      "path": "p_tokens.bin",
+      "sha256": "4287681a5f5e6d87723167decf02b84992f0b05b9af61f91dc4190cfe03133da"
+    },
+    {
+      "bytes": 4400128,
+      "path": "profile_labels.npy",
+      "sha256": "7c363c0a02ef695de4793485ac0fa68b530d59c47a77b6a9d2ee56f843a4446f"
+    },
+    {
+      "bytes": 100128,
+      "path": "profile_splits.npy",
+      "sha256": "010f981bd2a37efcc45e61d047c0c673694b87e2894659019f94f88abcb6bc26"
+    },
+    {
+      "bytes": 800136,
+      "path": "q_offsets.npy",
+      "sha256": "3ef433687ae8d9faeef4af12e2a8e60517281f2047c5c54deeef224dd84fb00d"
+    },
+    {
+      "bytes": 3693076,
+      "path": "q_tokens.bin",
+      "sha256": "00a118e1a65f7210c4997a602d8fd76a4eefe347a846756fe97bf77fd42649a2"
+    }
+  ],
+  "format_version": 1,
+  "manifest_sha256": "9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b",
+  "p_examples": 100000,
+  "parent_manifest_sha256": "144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25",
+  "path": "/data/mini-train-sys/artifacts/synbios_moe/single/probe_cache",
+  "profiles": 100000,
+  "q_examples": 100000,
+  "split_semantics": "deterministic person-level probe train/validation split; both partitions were seen by backbone pretraining",
+  "variant": "single"
+}
