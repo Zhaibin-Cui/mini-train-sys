@@ -6,6 +6,7 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Mapping, Sequence
 
 import torch
 import torch.nn.functional as F
@@ -13,12 +14,24 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 from experiments.synbios_moe.data import ATTRIBUTES
+from experiments.synbios_moe.probe_checkpoint import (
+    load_probe_recovery,
+    save_probe_recovery,
+)
 from minitrain.model.transformer import MiniTransformer
 from minitrain.runtime.logger import EventLogger
-from minitrain.runtime.monitoring import ProgressReporter
+from minitrain.runtime.monitoring import GpuUtilizationMonitor, ProgressReporter
 
 
 GPT2_EOS_TOKEN = 50256
+
+
+def linear_decay_fraction(step: int, steps: int) -> float:
+    """Return paper-style no-warmup decay: 1 at step 0 and 0 at the final step."""
+
+    if steps <= 0 or not 0 <= step < steps:
+        raise ValueError("step must be in [0, steps)")
+    return 1.0 if steps == 1 else 1.0 - step / (steps - 1)
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -63,6 +76,32 @@ class GPT2Codec:
         return [self.eos, *ids], positions
 
 
+def ordered_p_probe_starts(attribute_spans: Mapping[str, Sequence[int]]) -> list[int]:
+    """Return paper-style P0..P5 character positions in left-to-right text order.
+
+    The positional axis follows successive facts in the rendered biography,
+    rather than the fixed semantic attribute order. This distinction matters
+    when sentence permutation changes which attribute appears first.
+    """
+
+    spans: list[tuple[int, int, str]] = []
+    for attribute in ATTRIBUTES:
+        try:
+            raw_span = attribute_spans[attribute]
+            start, end = raw_span
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"invalid span for attribute {attribute!r}") from exc
+        if not isinstance(start, int) or not isinstance(end, int) or start < 0 or end <= start:
+            raise ValueError(f"invalid span for attribute {attribute!r}: {raw_span!r}")
+        spans.append((start, end, attribute))
+
+    spans.sort(key=lambda item: item[0])
+    for previous, current in zip(spans, spans[1:]):
+        if current[0] < previous[1]:
+            raise ValueError(f"overlapping attribute spans: {previous[2]!r} and {current[2]!r}")
+    return [start for start, _, _ in spans]
+
+
 def task_label(profile: dict, attribute: str, target: str, codec: GPT2Codec) -> str:
     value = str(profile[attribute])
     if target == "whole":
@@ -100,7 +139,7 @@ class PProbeDataset(Dataset):
             profile = profiles[row["person_id"]]
             if profile["split"] != split:
                 continue
-            starts = [row["attribute_spans"][name][0] for name in ATTRIBUTES]
+            starts = ordered_p_probe_starts(row["attribute_spans"])
             ids, positions = codec.positions_before_chars(row["text"], starts)
             self.items.append(
                 ProbeBatchItem(
@@ -222,17 +261,13 @@ def evaluate(
         correct = batch_correct if correct is None else correct + batch_correct
         total += labels.numel()
         if progress is not None:
-            accuracy_by_position = [
-                float(value / max(total, 1)) for value in correct
-            ]
+            accuracy_by_position = [float(value / max(total, 1)) for value in correct]
             progress.update(
                 batch_index,
                 items=labels.numel(),
                 tokens=input_ids.numel(),
                 metrics={
-                    "accuracy_running": float(
-                        correct.sum() / max(total * correct.numel(), 1)
-                    ),
+                    "accuracy_running": float(correct.sum() / max(total * correct.numel(), 1)),
                     "accuracy_by_position_running": accuracy_by_position,
                     **{
                         f"accuracy_position_{index}_running": value
@@ -259,13 +294,22 @@ def train_probe(
     seed: int = 1337,
     logger: EventLogger | None = None,
     log_interval: int | None = None,
+    recovery_path: str | Path | None = None,
+    checkpoint_interval_steps: int | None = None,
+    recovery_metadata: dict[str, object] | None = None,
+    resume: bool = True,
+    evaluate_train: bool = False,
+    evaluate_validation: bool = True,
+    evaluation_batch_size: int | None = None,
 ) -> dict[str, object]:
-    """Optimize one probe with deterministic shuffling and linear LR decay."""
+    """Optimize one probe with monitored, resumable, deterministic training."""
 
     if steps <= 0:
         raise ValueError("probe steps must be positive")
     if batch_size <= 0:
         raise ValueError("probe batch_size must be positive")
+    if checkpoint_interval_steps is not None and checkpoint_interval_steps <= 0:
+        raise ValueError("checkpoint_interval_steps must be positive or None")
     if len(train_data) == 0 or len(validation_data) == 0:
         raise ValueError("probe train and validation datasets must both be non-empty")
 
@@ -279,9 +323,10 @@ def train_probe(
         drop_last=len(train_data) >= batch_size and batch_size > 1,
         pin_memory=device.type == "cuda",
     )
+    eval_batch_size = evaluation_batch_size or batch_size
     validation_loader = DataLoader(
         validation_data,
-        batch_size=batch_size,
+        batch_size=eval_batch_size,
         collate_fn=collate_probe,
         pin_memory=device.type == "cuda",
     )
@@ -305,26 +350,59 @@ def train_probe(
         if logger is not None
         else None
     )
-    # The requested step budget may span many epochs.  Recreate the iterator at
-    # exhaustion while DataLoader's generator advances deterministically.
+    recovery = Path(recovery_path) if recovery_path is not None else None
+    metadata = dict(recovery_metadata or {})
+    start_step = 0
+    losses: list[dict[str, object]] = []
+    epoch_generator_state = generator.get_state()
+    batches_consumed_in_epoch = 0
+    if recovery is not None and resume and recovery.is_file():
+        restored = load_probe_recovery(
+            recovery,
+            probe=probe,
+            optimizer=optimizer,
+            data_generator=generator,
+            expected_metadata=metadata,
+        )
+        start_step = int(restored["step"])
+        if start_step > steps:
+            raise ValueError(f"probe recovery step {start_step} exceeds requested steps {steps}")
+        losses = list(restored["loss_curve"])
+        epoch_generator_state = restored["epoch_generator_state"]
+        batches_consumed_in_epoch = int(restored["batches_consumed_in_epoch"])
+
+    # Recreate the current epoch's permutation and skip only already-consumed
+    # batches. This preserves shuffled data order exactly across interruption.
+    generator.set_state(epoch_generator_state)
     iterator = iter(train_loader)
-    losses = []
+    for _ in range(batches_consumed_in_epoch):
+        try:
+            next(iterator)
+        except StopIteration as exc:
+            raise ValueError("probe recovery batch offset exceeds its saved epoch") from exc
+
     trainable_parameters = [p for p in probe.parameters() if p.requires_grad]
     interval_started = time.perf_counter()
     interval_data_wait_seconds = 0.0
     interval_steps = 0
     interval_correct: torch.Tensor | None = None
     interval_examples = 0
-    for step in range(steps):
+    checkpoints_saved = 0
+    utilization = GpuUtilizationMonitor(device)
+    utilization.start()
+    for step in range(start_step, steps):
         fetch_started = time.perf_counter()
         try:
             input_ids, positions, labels = next(iterator)
         except StopIteration:
+            epoch_generator_state = generator.get_state()
             iterator = iter(train_loader)
+            batches_consumed_in_epoch = 0
             input_ids, positions, labels = next(iterator)
+        batches_consumed_in_epoch += 1
         interval_data_wait_seconds += time.perf_counter() - fetch_started
         interval_steps += 1
-        fraction = 1.0 - step / max(steps, 1)
+        fraction = linear_decay_fraction(step, steps)
         for group in optimizer.param_groups:
             group["lr"] = lr * fraction
         logits = probe(
@@ -378,6 +456,7 @@ def train_probe(
                     for index, value in enumerate(accuracy_by_position)
                 },
             }
+            metrics.update(utilization.read_interval())
             losses.append({"step": step + 1, **metrics})
             if not torch.isfinite(loss.detach()):
                 raise FloatingPointError(f"non-finite probe loss at step {step + 1}")
@@ -397,6 +476,36 @@ def train_probe(
                 items=labels.numel(),
                 tokens=input_ids.numel(),
             )
+        completed_step = step + 1
+        if (
+            recovery is not None
+            and checkpoint_interval_steps is not None
+            and completed_step < steps
+            and completed_step % checkpoint_interval_steps == 0
+        ):
+            save_probe_recovery(
+                recovery,
+                probe=probe,
+                optimizer=optimizer,
+                step=completed_step,
+                loss_curve=losses,
+                data_generator=generator,
+                epoch_generator_state=epoch_generator_state,
+                batches_consumed_in_epoch=batches_consumed_in_epoch,
+                metadata=metadata,
+            )
+            checkpoints_saved += 1
+            if logger is not None:
+                logger.log_event(
+                    {
+                        "event": "probe_checkpoint",
+                        "step": completed_step,
+                        "steps_total": steps,
+                        "path": str(recovery.resolve()),
+                    }
+                )
+    utilization.close()
+
     validation_progress = (
         ProgressReporter(
             "probe_validation",
@@ -406,17 +515,53 @@ def train_probe(
             log_interval=max(1, min(interval, len(validation_loader))),
             unit="batch",
         )
-        if logger is not None and len(validation_loader) > 0
+        if logger is not None and evaluate_validation and len(validation_loader) > 0
         else None
     )
+    validation_accuracy = (
+        evaluate(probe, validation_loader, device, progress=validation_progress)
+        if evaluate_validation
+        else None
+    )
+    train_accuracy = None
+    train_evaluation_progress = None
+    if evaluate_train:
+        train_evaluation_loader = DataLoader(
+            train_data,
+            batch_size=eval_batch_size,
+            collate_fn=collate_probe,
+            pin_memory=device.type == "cuda",
+        )
+        train_evaluation_progress = (
+            ProgressReporter(
+                "probe_train_evaluation",
+                len(train_evaluation_loader),
+                logger,
+                device,
+                log_interval=max(1, min(interval, len(train_evaluation_loader))),
+                unit="batch",
+            )
+            if logger is not None
+            else None
+        )
+        train_accuracy = evaluate(
+            probe, train_evaluation_loader, device, progress=train_evaluation_progress
+        )
     return {
-        "validation_accuracy": evaluate(
-            probe, validation_loader, device, progress=validation_progress
-        ),
+        "validation_accuracy": validation_accuracy,
+        "train_accuracy": train_accuracy,
         "loss_curve": losses,
+        "batch_size": batch_size,
+        "evaluation_batch_size": eval_batch_size,
+        "steps": steps,
+        "resumed_from_step": start_step,
+        "recovery_checkpoints_saved": checkpoints_saved,
         "trainable_parameters": sum(p.numel() for p in trainable_parameters),
         "monitoring": {
             "train": train_progress.summary() if train_progress is not None else {},
+            "train_evaluation": (
+                train_evaluation_progress.summary() if train_evaluation_progress is not None else {}
+            ),
             "validation": (
                 validation_progress.summary() if validation_progress is not None else {}
             ),

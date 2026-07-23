@@ -5,16 +5,30 @@ gate:
   max_new_tokens: 16
   sample_biographies: 12
 
+# 四卡采用任务并行：每张 GPU 同时训练一个独立 probe。服务器 batch benchmark
+# 完成后只需更新这里或使用同名 CLI 参数，不需要修改训练代码。
+runtime:
+  training_batch_sizes:
+    p: 50
+    q: 200
+  validation_batch_sizes:
+    p: 50
+    q: 200
+  log_interval_steps: 100
+  heartbeat_seconds: 10
+  checkpoint_interval_steps: 1000
+  evaluate_train: true
+
 stages:
   smoke:
     steps: 500
     requires: null
     tasks:
       - kind: p
-        attribute: birth_city
+        attribute: university
         target: whole
       - kind: q
-        attribute: birth_city
+        attribute: university
         target: whole
 
   pilot:

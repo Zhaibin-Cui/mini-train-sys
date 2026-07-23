@@ -1,7 +1,9 @@
 import json
+import copy
 from pathlib import Path
 
 import pytest
+import numpy as np
 import torch
 
 import experiments.synbios_moe.probe_pipeline as probe_pipeline_module
@@ -28,15 +30,23 @@ from experiments.synbios_moe.probe_pipeline import (
     CLOZE_GATE_PROTOCOL,
     JobCommand,
     ProbeJob,
+    ProbeRuntimeConfig,
     build_pipeline_identity,
     common_pipeline_identity,
     jobs_for_stage,
     load_pipeline_config,
+    probe_train_command_builder,
     require_matching_identity,
     resolve_devices,
     reusable_cloze_gate,
     schedule_jobs,
     summarize_probe_results,
+)
+from experiments.synbios_moe.probe_benchmark import (
+    benchmark_probe_batches,
+    parse_batch_sizes,
+    probe_batch_environment,
+    summarize_probe_benchmarks,
 )
 from experiments.synbios_moe.probes import (
     AttributeProbe,
@@ -45,6 +55,8 @@ from experiments.synbios_moe.probes import (
     ProbeBatchItem,
     active_parameter_estimate,
     collate_probe,
+    linear_decay_fraction,
+    ordered_p_probe_starts,
     train_probe,
 )
 from experiments.synbios_moe.router_analysis import analyze_batch
@@ -117,9 +129,7 @@ def test_progressive_cloze_uses_original_fact_order_and_spans():
     calls_biography = next(
         render_biography(profile, variant="single", sample=0, seed=seed)
         for seed in range(100)
-        if " a birthplace." in render_biography(
-            profile, variant="single", sample=0, seed=seed
-        ).text
+        if " a birthplace." in render_biography(profile, variant="single", sample=0, seed=seed).text
     )
     city = next(
         field
@@ -152,9 +162,7 @@ def test_p_probe_positions_and_frozen_backbone(tmp_path):
     codec = GPT2Codec()
     row = data.items[0]
     assert row.input_ids[0] == codec.eos
-    raw = json.loads(
-        (tmp_path / "biographies.jsonl").read_text(encoding="utf-8").splitlines()[0]
-    )
+    raw = json.loads((tmp_path / "biographies.jsonl").read_text(encoding="utf-8").splitlines()[0])
     ids, attribute_positions = _attribute_target_positions(
         codec, raw["text"], raw["attribute_spans"]
     )
@@ -168,6 +176,45 @@ def test_p_probe_positions_and_frozen_backbone(tmp_path):
     assert logits.shape == (2, 6, len(data.class_names))
     assert not any(parameter.grad is not None for parameter in model.parameters())
     assert probe.delta.b.weight.grad is not None
+
+
+def test_p_probe_positions_follow_rendered_text_order():
+    spans = {
+        "birth_date": (40, 50),
+        "birth_city": (10, 20),
+        "university": (70, 80),
+        "major": (0, 5),
+        "company": (60, 65),
+        "company_city": (25, 35),
+    }
+    assert ordered_p_probe_starts(spans) == [0, 10, 25, 40, 60, 70]
+
+    overlapping = {**spans, "birth_city": (3, 20)}
+    with pytest.raises(ValueError, match="overlapping attribute spans"):
+        ordered_p_probe_starts(overlapping)
+
+
+def test_gpt2_probe_boundary_excludes_a_token_crossing_the_attribute_start():
+    codec = GPT2Codec()
+    text = "They studied at Cambridge University."
+    start = text.index("Cambridge")
+    ids, positions = codec.positions_before_chars(text, [start])
+    visible_text = codec.encoding.decode(ids[1 : positions[0] + 1])
+    assert "Cambridge" not in visible_text
+    assert text.startswith(visible_text)
+    assert len(visible_text.encode("utf-8")) <= len(text[:start].encode("utf-8"))
+
+
+def test_probe_protocol_layers_and_exact_linear_decay():
+    p_probe = AttributeProbe(tiny_model(), 5, rank=2, kind="p")
+    q_probe = AttributeProbe(tiny_model(), 5, rank=16, kind="q")
+    assert isinstance(p_probe.normalizer, torch.nn.LayerNorm)
+    assert isinstance(q_probe.normalizer, torch.nn.BatchNorm1d)
+    assert not any(parameter.requires_grad for parameter in p_probe.backbone.parameters())
+    p_probe.train()
+    assert p_probe.backbone.training  # Paper keeps frozen-backbone dropout enabled for training.
+    assert linear_decay_fraction(0, 30_000) == 1.0
+    assert linear_decay_fraction(29_999, 30_000) == 0.0
 
 
 def test_router_analysis_and_active_parameter_count():
@@ -187,6 +234,15 @@ def test_probe_cache_matches_legacy_datasets(tmp_path):
     data_root = tmp_path / "data"
     cache_root = tmp_path / "cache"
     write_dataset(data_root, num_people=100, variant="multi2+permute", seed=17)
+    biographies = [
+        json.loads(line)
+        for line in (data_root / "biographies.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert any(
+        [row["attribute_spans"][name][0] for name in ATTRIBUTES]
+        != sorted(row["attribute_spans"][name][0] for name in ATTRIBUTES)
+        for row in biographies
+    )
     build_probe_cache(data_root, cache_root)
     status = validate_probe_cache(cache_root)
     assert status["valid"]
@@ -203,6 +259,10 @@ def test_probe_cache_matches_legacy_datasets(tmp_path):
     assert cached.class_names == legacy.class_names
     assert len(cached) == len(legacy)
     assert cached[0] == legacy[0]
+    assert all(item.positions == sorted(item.positions) for item in legacy.items)
+    assert all(
+        cached[index].positions == sorted(cached[index].positions) for index in range(len(cached))
+    )
 
     cached_q = CachedProbeDataset(
         cache_root, kind="q", attribute="birth_city", target="first", split="validation"
@@ -211,8 +271,30 @@ def test_probe_cache_matches_legacy_datasets(tmp_path):
     assert len(cached_q[0].positions) == 1
 
 
+def test_probe_cache_validation_rejects_semantic_position_corruption(tmp_path):
+    pytest.importorskip("tiktoken")
+    data_root, cache_root = tmp_path / "data", tmp_path / "cache"
+    write_dataset(data_root, num_people=20, variant="single", seed=23)
+    build_probe_cache(data_root, cache_root)
+    positions = np.load(cache_root / "p_positions.npy", allow_pickle=False)
+    positions[0, -1] = np.iinfo(np.int32).max
+    np.save(cache_root / "p_positions.npy", positions, allow_pickle=False)
+    with pytest.raises(ValueError, match="outside its biography"):
+        validate_probe_cache(cache_root, data_root)
+
+
 def test_probe_stage_config_and_device_resolution():
     config = load_pipeline_config("configs/synbios_moe/probe_pipeline.yaml")
+    runtime = ProbeRuntimeConfig.from_config(config)
+    assert runtime.p_batch_size == 50
+    assert runtime.q_batch_size == 200
+    assert runtime.heartbeat_seconds == 10
+    assert runtime.with_overrides(p_batch_size=96).p_batch_size == 96
+    with pytest.raises(ValueError, match="must be positive"):
+        runtime.with_overrides(p_batch_size=0)
+    broken_runtime = {**config, "runtime": {"training_batch_sizes": {"pp": 10}}}
+    with pytest.raises(ValueError, match="training_batch_sizes.pp"):
+        ProbeRuntimeConfig.from_config(broken_runtime)
     smoke_steps, smoke_jobs, required = jobs_for_stage(config, "smoke")
     assert smoke_steps == 500
     assert len(smoke_jobs) == 2
@@ -239,6 +321,37 @@ def test_probe_stage_rejects_duplicate_jobs():
     }
     with pytest.raises(ValueError, match="duplicate probe jobs"):
         jobs_for_stage(config, "broken")
+
+
+def test_probe_train_command_uses_independent_runtime_controls(tmp_path):
+    builder = probe_train_command_builder(
+        script=Path("scripts/synbios_moe.py"),
+        data=tmp_path / "data",
+        cache=tmp_path / "cache",
+        model_config=tmp_path / "model.yaml",
+        checkpoint=tmp_path / "model.pt",
+        output_dir=tmp_path / "formal",
+        steps=30_000,
+        seed=42,
+        quiet=False,
+        log_interval=25,
+        tensorboard=True,
+        batch_sizes={"p": 96, "q": 384},
+        validation_batch_sizes={"p": 128, "q": 512},
+        checkpoint_interval_steps=750,
+        evaluate_train=True,
+        checkpoint_model_sha256="abc123",
+    )
+    spec = builder(ProbeJob("p", "major", "first"), "cuda:2")
+    command = spec.command
+    assert command[command.index("--batch-size") + 1] == "96"
+    assert command[command.index("--evaluation-batch-size") + 1] == "128"
+    assert command[command.index("--checkpoint-interval-steps") + 1] == "750"
+    assert "--evaluate-train" in command
+    assert "--skip-final-validation" in command
+    assert command[command.index("--checkpoint-model-sha256") + 1] == "abc123"
+    assert command[command.index("--device") + 1] == "cuda:2"
+    assert spec.events_root == tmp_path / "formal/training/operation_logs"
 
 
 def test_pipeline_identity_binds_every_durable_input(tmp_path):
@@ -335,10 +448,7 @@ def test_probe_training_emits_health_metrics():
         def close(self):
             pass
 
-    items = [
-        ProbeBatchItem([50256, 1, 2, 3], [1, 2], index % 2)
-        for index in range(4)
-    ]
+    items = [ProbeBatchItem([50256, 1, 2, 3], [1, 2], index % 2) for index in range(4)]
     logger = CaptureLogger()
     result = train_probe(
         AttributeProbe(tiny_model(), 2, rank=2, kind="p"),
@@ -361,6 +471,217 @@ def test_probe_training_emits_health_metrics():
         "step_time_ms",
     } <= train_events[-1].keys()
     assert len(result["loss_curve"]) == 2
+
+
+def test_probe_recovery_resumes_exact_trainable_state(tmp_path):
+    items = [ProbeBatchItem([50256, 1, 2, 3], [1, 2], index % 2) for index in range(8)]
+    torch.manual_seed(123)
+    initial = copy.deepcopy(AttributeProbe(tiny_model(), 2, rank=2, kind="p").state_dict())
+
+    uninterrupted = AttributeProbe(tiny_model(), 2, rank=2, kind="p")
+    uninterrupted.load_state_dict(initial)
+    torch.manual_seed(999)
+    train_probe(
+        uninterrupted,
+        items,
+        items,
+        device=torch.device("cpu"),
+        batch_size=2,
+        steps=4,
+        seed=7,
+        evaluate_validation=False,
+    )
+
+    recovery = tmp_path / "recovery.pt"
+
+    class StopAfterCheckpoint:
+        def log_event(self, payload):
+            if payload["event"] == "probe_checkpoint":
+                raise RuntimeError("simulated interruption")
+
+    interrupted = AttributeProbe(tiny_model(), 2, rank=2, kind="p")
+    interrupted.load_state_dict(initial)
+    torch.manual_seed(999)
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        train_probe(
+            interrupted,
+            items,
+            items,
+            device=torch.device("cpu"),
+            batch_size=2,
+            steps=4,
+            seed=7,
+            logger=StopAfterCheckpoint(),
+            recovery_path=recovery,
+            checkpoint_interval_steps=2,
+            recovery_metadata={"job": "p_test"},
+            evaluate_validation=False,
+        )
+
+    resumed = AttributeProbe(tiny_model(), 2, rank=2, kind="p")
+    resumed.load_state_dict(initial)
+    result = train_probe(
+        resumed,
+        items,
+        items,
+        device=torch.device("cpu"),
+        batch_size=2,
+        steps=4,
+        seed=7,
+        recovery_path=recovery,
+        checkpoint_interval_steps=2,
+        recovery_metadata={"job": "p_test"},
+        evaluate_validation=False,
+    )
+    assert result["resumed_from_step"] == 2
+    for key, value in uninterrupted.state_dict().items():
+        if not key.startswith("backbone."):
+            assert torch.equal(value, resumed.state_dict()[key]), key
+
+
+def test_probe_benchmark_summary_requires_cross_gpu_safety(tmp_path):
+    paths = []
+    for replica, peak in (("a", 80.0), ("b", 93.0)):
+        path = tmp_path / f"p_{replica}_training.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "kind": "p",
+                    "mode": "training",
+                    "memory_limit_percent": 92.0,
+                    "results": [
+                        {
+                            "batch_size": 50,
+                            "status": "completed",
+                            "peak_memory_percent": 70.0,
+                            "examples_per_second": 100.0,
+                        },
+                        {
+                            "batch_size": 64,
+                            "status": "completed",
+                            "peak_memory_percent": peak,
+                            "examples_per_second": 120.0,
+                        },
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        paths.append(path)
+    for replica, peak in (("a", 88.0), ("b", 94.0)):
+        path = tmp_path / f"p_{replica}_validation.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "kind": "p",
+                    "mode": "validation",
+                    "memory_limit_percent": 92.0,
+                    "results": [
+                        {
+                            "batch_size": 64,
+                            "status": "completed",
+                            "peak_memory_percent": 60.0,
+                            "examples_per_second": 180.0,
+                        },
+                        {
+                            "batch_size": 128,
+                            "status": "completed",
+                            "peak_memory_percent": peak,
+                            "examples_per_second": 240.0,
+                        },
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        paths.append(path)
+    summary = summarize_probe_benchmarks(paths)
+    recommendation = summary["recommendations"]["p"]
+    assert recommendation["paper_batch_safe_on_all"]
+    assert recommendation["recommended_training_batch_size"] == 50
+    assert recommendation["recommended_validation_batch_size"] == 64
+    assert not summary["ready_for_formal"]  # Q training/validation results are deliberately absent.
+    assert parse_batch_sizes("64, 32,64,50") == (32, 50, 64)
+
+
+def test_probe_batch_environment_requires_complete_bracketed_two_replica_matrix(tmp_path):
+    paths = []
+    for kind in ("p", "q"):
+        for mode in ("training", "validation"):
+            for replica in ("a", "b"):
+                path = tmp_path / f"{kind}_{mode}_{replica}.json"
+                path.write_text(
+                    json.dumps(
+                        {
+                            "kind": kind,
+                            "mode": mode,
+                            "memory_limit_percent": 92.0,
+                            "results": [
+                                {
+                                    "batch_size": 1,
+                                    "status": "completed",
+                                    "peak_memory_percent": 70.0,
+                                    "examples_per_second": 10.0,
+                                },
+                                {
+                                    "batch_size": 2,
+                                    "status": "oom",
+                                    "peak_memory_percent": 100.0,
+                                    "examples_per_second": 0.0,
+                                },
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                paths.append(path)
+    summary = summarize_probe_benchmarks(paths)
+    assert summary["ready_for_formal"]
+    environment = probe_batch_environment(summary)
+    assert "export P_BATCH_SIZE=1\n" in environment
+    assert "export Q_VALIDATION_BATCH_SIZE=1\n" in environment
+
+    for path in paths[:2]:
+        boundary_payload = json.loads(path.read_text(encoding="utf-8"))
+        boundary_payload["results"][1].update(
+            status="completed", peak_memory_percent=80.0, examples_per_second=20.0
+        )
+        path.write_text(json.dumps(boundary_payload), encoding="utf-8")
+    boundary = summarize_probe_benchmarks(paths)
+    assert not boundary["ready_for_formal"]
+    assert "p/training" in boundary["boundary_recommendations"]
+    with pytest.raises(ValueError, match="not ready"):
+        probe_batch_environment(boundary)
+
+
+def test_probe_batch_benchmark_executes_real_train_steps_on_cpu():
+    items = [ProbeBatchItem([50256, 1, 2, 3], [1, 2], index % 2) for index in range(4)]
+    result = benchmark_probe_batches(
+        tiny_model(),
+        items,
+        kind="p",
+        num_classes=2,
+        rank=2,
+        batch_sizes=(2, 4),
+        device=torch.device("cpu"),
+        warmup_steps=0,
+        measure_steps=1,
+    )
+    assert [item["status"] for item in result["results"]] == ["completed", "completed"]
+    assert result["recommended_capacity_batch_size"] in {2, 4}
+    validation = benchmark_probe_batches(
+        tiny_model(),
+        items,
+        kind="p",
+        num_classes=2,
+        rank=2,
+        batch_sizes=(2,),
+        device=torch.device("cpu"),
+        mode="validation",
+        warmup_steps=0,
+        measure_steps=1,
+    )
+    assert validation["mode"] == "validation"
 
 
 def test_probe_scheduler_reports_started_and_finished_for_cached_job(tmp_path):
@@ -412,6 +733,30 @@ def test_probe_scheduler_reports_heartbeats(tmp_path, monkeypatch):
     assert events[1]["seconds"] == pytest.approx(1.5)
 
 
+def test_pipeline_reads_structured_worker_progress(tmp_path):
+    root = tmp_path / "operation_logs"
+    events = root / "synbios_p_probe_p_major_first" / "timestamp" / "events.jsonl"
+    events.parent.mkdir(parents=True)
+    events.write_text(
+        json.dumps(
+            {
+                "event": "probe_train",
+                "step": 1200,
+                "steps_total": 30000,
+                "loss": 0.25,
+                "accuracy": 0.8,
+                "progress_percent": 4.0,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    progress = probe_pipeline_module._latest_worker_progress(root, "p_major_first")
+    assert progress["worker_step"] == 1200
+    assert progress["worker_steps_total"] == 30000
+    assert progress["worker_loss"] == pytest.approx(0.25)
+
+
 def test_probe_scheduler_fails_when_process_omits_output(tmp_path, monkeypatch):
     monkeypatch.setattr(
         probe_pipeline_module,
@@ -450,9 +795,7 @@ def test_probe_scheduler_does_not_trust_orphaned_output(tmp_path, monkeypatch):
 
 
 def test_synbios_notebook_covers_monitored_probe_pipeline():
-    notebook = json.loads(
-        Path("tests/synbios_moe_end_to_end.ipynb").read_text(encoding="utf-8")
-    )
+    notebook = json.loads(Path("tests/synbios_moe_end_to_end.ipynb").read_text(encoding="utf-8"))
     source = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
     required_calls = {
         "cache-probes",
@@ -490,9 +833,7 @@ def test_probe_result_postprocessing(tmp_path):
         "target": "whole",
         "classes": 100,
         "examples": 50,
-        "dataset_manifest": {
-            "files": {"profiles.jsonl": {"sha256": "same-profile-table"}}
-        },
+        "dataset_manifest": {"files": {"profiles.jsonl": {"sha256": "same-profile-table"}}},
     }
     (left / "q_major_whole.json").write_text(
         json.dumps({**base, "validation_accuracy": [0.25]}), encoding="utf-8"

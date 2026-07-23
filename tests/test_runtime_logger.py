@@ -86,12 +86,18 @@ def test_probe_console_surfaces_health_and_pipeline_state():
             "task": "p_major_first",
             "action": "finished",
             "device": "cuda:0",
+            "worker_step": 1200,
+            "worker_steps_total": 30000,
+            "worker_progress_percent": 4.0,
+            "worker_eta_seconds": 360,
+            "worker_loss": 0.25,
             "eta_seconds": 60,
         }
     )
     assert "tasks 3/22" in pipeline
     assert "running 4" in pipeline
     assert "p_major_first on cuda:0" in pipeline
+    assert "worker 1200/30000 4.0% ETA 0:06:00 loss 0.25000" in pipeline
 
 
 def test_tensorboard_records_full_numeric_state(tmp_path):

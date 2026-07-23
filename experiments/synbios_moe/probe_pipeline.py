@@ -21,13 +21,12 @@ import yaml
 from experiments.synbios_moe.probe_data import paper_probe_tasks
 
 
-PIPELINE_PROTOCOL_VERSION = 3
+PIPELINE_PROTOCOL_VERSION = 4
 CLOZE_GATE_PROTOCOL = "progressive_original_biography_cloze_greedy"
 
 
 class PipelineEventLogger(Protocol):
-    def log_event(self, payload: dict[str, object]) -> None:
-        ...
+    def log_event(self, payload: dict[str, object]) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -47,6 +46,84 @@ class JobCommand:
     output: Path
     log: Path
     dependencies: tuple[Path, ...] = ()
+    events_root: Path | None = None
+
+
+@dataclass(frozen=True)
+class ProbeRuntimeConfig:
+    """Operational knobs kept separate from the scientific task matrix."""
+
+    p_batch_size: int = 50
+    q_batch_size: int = 200
+    p_validation_batch_size: int = 50
+    q_validation_batch_size: int = 200
+    log_interval_steps: int = 100
+    heartbeat_seconds: float = 10.0
+    checkpoint_interval_steps: int = 1000
+    evaluate_train: bool = True
+
+    def __post_init__(self) -> None:
+        numeric = (
+            self.p_batch_size,
+            self.q_batch_size,
+            self.p_validation_batch_size,
+            self.q_validation_batch_size,
+            self.log_interval_steps,
+            self.heartbeat_seconds,
+            self.checkpoint_interval_steps,
+        )
+        if any(value <= 0 for value in numeric):
+            raise ValueError("probe runtime numeric settings must be positive")
+
+    @classmethod
+    def from_config(cls, config: dict) -> "ProbeRuntimeConfig":
+        runtime = dict(config.get("runtime", {}))
+        training = dict(runtime.pop("training_batch_sizes", {}))
+        validation = dict(runtime.pop("validation_batch_sizes", {}))
+        unknown_training = sorted(set(training) - {"p", "q"})
+        unknown_validation = sorted(set(validation) - {"p", "q"})
+        if unknown_training or unknown_validation:
+            unknown = [
+                *(f"training_batch_sizes.{key}" for key in unknown_training),
+                *(f"validation_batch_sizes.{key}" for key in unknown_validation),
+            ]
+            raise ValueError("unknown probe runtime settings: " + ", ".join(unknown))
+        instance = cls(
+            p_batch_size=int(training.get("p", cls.p_batch_size)),
+            q_batch_size=int(training.get("q", cls.q_batch_size)),
+            p_validation_batch_size=int(validation.get("p", cls.p_validation_batch_size)),
+            q_validation_batch_size=int(validation.get("q", cls.q_validation_batch_size)),
+            log_interval_steps=int(runtime.pop("log_interval_steps", cls.log_interval_steps)),
+            heartbeat_seconds=float(runtime.pop("heartbeat_seconds", cls.heartbeat_seconds)),
+            checkpoint_interval_steps=int(
+                runtime.pop("checkpoint_interval_steps", cls.checkpoint_interval_steps)
+            ),
+            evaluate_train=bool(runtime.pop("evaluate_train", cls.evaluate_train)),
+        )
+        if runtime:
+            raise ValueError("unknown probe runtime settings: " + ", ".join(sorted(runtime)))
+        return instance
+
+    def with_overrides(self, **overrides: object) -> "ProbeRuntimeConfig":
+        values = {
+            name: getattr(self, name) if value is None else value
+            for name, value in overrides.items()
+        }
+        payload = {**self.__dict__, **values}
+        return type(self)(**payload)
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "training_batch_sizes": {"p": self.p_batch_size, "q": self.q_batch_size},
+            "validation_batch_sizes": {
+                "p": self.p_validation_batch_size,
+                "q": self.q_validation_batch_size,
+            },
+            "log_interval_steps": self.log_interval_steps,
+            "heartbeat_seconds": self.heartbeat_seconds,
+            "checkpoint_interval_steps": self.checkpoint_interval_steps,
+            "evaluate_train": self.evaluate_train,
+        }
 
 
 def all_probe_jobs() -> tuple[ProbeJob, ...]:
@@ -113,6 +190,7 @@ def build_pipeline_identity(
     cache: str | Path,
     model_config: str | Path,
     checkpoint: str | Path,
+    runtime: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Fingerprint every input that changes durable probe outputs."""
 
@@ -130,7 +208,7 @@ def build_pipeline_identity(
     missing = [f"{name}: {path}" for name, path in required_files.items() if not path.is_file()]
     if missing:
         raise FileNotFoundError("missing pipeline input(s): " + "; ".join(missing))
-    return {
+    identity = {
         "protocol_version": PIPELINE_PROTOCOL_VERSION,
         "stage": stage,
         "steps": int(steps),
@@ -139,14 +217,15 @@ def build_pipeline_identity(
         "data": str(data_root),
         "data_manifest_sha256": _sha256_file(required_files["dataset manifest"]),
         "probe_cache": str(cache_root),
-        "probe_cache_manifest_sha256": _sha256_file(
-            required_files["probe cache manifest"]
-        ),
+        "probe_cache_manifest_sha256": _sha256_file(required_files["probe cache manifest"]),
         "model_config": str(model_path),
         "model_config_sha256": _sha256_file(model_path),
         "checkpoint": str(checkpoint_path),
         "checkpoint_model_sha256": _sha256_file(model_export),
     }
+    if runtime is not None:
+        identity["runtime"] = runtime
+    return identity
 
 
 def common_pipeline_identity(identity: dict[str, object]) -> dict[str, object]:
@@ -156,9 +235,7 @@ def common_pipeline_identity(identity: dict[str, object]) -> dict[str, object]:
     return {key: value for key, value in identity.items() if key not in stage_fields}
 
 
-def reusable_cloze_gate(
-    candidate: dict[str, object], identity: dict[str, object]
-) -> bool:
+def reusable_cloze_gate(candidate: dict[str, object], identity: dict[str, object]) -> bool:
     """Return whether a cached gate uses the current strict generation protocol."""
 
     return (
@@ -255,6 +332,13 @@ class ProbePipelineState:
                 "eta_seconds": eta,
                 "progress_percent": 100.0 * completed / max(total, 1),
             }
+            payload.update(
+                {
+                    key: value
+                    for key, value in event.items()
+                    if key.startswith("worker_") and value is not None
+                }
+            )
             self.logger.log_event(payload)
             self.events_path.parent.mkdir(parents=True, exist_ok=True)
             with self.events_path.open("a", encoding="utf-8") as handle:
@@ -321,6 +405,58 @@ def _run_one(
     return process.returncode, time.monotonic() - started
 
 
+def _latest_worker_progress(events_root: Path | None, job_key: str) -> dict[str, object]:
+    """Read the newest structured worker event without coupling scheduling to training."""
+
+    if events_root is None or not events_root.is_dir():
+        return {}
+    candidates = list(events_root.glob(f"synbios_*_{job_key}/*/events.jsonl"))
+    if not candidates:
+        return {}
+    path = max(candidates, key=lambda item: item.stat().st_mtime_ns)
+    try:
+        with path.open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            size = handle.tell()
+            handle.seek(max(0, size - 64 * 1024))
+            lines = handle.read().splitlines()
+        for line in reversed(lines):
+            payload = json.loads(line)
+            if payload.get("event") not in {
+                "probe_train",
+                "probe_train_evaluation",
+                "probe_validation",
+                "probe_checkpoint",
+            }:
+                continue
+            fields: dict[str, object] = {
+                "worker_event": payload.get("event"),
+                "worker_step": payload.get("step"),
+                "worker_progress_percent": payload.get("progress_percent"),
+                "worker_eta_seconds": payload.get("eta_seconds"),
+            }
+            total = payload.get("steps_total", payload.get("batches_total"))
+            if total is not None:
+                fields["worker_steps_total"] = total
+            for name in (
+                "loss",
+                "accuracy",
+                "accuracy_running",
+                "lr",
+                "grad_norm",
+                "items_per_sec",
+                "gpu_peak_memory_allocated_mb_max",
+                "gpu_memory_capacity_mb_max",
+                "gpu_compute_utilization_percent_local_mean",
+            ):
+                if name in payload:
+                    fields[f"worker_{name}"] = payload[name]
+            return fields
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {}
+    return {}
+
+
 def schedule_jobs(
     jobs: Iterable[ProbeJob],
     devices: tuple[str, ...],
@@ -352,10 +488,14 @@ def schedule_jobs(
                 with result_lock:
                     if on_event is not None:
                         on_event({"action": "started", "job": job.key, "device": device})
-                is_current = reuse_existing and spec.output.is_file() and all(
-                    dependency.is_file()
-                    and spec.output.stat().st_mtime_ns >= dependency.stat().st_mtime_ns
-                    for dependency in spec.dependencies
+                is_current = (
+                    reuse_existing
+                    and spec.output.is_file()
+                    and all(
+                        dependency.is_file()
+                        and spec.output.stat().st_mtime_ns >= dependency.stat().st_mtime_ns
+                        for dependency in spec.dependencies
+                    )
                 )
                 if is_current:
                     record = {
@@ -389,6 +529,7 @@ def schedule_jobs(
                                         "device": device,
                                         "seconds": elapsed,
                                         "log": str(spec.log),
+                                        **_latest_worker_progress(spec.events_root, job.key),
                                     }
                                 )
 
@@ -457,6 +598,11 @@ def probe_train_command_builder(
     quiet: bool,
     log_interval: int,
     tensorboard: bool,
+    batch_sizes: dict[str, int],
+    validation_batch_sizes: dict[str, int],
+    checkpoint_interval_steps: int,
+    evaluate_train: bool,
+    checkpoint_model_sha256: str | None = None,
 ) -> Callable[[ProbeJob, str], JobCommand]:
     def build(job: ProbeJob, device: str) -> JobCommand:
         output = output_dir / "training" / f"{job.key}.json"
@@ -480,6 +626,10 @@ def probe_train_command_builder(
             job.target,
             "--steps",
             str(steps),
+            "--batch-size",
+            str(batch_sizes[job.kind]),
+            "--evaluation-batch-size",
+            str(validation_batch_sizes[job.kind]),
             "--seed",
             str(seed),
             "--device",
@@ -488,7 +638,16 @@ def probe_train_command_builder(
             str(output),
             "--log-interval",
             str(log_interval),
+            "--recovery-checkpoint",
+            str(output_dir / "recovery" / f"{job.key}.pt"),
+            "--checkpoint-interval-steps",
+            str(checkpoint_interval_steps),
+            "--skip-final-validation",
         ]
+        if evaluate_train:
+            command.append("--evaluate-train")
+        if checkpoint_model_sha256 is not None:
+            command.extend(("--checkpoint-model-sha256", checkpoint_model_sha256))
         if quiet:
             command.append("--quiet")
         if not tensorboard:
@@ -498,6 +657,7 @@ def probe_train_command_builder(
             command,
             output.with_suffix(".pt"),
             output_dir / "logs" / f"train_{job.key}.log",
+            events_root=output.parent / "operation_logs",
         )
 
     return build
@@ -514,6 +674,8 @@ def probe_validation_command_builder(
     quiet: bool,
     log_interval: int,
     tensorboard: bool,
+    validation_batch_sizes: dict[str, int],
+    checkpoint_model_sha256: str | None = None,
 ) -> Callable[[ProbeJob, str], JobCommand]:
     def build(job: ProbeJob, device: str) -> JobCommand:
         output = output_dir / "validation" / f"{job.key}.json"
@@ -538,9 +700,13 @@ def probe_validation_command_builder(
             str(output),
             "--log-interval",
             str(log_interval),
+            "--batch-size",
+            str(validation_batch_sizes[job.kind]),
         ]
         if quiet:
             command.append("--quiet")
+        if checkpoint_model_sha256 is not None:
+            command.extend(("--checkpoint-model-sha256", checkpoint_model_sha256))
         if not tensorboard:
             command.append("--no-tensorboard")
         return JobCommand(
@@ -548,6 +714,7 @@ def probe_validation_command_builder(
             output,
             output_dir / "logs" / f"validation_{job.key}.log",
             dependencies=(probe_checkpoint,),
+            events_root=output.parent / "operation_logs",
         )
 
     return build
@@ -635,9 +802,7 @@ def summarize_probe_results(
         raise ValueError("probe runs cannot be compared: task sets differ")
     position_sets = {
         run_name: {
-            (str(row["task"]), int(row["position"]))
-            for row in rows
-            if row["run"] == run_name
+            (str(row["task"]), int(row["position"])) for row in rows if row["run"] == run_name
         }
         for run_name in named_directories
     }

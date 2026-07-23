@@ -14,10 +14,15 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from experiments.synbios_moe.data import ATTRIBUTES
-from experiments.synbios_moe.probes import GPT2Codec, ProbeBatchItem, task_label
+from experiments.synbios_moe.probes import (
+    GPT2Codec,
+    ProbeBatchItem,
+    ordered_p_probe_starts,
+    task_label,
+)
 
 
-CACHE_FORMAT_VERSION = 1
+CACHE_FORMAT_VERSION = 2
 SPLIT_CODES = {"train": 0, "validation": 1}
 
 
@@ -122,7 +127,9 @@ def build_probe_cache(
         classes: dict[str, list[str]] = {}
         label_maps: dict[str, dict[str, int]] = {}
         for task in tasks:
-            names = sorted({task_label(profile, task.attribute, task.target, codec) for profile in profiles})
+            names = sorted(
+                {task_label(profile, task.attribute, task.target, codec) for profile in profiles}
+            )
             classes[task.key] = names
             label_maps[task.key] = {name: index for index, name in enumerate(names)}
 
@@ -139,7 +146,9 @@ def build_probe_cache(
         np.save(staging / "profile_labels.npy", labels, allow_pickle=False)
         np.save(staging / "profile_splits.npy", splits, allow_pickle=False)
 
-        q_rows = ([codec.eos, *codec.encode(profile["full_name"]), codec.eos] for profile in profiles)
+        q_rows = (
+            [codec.eos, *codec.encode(profile["full_name"]), codec.eos] for profile in profiles
+        )
         q_examples, q_tokens = _write_ragged_tokens(
             q_rows, staging / "q_tokens.bin", staging / "q_offsets.npy"
         )
@@ -157,7 +166,7 @@ def build_probe_cache(
                     raise ValueError(
                         f"biography references unknown person_id={row.get('person_id')!r}"
                     ) from exc
-                starts = [row["attribute_spans"][name][0] for name in ATTRIBUTES]
+                starts = ordered_p_probe_starts(row["attribute_spans"])
                 ids, positions = codec.positions_before_chars(row["text"], starts)
                 values = np.asarray(ids, dtype="<i4")
                 token_handle.write(values.tobytes())
@@ -182,9 +191,7 @@ def build_probe_cache(
 
         coverage = _coverage_report(labels, splits, tasks, classes)
         missing_tasks = [
-            key
-            for key, value in coverage.items()
-            if value["validation_classes_missing_from_train"]
+            key for key, value in coverage.items() if value["validation_classes_missing_from_train"]
         ]
         if require_coverage and missing_tasks:
             raise ValueError(
@@ -195,7 +202,7 @@ def build_probe_cache(
         source_manifest = json.loads(source_manifest_path.read_text(encoding="utf-8"))
         manifest = {
             "format_version": CACHE_FORMAT_VERSION,
-            "generator": "minitrain.synbios_moe.probe_cache.v1",
+            "generator": "minitrain.synbios_moe.probe_cache.v2",
             "source_data": str(data_root.resolve()),
             "source_manifest": source_manifest,
             "tokenizer": "tiktoken:gpt2",
@@ -242,14 +249,31 @@ def validate_probe_cache(
         raise ValueError(f"unsupported probe cache format: {manifest.get('format_version')}")
     if data_root is not None:
         data_root = Path(data_root)
-        current_manifest = json.loads(
-            (data_root / "manifest.json").read_text(encoding="utf-8")
-        )
+        current_manifest = json.loads((data_root / "manifest.json").read_text(encoding="utf-8"))
         if manifest.get("source_manifest") != current_manifest:
             raise ValueError("probe cache source manifest does not match --data")
     profiles = int(manifest["profiles"])
     p_examples = int(manifest["p_examples"])
     q_examples = int(manifest["q_examples"])
+    expected_tasks = [task.key for task in paper_probe_tasks()]
+    task_entries = manifest.get("tasks")
+    if not isinstance(task_entries, list):
+        raise ValueError("probe cache manifest tasks must be a list")
+    actual_tasks = [str(task.get("key")) for task in task_entries]
+    if actual_tasks != expected_tasks:
+        raise ValueError(f"probe cache tasks are {actual_tasks}, expected {expected_tasks}")
+    for task in task_entries:
+        expected_key = f"{task.get('attribute')}_{task.get('target')}"
+        class_names = task.get("class_names")
+        if task.get("key") != expected_key:
+            raise ValueError(f"probe cache task key is inconsistent: {task!r}")
+        if (
+            not isinstance(class_names, list)
+            or not class_names
+            or any(not isinstance(name, str) for name in class_names)
+            or len(set(class_names)) != len(class_names)
+        ):
+            raise ValueError(f"invalid class_names for probe task {expected_key}")
     expected_shapes = {
         "profile_labels.npy": (profiles, len(manifest["tasks"])),
         "profile_splits.npy": (profiles,),
@@ -265,13 +289,23 @@ def validate_probe_cache(
     splits = np.load(root / "profile_splits.npy", mmap_mode="r", allow_pickle=False)
     if not set(np.unique(splits).tolist()).issubset(set(SPLIT_CODES.values())):
         raise ValueError("profile_splits.npy contains invalid split codes")
-    profile_indices = np.load(
-        root / "p_profile_indices.npy", mmap_mode="r", allow_pickle=False
-    )
+    labels = np.load(root / "profile_labels.npy", mmap_mode="r", allow_pickle=False)
+    for column, task in enumerate(task_entries):
+        column_labels = labels[:, column]
+        if len(column_labels) and (
+            int(column_labels.min()) < 0
+            or int(column_labels.max()) >= len(task["class_names"])
+        ):
+            raise ValueError(f"profile_labels.npy contains invalid IDs for {task['key']}")
+    profile_indices = np.load(root / "p_profile_indices.npy", mmap_mode="r", allow_pickle=False)
     if len(profile_indices) and (
         int(profile_indices.min()) < 0 or int(profile_indices.max()) >= profiles
     ):
         raise ValueError("p_profile_indices.npy contains an out-of-range profile index")
+    p_positions = np.load(root / "p_positions.npy", mmap_mode="r", allow_pickle=False)
+    if p_positions.shape[1] > 1 and np.any(p_positions[:, 1:] < p_positions[:, :-1]):
+        raise ValueError("p_positions.npy is not ordered left-to-right")
+    offsets_by_kind = {}
     for kind in ("p", "q"):
         path = root / f"{kind}_tokens.bin"
         expected_bytes = int(manifest[f"{kind}_tokens"]) * np.dtype("<i4").itemsize
@@ -280,10 +314,16 @@ def validate_probe_cache(
                 f"{path.name} has {path.stat().st_size} bytes, expected {expected_bytes}"
             )
         offsets = np.load(root / f"{kind}_offsets.npy", mmap_mode="r", allow_pickle=False)
+        offsets_by_kind[kind] = offsets
         if int(offsets[0]) != 0 or int(offsets[-1]) != int(manifest[f"{kind}_tokens"]):
             raise ValueError(f"{kind}_offsets.npy does not span the token file")
         if np.any(offsets[1:] < offsets[:-1]):
             raise ValueError(f"{kind}_offsets.npy is not monotonic")
+    p_lengths = offsets_by_kind["p"][1:] - offsets_by_kind["p"][:-1]
+    if len(p_positions) and (
+        np.any(p_positions < 0) or np.any(p_positions >= p_lengths[:, None])
+    ):
+        raise ValueError("p_positions.npy contains a position outside its biography")
     missing = {
         key: value["validation_classes_missing_from_train"]
         for key, value in manifest["coverage"].items()
@@ -297,9 +337,7 @@ def validate_probe_cache(
         "p_examples": p_examples,
         "q_examples": q_examples,
         "coverage_complete": not missing,
-        "missing_validation_class_counts": {
-            key: len(values) for key, values in missing.items()
-        },
+        "missing_validation_class_counts": {key: len(values) for key, values in missing.items()},
     }
     if include_missing_classes:
         result["missing_validation_classes"] = missing
@@ -322,6 +360,10 @@ class CachedProbeDataset(Dataset):
             raise ValueError("kind must be p/q and split must be train/validation")
         self.root = Path(root)
         self.manifest = json.loads((self.root / "manifest.json").read_text(encoding="utf-8"))
+        if self.manifest.get("format_version") != CACHE_FORMAT_VERSION:
+            raise ValueError(
+                f"unsupported probe cache format: {self.manifest.get('format_version')}"
+            )
         tasks = self.manifest["tasks"]
         matches = [
             (index, task)
@@ -334,9 +376,7 @@ class CachedProbeDataset(Dataset):
         self.class_names = list(task["class_names"])
         self.labels = np.load(self.root / "profile_labels.npy", mmap_mode="r", allow_pickle=False)
         self.splits = np.load(self.root / "profile_splits.npy", mmap_mode="r", allow_pickle=False)
-        self.offsets = np.load(
-            self.root / f"{kind}_offsets.npy", mmap_mode="r", allow_pickle=False
-        )
+        self.offsets = np.load(self.root / f"{kind}_offsets.npy", mmap_mode="r", allow_pickle=False)
         self.tokens = np.memmap(self.root / f"{kind}_tokens.bin", mode="r", dtype="<i4")
         self.kind = kind
         if kind == "p":
@@ -356,14 +396,26 @@ class CachedProbeDataset(Dataset):
     def __len__(self) -> int:
         return len(self.sample_indices)
 
+    def longest_items(self, limit: int) -> list[ProbeBatchItem]:
+        """Return the longest examples for conservative batch-capacity benchmarks."""
+
+        if limit <= 0:
+            raise ValueError("limit must be positive")
+        samples = self.sample_indices
+        lengths = self.offsets[samples + 1] - self.offsets[samples]
+        count = min(limit, len(samples))
+        if count == 0:
+            return []
+        selected = np.argpartition(lengths, -count)[-count:]
+        selected = selected[np.argsort(lengths[selected])[::-1]]
+        return [self[int(index)] for index in selected]
+
     def __getitem__(self, index: int) -> ProbeBatchItem:
         sample = int(self.sample_indices[index])
         start, end = int(self.offsets[sample]), int(self.offsets[sample + 1])
         ids = self.tokens[start:end].astype(np.int64).tolist()
         profile = int(self.profile_indices[sample])
         positions = (
-            self.positions[sample].astype(np.int64).tolist()
-            if self.kind == "p"
-            else [len(ids) - 1]
+            self.positions[sample].astype(np.int64).tolist() if self.kind == "p" else [len(ids) - 1]
         )
         return ProbeBatchItem(ids, positions, int(self.labels[profile, self.task_index]))

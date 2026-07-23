@@ -18,8 +18,8 @@
 | packing | 随机采样 BIO 条目、EOS 分隔并拼成 512-token 序列 | 每 epoch 确定性随机重排完整 BIO 条目，再切非重叠 512-token blocks；允许切中条目 |
 | 主干 | 12 layers, 12 heads, d=768, RoPE | 相同尺寸；FFN 改为 MoE |
 | 预训练 | AdamW, wd=.1, eps=1e-6, lr=1e-3, warmup 1k, cosine 到 1e-4, batch 96, 80k steps；约 540 passes | 无梯度累积；single 540 epochs、multi5+permute 108 epochs，约 4.0B token；硬件 batch 可不同，但固定使用论文 LR/warmup，不做线性放大 |
-| P-probe | 冻结主干；embedding rank 2；LayerNorm+linear；batch 50；30k steps | 相同；AdamW lr=1e-3, wd=.3, eps=1e-6，linear decay |
-| Q-probe | 仅 BOS+姓名+EOS；embedding rank 16；BatchNorm+linear；batch 200；30k steps | 相同；AdamW lr=1e-3, wd=.3, eps=1e-6，linear decay |
+| P-probe | 冻结主干但开启 dropout；embedding rank 2；LayerNorm+linear；batch 50；30k steps | 参数化协议、dropout、30k steps 与优化器相同；batch 由4090最长样本容量回归确定并记录 |
+| Q-probe | 仅 BOS+姓名+EOS；冻结主干但开启 dropout；embedding rank 16；BatchNorm+linear；batch 200；30k steps | 输入、参数化协议、dropout、30k steps 与优化器相同；batch 由容量回归确定并记录 |
 
 MoE 主配置采用 8 experts、top-2、dropless routing、SwiGLU、负载均衡系数 0.01 和 router z-loss 0.001。单 expert intermediate size 设为 1024：top-2 SwiGLU 每 token 激活 `2 × 3 × 768 × 1024` 个 FFN 权重，近似论文 GPT-2 MLP 的 `2 × 768 × 3072`；同时绑定输入/输出 embedding。这样 active 参数量约等于论文的 124M，而 MoE total 参数量约为 293M。报告必须同时给出 total parameters 与 active parameters，不能只报其中一个。
 
@@ -27,7 +27,18 @@ MoE 主配置采用 8 experts、top-2、dropless routing、SwiGLU、负载均衡
 
 训练不使用梯度累计，因此只有实际 global batch 恰好为 96 时才能匹配论文 batch；optimizer-update 轨迹仍会因 packing 和实现差异而不同。本复刻优先保持总 token/人物曝光预算：`single:multi5+permute` 使用严格的 `540:108 = 5:1` epoch 比例。为避免大 batch 线性缩放偏离论文且引发不稳定，所有 SynBioS 正式配置固定使用论文峰值 LR `1e-3`、warmup 1,000 step 和 cosine floor `1e-4`。global batch 不为 96 仍是明确记录的 fidelity 差异。
 
-论文给出了每类模板数量，但没有随论文发布完整模板表、姓名/城市/学校/专业/公司原始清单。实现会固定生成器版本、seed、候选数、依赖关系和模板数，并保存 manifest/hash；这能做到可重复的机制复刻，但不是原始数据逐条复原。
+论文给出了每类模板数量，但没有随论文发布完整模板表、姓名/城市/学校/专业/公司原始清单；作者 FAQ 也明确说明 Part 3 代码和 bioS 数据尚未公开。实现会固定生成器版本、seed、候选数、依赖关系和模板数，并保存 manifest/hash；这能做到可重复的机制复刻，但不是原始数据逐条复原。
+
+这项缺失尤其影响 first-token 随机基线：候选总数与论文一致，不代表候选字符串经过 GPT-2
+tokenization 后的首 token 分布一致。当前再实现完整池得到的 first-token 类别数为
+`12/21/20/20/20/21`（生日、出生城市、大学、专业、公司、公司城市），而论文图中的 majority
+baseline 反映其未公开原始词表。报告可以比较本项目 `single` 与 `multi5+permute` 的机制差异，
+但不能把 first-token 绝对准确率逐点声称为论文数值复现。Whole 类别数和公司城市依赖关系仍按
+公开协议保持。该差异必须随正式结果一并报告，不能通过事后调整类别表隐藏。
+
+用户已明确选择让正式 probe 使用服务器吞吐最优 batch，而不是强制论文的 P=50/Q=200。
+这会改变固定30k steps下的样本曝光量，是另一项有意的 fidelity 差异；两个主数据条件必须使用
+同一份 `recommended.env`，并在 `HISTORY.md` 和结果 provenance 中记录，才可做公平对照。
 
 ## 实现阶段
 
@@ -38,7 +49,7 @@ MoE 主配置采用 8 experts、top-2、dropless routing、SwiGLU、负载均衡
    - probe 位置由 UTF-8 byte span 与 GPT-2 token bytes 对齐，不依赖脆弱的字符串 token 数猜测。
 2. `experiments/synbios_moe/probes.py`
    - 低秩 embedding delta 独立于冻结主干；每个任务独立训练。
-   - P-probe 在六个“属性首次出现前”的位置取最后层 hidden；Q-probe 在姓名 EOS 位置取 hidden。
+   - P-probe 在六个“属性首次出现前”的位置取最后层 hidden，并按最终 biography 从左到右编号为 `P0...P5`；Q-probe 在姓名 EOS 位置取 hidden。
    - birth date 只做 first-token/month；其他五属性同时支持 first-token 与 whole-attribute 分类，共 11 个任务。
 3. `experiments/synbios_moe/router_analysis.py`
    - 用 hooks 收集每层 top-k expert、权重、位置和属性标签。

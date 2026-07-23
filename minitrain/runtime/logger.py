@@ -21,11 +21,9 @@ class EventLogger(Protocol):
     future service. Keeping this interface tiny makes those outputs swappable.
     """
 
-    def log_event(self, payload: dict[str, object]) -> None:
-        ...
+    def log_event(self, payload: dict[str, object]) -> None: ...
 
-    def close(self) -> None:
-        ...
+    def close(self) -> None: ...
 
 
 def is_primary_rank() -> bool:
@@ -90,12 +88,31 @@ def format_console_event(payload: dict[str, object]) -> str:
                 f"{payload.get('action', 'update')} {payload.get('task')} "
                 f"on {payload.get('device', '?')}"
             )
+        if payload.get("worker_step") is not None:
+            worker = f"worker {payload.get('worker_step')}/{payload.get('worker_steps_total', '?')}"
+            if "worker_progress_percent" in payload:
+                worker += f" {_number(payload, 'worker_progress_percent', 1)}%"
+            if "worker_eta_seconds" in payload:
+                worker += f" ETA {_duration(payload.get('worker_eta_seconds'))}"
+            if "worker_loss" in payload:
+                worker += f" loss {_number(payload, 'worker_loss', 5)}"
+            accuracy_key = (
+                "worker_accuracy" if "worker_accuracy" in payload else "worker_accuracy_running"
+            )
+            if accuracy_key in payload:
+                worker += f" acc {_number(payload, accuracy_key, 4)}"
+            if "worker_gpu_peak_memory_allocated_mb_max" in payload:
+                used = float(payload["worker_gpu_peak_memory_allocated_mb_max"]) / 1024
+                capacity = float(payload.get("worker_gpu_memory_capacity_mb_max", 0)) / 1024
+                worker += f" gpu {used:.2f}/{capacity:.2f} GiB"
+            parts.append(worker)
         parts.append(f"ETA {_duration(payload.get('eta_seconds'))}")
         return " | ".join(parts)
     if event in {
         "train",
         "probe_train",
         "probe_validation",
+        "probe_train_evaluation",
         "evaluate",
         "analyze",
         "model_load",
@@ -135,14 +152,21 @@ def format_console_event(payload: dict[str, object]) -> str:
         elif "host_peak_memory_mb" in payload:
             parts.append(f"host-peak {_number(payload, 'host_peak_memory_mb', 1)} MiB")
         if "gpu_compute_utilization_percent_mean" in payload:
+            parts.append(f"gpu-util {_number(payload, 'gpu_compute_utilization_percent_mean', 1)}%")
+        elif "gpu_compute_utilization_percent_local_mean" in payload:
             parts.append(
-                f"gpu-util {_number(payload, 'gpu_compute_utilization_percent_mean', 1)}%"
+                f"gpu-util {_number(payload, 'gpu_compute_utilization_percent_local_mean', 1)}%"
             )
         parts.append(f"{_number(payload, 'progress_percent', 1)}%")
         parts.append(f"ETA {_duration(payload.get('eta_seconds'))}")
         return " | ".join(parts)
     if event == "checkpoint":
         return f"[checkpoint] saved {payload.get('path')} (model+optimizer state)"
+    if event == "probe_checkpoint":
+        return (
+            f"[probe_checkpoint] step {payload.get('step')}/{payload.get('steps_total')} "
+            f"saved {payload.get('path')}"
+        )
     if event == "resume":
         return (
             f"[resume] {payload.get('path')} | epoch={payload.get('epoch')} "
@@ -200,8 +224,19 @@ class TensorBoardLogger:
             self._log_text_event(event, payload)
             return None
 
+        worker_step = payload.get("worker_step")
+        if event == "probe_pipeline" and isinstance(worker_step, int) and payload.get("task"):
+            prefix = f"probe_pipeline/{payload.get('phase', 'phase')}/{payload['task']}"
+            for key, value in payload.items():
+                if key.startswith("worker_") and isinstance(value, (int, float)):
+                    self.writer.add_scalar(
+                        f"{prefix}/{key.removeprefix('worker_')}", value, worker_step
+                    )
+
         for key, value in payload.items():
             if key in {"event", "step"}:
+                continue
+            if event == "probe_pipeline" and key.startswith("worker_"):
                 continue
             if isinstance(value, bool):
                 continue
@@ -227,14 +262,16 @@ class TensorBoardLogger:
             return None
         return tensor
 
-    def _log_tensor(
-        self, event: str, key: str, tensor: torch.Tensor, step: int
-    ) -> None:
+    def _log_tensor(self, event: str, key: str, tensor: torch.Tensor, step: int) -> None:
         tag = f"{event}/{key}"
-        if key in {
-            "moe/expert_load_fraction_by_layer",
-            "moe/expert_probability_by_layer",
-        } and tensor.ndim == 2:
+        if (
+            key
+            in {
+                "moe/expert_load_fraction_by_layer",
+                "moe/expert_probability_by_layer",
+            }
+            and tensor.ndim == 2
+        ):
             # A fixed 0x..2x-uniform scale makes images comparable over time:
             # blue=under-used, white=balanced, red=over-used. Rows are layers,
             # columns are experts. Per-expert scalar curves retain exact labels.
@@ -249,9 +286,7 @@ class TensorBoardLogger:
                 )
             ).clamp(0.0, 1.0)
             self._add_rgb_image(f"{tag}/balance_heatmap", heatmap, step)
-            self.writer.add_histogram(
-                f"{tag}/ratio_histogram", expert_ratio.flatten(), step
-            )
+            self.writer.add_histogram(f"{tag}/ratio_histogram", expert_ratio.flatten(), step)
             return
         self.writer.add_histogram(tag, tensor.flatten(), step)
 
@@ -263,11 +298,7 @@ class TensorBoardLogger:
         if image.ndim != 3 or image.shape[0] != 3:
             raise ValueError("TensorBoard RGB images must have shape [3, height, width]")
         pixels = (
-            image.mul(255)
-            .round()
-            .to(dtype=torch.uint8, device="cpu")
-            .permute(1, 2, 0)
-            .contiguous()
+            image.mul(255).round().to(dtype=torch.uint8, device="cpu").permute(1, 2, 0).contiguous()
         )
         height, width, _ = pixels.shape
         scanlines = b"".join(

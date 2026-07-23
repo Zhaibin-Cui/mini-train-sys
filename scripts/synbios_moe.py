@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from contextlib import contextmanager
@@ -30,8 +31,16 @@ from experiments.synbios_moe.probe_data import (
     build_probe_cache,
     validate_probe_cache,
 )
+from experiments.synbios_moe.probe_checkpoint import save_probe_result
+from experiments.synbios_moe.probe_benchmark import (
+    benchmark_probe_batches,
+    parse_batch_sizes,
+    probe_batch_environment,
+    summarize_probe_benchmarks,
+)
 from experiments.synbios_moe.probe_pipeline import (
     ProbePipelineState,
+    ProbeRuntimeConfig,
     build_pipeline_identity,
     common_pipeline_identity,
     jobs_for_stage,
@@ -73,6 +82,19 @@ def checkpoint_size_bytes(path: str | Path) -> int:
     if checkpoint.is_file():
         return checkpoint.stat().st_size
     return sum(item.stat().st_size for item in checkpoint.rglob("*") if item.is_file())
+
+
+def _sha256_file(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _checkpoint_model_path(path: str | Path) -> Path:
+    checkpoint = Path(path)
+    return checkpoint if checkpoint.is_file() else checkpoint / "model.pt"
 
 
 @contextmanager
@@ -150,11 +172,15 @@ def command_prepare(args: argparse.Namespace) -> None:
             split_seed=args.seed,
         )
         progress.update(2, metrics={"phase": 2.0})
-        print(json.dumps({
-            "dataset_manifest": str(manifest),
-            "token_manifest": str(token_manifest),
-            "log_dir": str(log_dir) if log_dir is not None else None,
-        }))
+        print(
+            json.dumps(
+                {
+                    "dataset_manifest": str(manifest),
+                    "token_manifest": str(token_manifest),
+                    "log_dir": str(log_dir) if log_dir is not None else None,
+                }
+            )
+        )
 
 
 def command_cache_probes(args: argparse.Namespace) -> None:
@@ -181,7 +207,7 @@ def command_cache_probes(args: argparse.Namespace) -> None:
 
 
 def command_validate_cache(args: argparse.Namespace) -> None:
-    print(json.dumps(validate_probe_cache(args.probe_cache), indent=2))
+    print(json.dumps(validate_probe_cache(args.probe_cache, args.data), indent=2))
 
 
 def build_probe_dataset(
@@ -232,16 +258,43 @@ def command_probe(args: argparse.Namespace) -> None:
         )
         rank = args.rank or (2 if args.kind == "p" else 16)
         probe = AttributeProbe(model, len(train_data.class_names), rank=rank, kind=args.kind)
+        batch_size = args.batch_size or (50 if args.kind == "p" else 200)
+        checkpoint_model_sha256 = args.checkpoint_model_sha256 or _sha256_file(
+            _checkpoint_model_path(args.checkpoint)
+        )
+        cache_manifest_sha256 = (
+            _sha256_file(Path(args.probe_cache) / "manifest.json") if args.probe_cache else None
+        )
+        recovery_metadata = {
+            "kind": args.kind,
+            "attribute": args.attribute,
+            "target": args.target,
+            "rank": rank,
+            "batch_size": batch_size,
+            "steps": args.steps,
+            "seed": args.seed,
+            "checkpoint": str(Path(args.checkpoint).resolve()),
+            "checkpoint_model_sha256": checkpoint_model_sha256,
+            "probe_cache": str(Path(args.probe_cache).resolve()) if args.probe_cache else None,
+            "probe_cache_manifest_sha256": cache_manifest_sha256,
+        }
         result = train_probe(
             probe,
             train_data,
             validation_data,
             device=device,
-            batch_size=args.batch_size or (50 if args.kind == "p" else 200),
+            batch_size=batch_size,
             steps=args.steps,
             seed=args.seed,
             logger=logger,
             log_interval=args.log_interval,
+            recovery_path=args.recovery_checkpoint,
+            checkpoint_interval_steps=args.checkpoint_interval_steps,
+            recovery_metadata=recovery_metadata,
+            resume=args.resume_probe,
+            evaluate_train=args.evaluate_train,
+            evaluate_validation=not args.skip_final_validation,
+            evaluation_batch_size=args.evaluation_batch_size,
         )
         result.update(
             {
@@ -250,25 +303,23 @@ def command_probe(args: argparse.Namespace) -> None:
                 "target": args.target,
                 "rank": rank,
                 "classes": len(train_data.class_names),
+                "class_names": list(train_data.class_names),
                 "model_parameters": active_parameter_estimate(model),
                 "checkpoint": str(Path(args.checkpoint).resolve()),
+                "checkpoint_model_sha256": checkpoint_model_sha256,
                 "checkpoint_bytes": checkpoint_size_bytes(args.checkpoint),
                 "dataset_manifest": json.loads(
                     (Path(args.data) / "manifest.json").read_text(encoding="utf-8")
                 ),
                 "probe_cache": str(Path(args.probe_cache).resolve()) if args.probe_cache else None,
+                "probe_cache_manifest_sha256": cache_manifest_sha256,
                 "provenance": collect_provenance(ROOT),
                 "log_dir": str(log_dir) if log_dir is not None else None,
             }
         )
         output = Path(args.output)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-        trainable_state = {
-            key: value for key, value in probe.state_dict().items()
-            if not key.startswith("backbone.")
-        }
-        torch.save({"probe": trainable_state, "result": result}, output.with_suffix(".pt"))
+        write_json_atomic(output, result)
+        save_probe_result(output.with_suffix(".pt"), probe=probe, result=result)
         print(json.dumps(result))
 
 
@@ -307,6 +358,21 @@ def command_validate_probe(args: argparse.Namespace) -> None:
             target=target,
             split="validation",
         )
+        saved_class_names = metadata.get("class_names")
+        if saved_class_names is not None and list(saved_class_names) != list(dataset.class_names):
+            raise SystemExit("probe checkpoint class mapping does not match the validation cache")
+        saved_cache_sha = metadata.get("probe_cache_manifest_sha256")
+        if args.probe_cache and saved_cache_sha is not None:
+            current_cache_sha = _sha256_file(Path(args.probe_cache) / "manifest.json")
+            if saved_cache_sha != current_cache_sha:
+                raise SystemExit("probe checkpoint was trained with a different probe cache manifest")
+        saved_model_sha = metadata.get("checkpoint_model_sha256")
+        if saved_model_sha is not None:
+            current_model_sha = args.checkpoint_model_sha256 or _sha256_file(
+                _checkpoint_model_path(args.checkpoint)
+            )
+            if saved_model_sha != current_model_sha and not args.allow_checkpoint_mismatch:
+                raise SystemExit("probe checkpoint was trained with different backbone weights")
         model = load_model(args.model_config, args.checkpoint, device, logger=logger)
         probe = AttributeProbe(
             model,
@@ -341,6 +407,7 @@ def command_validate_probe(args: argparse.Namespace) -> None:
             "target": target,
             "rank": int(metadata["rank"]),
             "classes": len(dataset.class_names),
+            "class_names": list(dataset.class_names),
             "examples": len(dataset),
             "validation_accuracy": accuracy,
             "probe_checkpoint": str(Path(args.probe_checkpoint).resolve()),
@@ -353,9 +420,102 @@ def command_validate_probe(args: argparse.Namespace) -> None:
             "log_dir": str(log_dir) if log_dir is not None else None,
         }
         output = Path(args.output)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+        write_json_atomic(output, result)
         print(json.dumps(result))
+
+
+def command_probe_benchmark(args: argparse.Namespace) -> None:
+    """Benchmark conservative P/Q batch candidates on one assigned GPU."""
+
+    device = torch.device(args.device)
+    sizes = parse_batch_sizes(args.batch_sizes)
+    with command_monitor(args, f"{args.kind}_probe_batch_benchmark") as (logger, log_dir):
+        model = load_model(args.model_config, args.checkpoint, device, logger=logger)
+        dataset = build_probe_dataset(
+            data=args.data,
+            cache=args.probe_cache,
+            kind=args.kind,
+            attribute=args.attribute,
+            target=args.target,
+            split="train" if args.mode == "training" else "validation",
+        )
+        rank = args.rank or (2 if args.kind == "p" else 16)
+        progress = ProgressReporter(
+            "probe_batch_benchmark",
+            len(sizes),
+            logger,
+            device,
+            unit="batch",
+        )
+        completed = 0
+
+        def report(record: dict[str, object]) -> None:
+            nonlocal completed
+            completed += 1
+            metrics = {
+                key: float(value)
+                for key, value in record.items()
+                if isinstance(value, (int, float)) and key != "batch_size"
+            }
+            metrics["candidate_batch_size"] = float(record["batch_size"])
+            metrics["candidate_completed"] = float(record["status"] == "completed")
+            progress.update(completed, metrics=metrics)
+
+        result = benchmark_probe_batches(
+            model,
+            dataset,
+            kind=args.kind,
+            num_classes=len(dataset.class_names),
+            rank=rank,
+            batch_sizes=sizes,
+            device=device,
+            mode=args.mode,
+            warmup_steps=args.warmup_steps,
+            measure_steps=args.measure_steps,
+            memory_limit_percent=args.memory_limit_percent,
+            on_result=report,
+        )
+        result.update(
+            {
+                "attribute": args.attribute,
+                "target": args.target,
+                "rank": rank,
+                "checkpoint": str(Path(args.checkpoint).resolve()),
+                "probe_cache": str(Path(args.probe_cache).resolve()),
+                "monitoring": progress.summary(),
+                "provenance": collect_provenance(ROOT),
+                "log_dir": str(log_dir) if log_dir is not None else None,
+            }
+        )
+        write_json_atomic(args.output, result)
+        print(json.dumps(result))
+
+
+def command_summarize_probe_benchmarks(args: argparse.Namespace) -> None:
+    result = summarize_probe_benchmarks(args.run)
+    write_json_atomic(args.output, result)
+    if args.require_complete_search and not result["ready_for_formal"]:
+        reasons = {
+            key: result[key]
+            for key in (
+                "missing_matrix",
+                "insufficient_replicas",
+                "missing_recommendations",
+                "boundary_recommendations",
+            )
+            if result[key]
+        }
+        raise SystemExit(
+            "probe batch search is not ready for formal use; inspect/expand candidates: "
+            + json.dumps(reasons, sort_keys=True)
+        )
+    if args.env_output:
+        destination = Path(args.env_output)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        temporary = destination.with_suffix(destination.suffix + ".tmp")
+        temporary.write_text(probe_batch_environment(result), encoding="utf-8")
+        temporary.replace(destination)
+    print(json.dumps(result, indent=2))
 
 
 def command_analyze(args: argparse.Namespace) -> None:
@@ -397,13 +557,21 @@ def command_probe_pipeline(args: argparse.Namespace) -> None:
         _command_probe_pipeline(args, logger=logger, log_dir=log_dir)
 
 
-def _command_probe_pipeline(
-    args: argparse.Namespace, *, logger, log_dir: Path | None
-) -> None:
+def _command_probe_pipeline(args: argparse.Namespace, *, logger, log_dir: Path | None) -> None:
     """Run a gated smoke/pilot/formal stage over any number of local GPUs."""
 
     config = load_pipeline_config(args.pipeline_config)
     steps, jobs, required_stage = jobs_for_stage(config, args.stage)
+    runtime_config = ProbeRuntimeConfig.from_config(config).with_overrides(
+        p_batch_size=args.p_batch_size,
+        q_batch_size=args.q_batch_size,
+        p_validation_batch_size=args.p_validation_batch_size,
+        q_validation_batch_size=args.q_validation_batch_size,
+        checkpoint_interval_steps=args.checkpoint_interval_steps,
+        heartbeat_seconds=args.heartbeat_seconds,
+        log_interval_steps=args.log_interval,
+        evaluate_train=args.evaluate_train,
+    )
     devices = resolve_devices(args.devices, args.num_gpus)
     cache_status = validate_probe_cache(
         args.probe_cache,
@@ -416,6 +584,7 @@ def _command_probe_pipeline(
     output_root = Path(args.output)
     stage_root = output_root / args.stage
     pipeline_path = stage_root / "pipeline.json"
+    probe_runtime = runtime_config.as_dict()
     identity = build_pipeline_identity(
         stage=args.stage,
         steps=steps,
@@ -425,6 +594,7 @@ def _command_probe_pipeline(
         cache=args.probe_cache,
         model_config=args.model_config,
         checkpoint=args.checkpoint,
+        runtime=probe_runtime,
     )
     requested_checkpoint = str(identity["checkpoint"])
     requested_data = str(identity["data"])
@@ -480,7 +650,7 @@ def _command_probe_pipeline(
                 max_new_tokens=int(gate_cfg.get("max_new_tokens", 16)),
                 sample_biographies=int(gate_cfg.get("sample_biographies", 12)),
                 logger=logger,
-                log_interval=args.log_interval,
+                log_interval=runtime_config.log_interval_steps,
             )
             gate_result["checkpoint"] = requested_checkpoint
             gate_result["identity"] = common_pipeline_identity(identity)
@@ -509,7 +679,7 @@ def _command_probe_pipeline(
         "checkpoint": Path(args.checkpoint).resolve(),
         "output_dir": stage_root.resolve(),
         "quiet": args.quiet_workers,
-        "log_interval": args.log_interval,
+        "log_interval": runtime_config.log_interval_steps,
         "tensorboard": args.tensorboard,
     }
     base_state = {
@@ -521,6 +691,7 @@ def _command_probe_pipeline(
         "jobs": [job.key for job in jobs],
         "identity": identity,
         "monitoring_log_dir": str(log_dir) if log_dir is not None else None,
+        "runtime": probe_runtime,
     }
     state = ProbePipelineState(
         pipeline_path=pipeline_path,
@@ -534,9 +705,18 @@ def _command_probe_pipeline(
     training = schedule_jobs(
         jobs,
         devices,
-        probe_train_command_builder(**common, steps=steps, seed=args.seed),
+        probe_train_command_builder(
+            **common,
+            steps=steps,
+            seed=args.seed,
+            batch_sizes=probe_runtime["training_batch_sizes"],
+            validation_batch_sizes=probe_runtime["validation_batch_sizes"],
+            checkpoint_interval_steps=runtime_config.checkpoint_interval_steps,
+            evaluate_train=runtime_config.evaluate_train,
+            checkpoint_model_sha256=str(identity["checkpoint_model_sha256"]),
+        ),
         on_event=state.monitor_phase("training"),
-        heartbeat_seconds=args.heartbeat_seconds,
+        heartbeat_seconds=runtime_config.heartbeat_seconds,
         reuse_existing=reuse_existing,
     )
     if any(item["status"] == "failed" for item in training):
@@ -546,9 +726,13 @@ def _command_probe_pipeline(
     validation = schedule_jobs(
         jobs,
         devices,
-        probe_validation_command_builder(**common),
+        probe_validation_command_builder(
+            **common,
+            validation_batch_sizes=probe_runtime["validation_batch_sizes"],
+            checkpoint_model_sha256=str(identity["checkpoint_model_sha256"]),
+        ),
         on_event=state.monitor_phase("validation", extra_state={"training": training}),
-        heartbeat_seconds=args.heartbeat_seconds,
+        heartbeat_seconds=runtime_config.heartbeat_seconds,
         reuse_existing=reuse_existing,
     )
     if any(item["status"] == "failed" for item in validation):
@@ -697,6 +881,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_cache = commands.add_parser("validate-probe-cache")
     validate_cache.add_argument("--probe-cache", required=True)
+    validate_cache.add_argument("--data")
     validate_cache.set_defaults(func=command_validate_cache)
 
     for name, function in (
@@ -718,9 +903,20 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--probe-cache")
             command.add_argument("--kind", choices=("p", "q"), required=True)
             command.add_argument("--rank", type=int)
+            command.add_argument("--checkpoint-model-sha256", help=argparse.SUPPRESS)
             command.add_argument("--batch-size", type=int)
+            command.add_argument("--evaluation-batch-size", type=int)
             command.add_argument("--steps", type=int, default=30_000)
             command.add_argument("--seed", type=int, default=1337)
+            command.add_argument("--recovery-checkpoint")
+            command.add_argument("--checkpoint-interval-steps", type=int)
+            command.add_argument(
+                "--resume-probe",
+                action=argparse.BooleanOptionalAction,
+                default=True,
+            )
+            command.add_argument("--evaluate-train", action="store_true")
+            command.add_argument("--skip-final-validation", action="store_true")
         elif name == "analyze":
             command.add_argument("--probe-cache")
             command.add_argument("--examples", type=int, default=1024)
@@ -737,12 +933,39 @@ def build_parser() -> argparse.ArgumentParser:
     validate_probe.add_argument("--probe-checkpoint", required=True)
     validate_probe.add_argument("--batch-size", type=int)
     validate_probe.add_argument("--allow-checkpoint-mismatch", action="store_true")
-    validate_probe.add_argument(
-        "--device", default="cuda" if torch.cuda.is_available() else "cpu"
-    )
+    validate_probe.add_argument("--checkpoint-model-sha256", help=argparse.SUPPRESS)
+    validate_probe.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     validate_probe.add_argument("--output", required=True)
     add_monitoring_arguments(validate_probe)
     validate_probe.set_defaults(func=command_validate_probe)
+
+    benchmark_probe = commands.add_parser("benchmark-probe-batches")
+    benchmark_probe.add_argument("--data", required=True)
+    benchmark_probe.add_argument("--probe-cache", required=True)
+    benchmark_probe.add_argument("--model-config", required=True)
+    benchmark_probe.add_argument("--checkpoint", required=True)
+    benchmark_probe.add_argument("--kind", choices=("p", "q"), required=True)
+    benchmark_probe.add_argument(
+        "--mode", choices=("training", "validation"), default="training"
+    )
+    benchmark_probe.add_argument("--attribute", choices=ATTRIBUTES, default="university")
+    benchmark_probe.add_argument("--target", choices=("first", "whole"), default="whole")
+    benchmark_probe.add_argument("--rank", type=int)
+    benchmark_probe.add_argument("--batch-sizes", required=True)
+    benchmark_probe.add_argument("--warmup-steps", type=int, default=3)
+    benchmark_probe.add_argument("--measure-steps", type=int, default=10)
+    benchmark_probe.add_argument("--memory-limit-percent", type=float, default=92.0)
+    benchmark_probe.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    benchmark_probe.add_argument("--output", required=True)
+    add_monitoring_arguments(benchmark_probe)
+    benchmark_probe.set_defaults(func=command_probe_benchmark)
+
+    summarize_benchmarks = commands.add_parser("summarize-probe-benchmarks")
+    summarize_benchmarks.add_argument("--run", action="append", required=True)
+    summarize_benchmarks.add_argument("--output", required=True)
+    summarize_benchmarks.add_argument("--env-output")
+    summarize_benchmarks.add_argument("--require-complete-search", action="store_true")
+    summarize_benchmarks.set_defaults(func=command_summarize_probe_benchmarks)
 
     cloze = commands.add_parser("cloze-evaluate")
     cloze.add_argument("--data", required=True)
@@ -783,9 +1006,19 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline.add_argument("--ignore-prerequisite", action="store_true")
     pipeline.add_argument("--require-coverage", action="store_true")
     pipeline.add_argument("--quiet-workers", action="store_true")
-    pipeline.add_argument("--heartbeat-seconds", type=float, default=30.0)
+    pipeline.add_argument("--heartbeat-seconds", type=float)
+    pipeline.add_argument("--p-batch-size", type=int)
+    pipeline.add_argument("--q-batch-size", type=int)
+    pipeline.add_argument("--p-validation-batch-size", type=int)
+    pipeline.add_argument("--q-validation-batch-size", type=int)
+    pipeline.add_argument("--checkpoint-interval-steps", type=int)
+    pipeline.add_argument(
+        "--evaluate-train",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     add_monitoring_arguments(pipeline)
-    pipeline.set_defaults(func=command_probe_pipeline)
+    pipeline.set_defaults(func=command_probe_pipeline, log_interval=None)
 
     summarize = commands.add_parser("summarize-probes")
     summarize.add_argument("--run", action="append", required=True)
@@ -802,4 +1035,4 @@ if __name__ == "__main__":
     ):
         raise SystemExit("whole birth-date classification is not part of the paper protocol")
     arguments.func(arguments)
-    require_matching_identity,
+    (require_matching_identity,)

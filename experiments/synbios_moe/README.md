@@ -94,7 +94,9 @@ comparison`。中断后重跑同一命令会恢复主训练，并只复用 ident
 `prepare/evaluate/probe/probe-pipeline/analyze` 与主训练共用结构化监控协议，默认写终端、JSONL 和
 TensorBoard。可用 `--log-dir PATH`、`--log-interval N`、`--no-tensorboard`、`--quiet`
 控制。pipeline 另外提供任务队列状态、失败数和 `--heartbeat-seconds` 心跳；单 probe 记录
-accuracy、逐位置 accuracy、grad norm、data wait 和 step time。多卡 checkpoint 的
+accuracy、逐位置 accuracy、grad norm、data wait、GPU利用率和 step time，并周期保存不含
+backbone的轻量恢复点。正式运行前可用 `scripts/bash/synbios_probe_batch_benchmark.sh`
+在四卡上回归 P/Q 的训练与验证 batch。多卡 checkpoint 的
 `distributed/` 用于恢复主训练，`model.pt` 用于任意单卡 evaluate/probe；probe 不加载主训练 Adam。完整字段见
 [`docs/training/monitoring_and_recovery.md`](../../docs/training/monitoring_and_recovery.md)。
 

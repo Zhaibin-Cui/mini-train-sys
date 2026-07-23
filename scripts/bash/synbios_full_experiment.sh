@@ -33,6 +33,14 @@ fi
 export NPROC
 export PROBE_GPUS="${PROBE_GPUS:-$NPROC}"
 
+# 分布式完整实验在预训练前确认正式 Probe 的容量回归结果可用。
+if [[ "$STRATEGY" != "single" && "${ALLOW_DEFAULT_PROBE_BATCHES:-0}" != "1" ]]; then
+  [[ -n "${PROBE_BATCH_ENV:-}" && -f "$PROBE_BATCH_ENV" ]] || {
+    echo "distributed full experiment requires PROBE_BATCH_ENV=<benchmark>/recommended.env" >&2
+    exit 2
+  }
+fi
+
 # 依次训练 single 和 multi5_permute 两种语料条件。
 variants=(single multi5_permute)
 for variant in "${variants[@]}"; do

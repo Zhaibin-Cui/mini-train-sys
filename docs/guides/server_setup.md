@@ -349,6 +349,7 @@ RESUME=safety NPROC=8 bash scripts/bash/synbios_moe.sh single ddp
 必须按 smoke → pilot → formal：
 
 ```bash
+export PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/<variant>/<UTC时间>/recommended.env
 STAGE=smoke NPROC=8 \
   bash scripts/bash/synbios_probes.sh single ddp latest
 STAGE=pilot NPROC=8 \
@@ -372,6 +373,7 @@ STAGE=pilot NPROC=8 PROBE_DEVICES=cuda:1,cuda:3 \
 
 ```bash
 CONFIRM_FULL_EXPERIMENT=1 NPROC=8 \
+PROBE_BATCH_ENV=<benchmark目录>/recommended.env \
   bash scripts/bash/synbios_full_experiment.sh ddp
 ```
 

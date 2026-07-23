@@ -40,7 +40,9 @@ source .minitrain-storage.env
 nvcc --version
 which c++
 which ninja
-export CUDA_HOME=/usr/local/cuda-12.4
+# 优先使用系统维护的 /usr/local/cuda 链接；若服务器没有该链接，再填 nvcc 对应目录。
+export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
+test -x "$CUDA_HOME/bin/nvcc"
 EXPECTED_GPUS=$(nvidia-smi --list-gpus | wc -l)
 minitrain-check-server --expected-gpus "$EXPECTED_GPUS" --require-nvcc
 
@@ -170,26 +172,149 @@ FORCE_PREPARE=1 \
 如果该语料条件已经存在 committed checkpoint，脚本会拒绝强制重建，以免把旧模型和
 Adam 状态恢复到不同的数据上。需要重建时，应先人工归档对应 checkpoint。
 
-## 3. Probe 整体顺序
+## 3. 明早执行流程：从 batch 回归开始
 
-Probe 按以下顺序运行：
+下面是四张4090、4卡FSDP预训练 checkpoint 的正式顺序。不要直接从 formal 开始，也不要
+使用配置文件中的占位 batch。每个耗时步骤都在独立 `tmux` 中运行，并把外层输出同时写入
+`artifacts/logs/`；启动和结束时按仓库根目录 `AGENTS.md` 追加 `HISTORY.md`。
 
-```text
-预训练 checkpoint
-  → 一次性生成并验证 Probe mmap cache
-  → 主模型 attribute-token accuracy gate
-  → smoke：2 个任务，每个 500 step
-  → pilot：全部 22 个任务，每个 3,000 step
-  → formal：全部 22 个任务，每个 30,000 step
-  → 独立 held-out validation
-  → 六个属性的 Router analysis
+### 3.1 登录后的只读检查
+
+```bash
+cd /path/to/mini-train-sys
+source .venv/bin/activate
+source .minitrain-storage.env
+
+git status --short
+tmux list-sessions || true
+nvidia-smi
+df -h . artifacts
+python -m pytest -q tests/test_synbios_moe.py tests/test_runtime_logger.py
+python -m pytest -q
 ```
 
-默认 gate 在 10,000 篇 biography 上计算 teacher-forced attribute-token accuracy，要求
-`micro_accuracy >= 0.90`。主模型尚未学会事实时，pipeline 会在训练 Probe 前停止。
+确认四张卡没有其他计算任务。batch 脚本默认在任一卡已使用超过 1 GiB 显存时拒绝启动，
+可通过 `PROBE_BENCHMARK_MAX_IDLE_MEMORY_MB` 调整，但不应为了绕过其他训练任务而提高它。
 
-每个 P/Q Probe 是独立的单 GPU 进程：主模型被冻结，只训练低秩输入扰动、归一化层和
-分类器。多张 GPU 用于并行调度不同任务，不使用 DDP/FSDP，也不进行 Probe 间梯度同步。
+### 3.2 对精确 checkpoint 做四卡 batch 回归
+
+优先使用 `multi5_permute` 的正式 checkpoint；P 会取最长 biography，Q 会取最长姓名，任务
+固定为类别数最大的 `university_whole`。脚本会自动建立/验证 probe cache，先测真实
+forward/backward/Adam，再独立测 forward-only validation。
+
+```bash
+tmux new -s synbios-probe-batch-$(date +%Y%m%d-%H%M)
+
+cd /path/to/mini-train-sys
+source .venv/bin/activate
+source .minitrain-storage.env
+mkdir -p artifacts/logs
+
+CHECKPOINT=artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/<epoch目录>
+LOG=artifacts/logs/synbios_probe_batch_$(date +%Y%m%d_%H%M%S).log
+bash scripts/bash/synbios_probe_batch_benchmark.sh \
+  multi5_permute "$CHECKPOINT" 2>&1 | tee "$LOG"
+```
+
+脚本每次写入独立 UTC 时间目录并在退出时打印路径。选择必须同时满足：两张复测卡共同安全、
+峰值 CUDA reserved memory 不超过92%、平均吞吐最高。若最优值仍是候选最大值，脚本会退出非零、
+保留 `summary.json`，但不会生成 `recommended.env`；扩大对应范围后用新会话重跑，例如：
+
+```bash
+P_BATCHES=64,80,96,112,128 \
+Q_BATCHES=256,320,384,448,512 \
+P_VALIDATION_BATCHES=128,160,192,224,256 \
+Q_VALIDATION_BATCHES=512,640,768,896,1024 \
+bash scripts/bash/synbios_probe_batch_benchmark.sh \
+  multi5_permute "$CHECKPOINT" 2>&1 | tee -a "$LOG"
+```
+
+只接受 `summary.json` 中 `ready_for_formal: true` 的目录：
+
+```bash
+BENCH_DIR=artifacts/synbios_moe/results/probe_batch_benchmark/multi5_permute/<UTC时间>
+python -m json.tool "$BENCH_DIR/summary.json" | less
+cat "$BENCH_DIR/recommended.env"
+source "$BENCH_DIR/recommended.env"
+export PROBE_BATCH_ENV="$BENCH_DIR/recommended.env"
+```
+
+同一份 `recommended.env` 必须贯穿两个数据条件的 smoke、pilot、formal。分布式 Bash 入口会
+拒绝缺少这四个值的启动；只有显式设置 `ALLOW_DEFAULT_PROBE_BATCHES=1` 才能用论文默认 batch，
+该开关仅供调试，不用于正式结果。
+
+### 3.3 500-step smoke：最大分类头与恢复链路
+
+Smoke 使用 P/Q `university_whole`（300类），验证选定 batch 能持续500步、dropout训练、恢复点、
+完整 train accuracy、独立 validation 和 progressive cloze gate。两个条件分别执行：
+
+```bash
+PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=smoke NPROC=4 \
+  bash scripts/bash/synbios_probes.sh single fsdp latest
+
+PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=smoke NPROC=4 \
+  bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
+```
+
+必须确认两个 `smoke/pipeline.json` 都是 `status: completed`，日志中没有 non-finite loss、OOM、
+worker failure；不能用 `SKIP_PRETRAIN_GATE`、`IGNORE_STAGE_PREREQUISITE` 或
+`REQUIRE_COVERAGE=0` 绕过正式门禁。
+
+### 3.4 3,000-step pilot：全部22个分类器
+
+```bash
+PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=pilot NPROC=4 \
+  bash scripts/bash/synbios_probes.sh single fsdp latest
+
+PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=pilot NPROC=4 \
+  bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
+```
+
+Pilot 是正式预算前最后一道结构门禁：检查22个训练 `.pt`、22个 validation JSON、summary
+任务集合、逐位置准确率、四卡任务分配和 recovery 文件。若 batch 或保存周期需要修改，必须从
+新 output 目录重新跑 smoke 和 pilot；pipeline identity 不允许把不同运行协议拼在一起。
+
+### 3.5 30,000-step formal 与结果导出
+
+```bash
+PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=formal NPROC=4 \
+  bash scripts/bash/synbios_probes.sh single fsdp latest
+
+PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=formal NPROC=4 \
+  bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
+
+bash scripts/bash/export_test_results.sh
+```
+
+`formal` 完成后 Bash 会继续做六个 router analysis。最终比较使用两个 formal validation
+目录；报告必须同时写明 MiniTrain MoE backbone、未公开原始词表、硬件选择 batch 这三项
+fidelity 差异，不能把绝对数值表述成论文 dense GPT-2 的逐点复现。
+
+### 3.6 实时查看
+
+父终端每10秒显示任务、GPU、worker step、loss、accuracy、显存和 ETA。另开 SSH 终端：
+
+```bash
+tail -f artifacts/logs/<本次probe日志>
+tensorboard --logdir artifacts/synbios_moe/results \
+  --host 127.0.0.1 --port 6606
+```
+
+通过 SSH 转发6606后查看 TensorBoard。每个分类器独立记录，父 pipeline 同时提供聚合视图。
+完整实验顺序为：
+
+```text
+已提交预训练 checkpoint
+  → cache/source/checkpoint/GPU preflight
+  → 四卡 batch 回归并找到右侧边界
+  → smoke（2任务×500）
+  → pilot（22任务×3,000）
+  → formal（22任务×30,000）
+  → held-out validation、router、single vs multi5+permute 比较
+```
+
+每个 P/Q Probe 是独立的单 GPU 进程：主模型参数冻结但训练 dropout 保持开启，只训练低秩
+输入扰动、归一化层和分类器。多卡只调度不同任务，不做 Probe DDP/FSDP 或跨任务梯度同步。
 
 ## 4. 分阶段启动 Probe
 
@@ -203,6 +328,12 @@ STAGE=<smoke|pilot|formal> NPROC=<预训练卡数> \
 
 `NPROC` 用来定位预训练 run name。若主模型由 4 卡训练得到，必须设置 `NPROC=4`；若由
 8 卡训练得到，必须设置 `NPROC=8`。
+
+以下分布式示例均假设已经设置：
+
+```bash
+export PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/<variant>/<UTC时间>/recommended.env
+```
 
 ### 4.1 单卡预训练模型
 
@@ -288,6 +419,27 @@ PROBE_DEVICES=1,3
 
 每张 GPU 同时最多运行一个 Probe；完成当前任务后会从公共队列领取下一个任务。
 
+四张4090在正式 Probe 前先做容量回归。完整命令和判定规则见第3.2节：
+
+```bash
+tmux new -s synbios-probe-batch
+bash scripts/bash/synbios_probe_batch_benchmark.sh \
+  multi5_permute artifacts/synbios_moe/checkpoints/<run>/<checkpoint>
+```
+
+压测先并发运行两份 P 和两份 Q 的训练步，再独立测 forward-only validation。只使用脚本生成且
+`ready_for_formal: true` 的 `recommended.env`，不要把机器相关结果写回公共 YAML：
+
+```bash
+PROBE_BATCH_ENV=artifacts/synbios_moe/results/probe_batch_benchmark/<variant>/<UTC时间>/recommended.env \
+PROBE_GPUS=4 STAGE=formal NPROC=4 \
+  bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
+```
+
+默认每100 steps记录 loss/accuracy/梯度/吞吐/显存/GPU利用率，每10秒刷新父终端，每1000
+steps原子保存一次 LoRA、分类头、LayerNorm、Adam、RNG和shuffle位置。分别通过
+`PROBE_LOG_INTERVAL`、`PROBE_HEARTBEAT_SECONDS`、`PROBE_CHECKPOINT_INTERVAL` 调整。
+
 ## 6. 指定 checkpoint
 
 默认的 `latest` 会选择对应 run 下目录名最大的 committed checkpoint：
@@ -367,21 +519,21 @@ RUN_ROUTER_ANALYSIS=0 STAGE=formal NPROC=8 \
 开销很大，必须显式确认：
 
 ```bash
-CONFIRM_FULL_EXPERIMENT=1 \
+CONFIRM_FULL_EXPERIMENT=1 PROBE_BATCH_ENV=<benchmark目录>/recommended.env \
   bash scripts/bash/synbios_full_experiment.sh single
 ```
 
 四卡 DDP：
 
 ```bash
-CONFIRM_FULL_EXPERIMENT=1 NPROC=4 \
+CONFIRM_FULL_EXPERIMENT=1 NPROC=4 PROBE_BATCH_ENV=<benchmark目录>/recommended.env \
   bash scripts/bash/synbios_full_experiment.sh ddp
 ```
 
 八卡 FSDP：
 
 ```bash
-CONFIRM_FULL_EXPERIMENT=1 NPROC=8 \
+CONFIRM_FULL_EXPERIMENT=1 NPROC=8 PROBE_BATCH_ENV=<benchmark目录>/recommended.env \
   bash scripts/bash/synbios_full_experiment.sh fsdp
 ```
 
@@ -389,8 +541,12 @@ CONFIRM_FULL_EXPERIMENT=1 NPROC=8 \
 
 ```bash
 CONFIRM_FULL_EXPERIMENT=1 NPROC=8 PROBE_GPUS=4 \
+PROBE_BATCH_ENV=<benchmark目录>/recommended.env \
   bash scripts/bash/synbios_full_experiment.sh ddp
 ```
+
+分布式一键入口会在预训练前检查 `PROBE_BATCH_ENV`，避免长时间训练结束后才因缺少正式
+batch 配置失败。单卡调试可不提供该文件。
 
 ## 10. 主要输出目录
 
