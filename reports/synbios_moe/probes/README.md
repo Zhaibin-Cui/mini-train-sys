@@ -51,6 +51,7 @@
 | [`diagnostics/bad_case_routes.md`](diagnostics/bad_case_routes.md) | bad-case 五属性×12层 MoE route 分支 | 已完成 |
 | [`formal_protocol.md`](formal_protocol.md) | probe 任务、rank、batch、预算与端点定义 | 已执行 |
 | [`formal_training_decision.md`](formal_training_decision.md) | pilot → formal 的工业预算决策 | 历史决策 |
+| [`ground_truth_first_training_decision.md`](ground_truth_first_training_decision.md) | true-`t1` fresh whole probe 的修复、容量与 4,000-step launch 决策 | **当前执行配置** |
 | [`single_formal.md`](single_formal.md) | multi 完成前的 single 阶段报告 | 已被正式对照报告取代 |
 | [`pilot_comparison.md`](pilot_comparison.md) | 3,000-step pilot 跨条件结果 | 历史证据 |
 | [`pilot_analysis.md`](pilot_analysis.md) | pilot 趋势和风险分析 | 历史证据 |

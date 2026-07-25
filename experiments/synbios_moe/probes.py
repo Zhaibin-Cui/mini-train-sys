@@ -405,13 +405,16 @@ def train_probe(
         fraction = linear_decay_fraction(step, steps)
         for group in optimizer.param_groups:
             group["lr"] = lr * fraction
+        # Drop the preceding update's gradients before allocating the next
+        # backbone activation set. At capacity-sized batches, clearing them only
+        # after the forward pass needlessly overlaps two large allocations.
+        optimizer.zero_grad(set_to_none=True)
         logits = probe(
             input_ids.to(device, non_blocking=True),
             positions.to(device, non_blocking=True),
         )
         expanded = labels.to(device, non_blocking=True)[:, None].expand(-1, logits.shape[1])
         loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), expanded.reshape(-1))
-        optimizer.zero_grad(set_to_none=True)
         loss.backward()
         predictions = logits.detach().argmax(-1)
         batch_correct = (predictions == expanded).sum(0)
@@ -504,6 +507,7 @@ def train_probe(
                         "path": str(recovery.resolve()),
                     }
                 )
+        del input_ids, positions, labels, logits, expanded, loss, predictions, batch_correct
     utilization.close()
 
     validation_progress = (

@@ -10,7 +10,7 @@ from typing import Callable
 
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset
 
 from experiments.synbios_moe.probes import AttributeProbe, ProbeBatchItem, collate_probe
 from minitrain.runtime.monitoring import GpuUtilizationMonitor
@@ -63,7 +63,11 @@ def benchmark_probe_batches(
     if not candidates or candidates[0] <= 0:
         raise ValueError("batch_sizes must contain positive integers")
 
-    items = _benchmark_items(dataset, max(candidates))
+    # Use enough worst-length examples for at least two distinct batches when
+    # the dataset permits. Each measured step must traverse collate + host-to-
+    # device transfer like the real training loop; reusing one GPU-resident
+    # batch understates allocator pressure at the capacity boundary.
+    items = _benchmark_items(dataset, min(len(dataset), 2 * max(candidates)))
     if len(items) < max(candidates):
         raise ValueError("dataset is smaller than the largest benchmark batch")
     results: list[dict[str, object]] = []
@@ -92,28 +96,47 @@ def benchmark_probe_batches(
                 if mode == "training"
                 else None
             )
-            input_ids, positions, labels = collate_probe(items[:batch_size])
-            input_ids = input_ids.to(device, non_blocking=True)
-            positions = positions.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True)
+            loader = DataLoader(
+                items,
+                batch_size=batch_size,
+                collate_fn=collate_probe,
+                drop_last=True,
+                pin_memory=device.type == "cuda",
+            )
+            iterator = iter(loader)
             if device.type == "cuda":
                 torch.cuda.empty_cache()
                 torch.cuda.reset_peak_memory_stats(device)
             timings = []
+            sequence_length = None
+            last_loss = None
             for step in range(warmup_steps + measure_steps):
                 started = time.perf_counter()
+                try:
+                    cpu_input_ids, cpu_positions, cpu_labels = next(iterator)
+                except StopIteration:
+                    iterator = iter(loader)
+                    cpu_input_ids, cpu_positions, cpu_labels = next(iterator)
+                input_ids = cpu_input_ids.to(device, non_blocking=True)
+                positions = cpu_positions.to(device, non_blocking=True)
+                labels = cpu_labels.to(device, non_blocking=True)
+                if optimizer is not None:
+                    optimizer.zero_grad(set_to_none=True)
                 with torch.set_grad_enabled(mode == "training"):
                     logits = probe(input_ids, positions)
                     expanded = labels[:, None].expand(-1, logits.shape[1])
                     loss = F.cross_entropy(logits.flatten(0, 1), expanded.reshape(-1))
                 if optimizer is not None:
-                    optimizer.zero_grad(set_to_none=True)
                     loss.backward()
                     optimizer.step()
                 if device.type == "cuda":
                     torch.cuda.synchronize(device)
+                sequence_length = int(input_ids.shape[1])
+                last_loss = float(loss.detach())
                 if step >= warmup_steps:
                     timings.append(time.perf_counter() - started)
+                input_ids = positions = labels = None
+                logits = loss = expanded = None
             mean_seconds = sum(timings) / len(timings)
             if device.type == "cuda":
                 peak_allocated = torch.cuda.max_memory_allocated(device)
@@ -134,8 +157,9 @@ def benchmark_probe_batches(
                 {
                     "step_time_ms": round(1000 * mean_seconds, 3),
                     "examples_per_second": round(batch_size / mean_seconds, 3),
-                    "sequence_length": int(input_ids.shape[1]),
-                    "loss": float(loss.detach()),
+                    "sequence_length": sequence_length,
+                    "loss": last_loss,
+                    "batch_lifecycle": "fresh_dataloader_batch_per_step",
                     **monitor.read_interval(),
                 }
             )

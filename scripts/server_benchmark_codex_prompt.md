@@ -1,35 +1,42 @@
-# 给服务器 Codex 的分阶段实验提示词
+# 给服务器 Codex 的精简 Benchmark 提示词
 
-把下面整段发给服务器上的 Codex。它只负责执行，不允许跳过阶段确认，也不允许为了得到
-好看的数字修改比较条件。
+把下面整段发给服务器上的 Codex。目标不是继续扩展实验范围，而是产出两组可以放进简历、
+项目 README 和技术报告的可信数字：
+
+1. 我优化了哪些核心 kernel，以及各 kernel 的正确性、速度提升和空间节省；
+2. 正式 293M SynBioS MoE 在 4×RTX 4090 FSDP 下：
+   - 相同训练工作量时节省多少显存、提升多少吞吐；
+   - 相同显存上限时可以提升多少 token 训练吞吐。
 
 ---
 
-你现在位于 `mini-train-sys` 仓库。请先完整阅读根目录 `AGENTS.md`，严格遵守 tmux、
-挂载盘、日志、`HISTORY.md` 和结果导出规则。当前机器预期为 4 × RTX 4090 24 GB。
+你现在位于 `mini-train-sys` 仓库。先完整阅读根目录 `AGENTS.md`，严格遵守 tmux、挂载盘、
+日志、`HISTORY.md` 和结果导出规则。机器预期为 4 × RTX 4090 24 GB。
 
-总规则：
+## 总规则
 
-1. 先检查当前分支、commit、dirty state、四卡型号/显存/拓扑、`.venv`、
-   `.minitrain-storage.env`、数据、checkpoint 和 probe cache；不要擅自清理已有产物。
-2. 所有长任务必须在独立 tmux 中运行，并把 stdout/stderr 写入
-   `artifacts/logs/<timestamp>.log`。启动后确认 pane 仍存活。
-3. 每个阶段先把准确命令、预计耗时、我应该回来检查的北京时间告诉我，并问
-   “是否开始阶段 N？”。没有得到我的明确同意，不得启动。
-4. 阶段完成后检查退出码、JSON/CSV/图片/notebook、错误日志和质量门槛，更新同一条
-   `HISTORY.md` 记录，运行 `bash scripts/bash/export_test_results.sh`，再汇报结果。
-5. 每完成一个阶段都停下来，告诉我结论、产物路径、失败项（包括 OOM）和下一阶段预计
-   时间，再问是否继续。不得自动连续执行。
-6. 不得把 OOM、timeout、fallback 或少于要求的重复次数包装成成功；不得挑选性删除
-   慢结果。若候选最优值落在扫描边界，扩展一档后重测。
-7. 长任务采用低频轮询，不要持续刷新状态：启动后先根据预计耗时等待，通常每
-   10–20 分钟检查一次；临近预计完成时间再适当缩短间隔。每次只检查 tmux/进程是否
-   存活、GPU 状态和日志末尾 20–50 行，不要反复读取或输出完整日志；状态没有变化时
-   不要重复汇报。仅在任务异常、接近完成或需要我决策时提高检查频率。
+1. 整个 benchmark 只分两个阶段：**kernel microbenchmark** 和
+   **formal end-to-end benchmark**。ground-truth-t1 rank-matched probe 属于另一条科学实验线，不要混入
+   本 benchmark。
+2. 每阶段启动前只做一次必要预检，然后给出准确命令、预计耗时和北京时间。得到明确同意
+   后启动；阶段完成后停下来汇报，不要自动进入下一阶段。
+3. 长任务必须在独立 tmux 中运行，stdout/stderr 写入
+   `artifacts/logs/<timestamp>.log`。启动时写 `HISTORY.md`，结束后补全状态和结果。
+4. 不得隐藏 OOM、timeout、fallback、正确性失败或慢结果。所有正式对比必须使用相同
+   shape、dtype、warmup、measure steps 和重复次数。
+5. 每阶段结束后运行 `bash scripts/bash/export_test_results.sh`。原始 JSON/CSV/log、
+   executed notebook、图片和聚合报告全部保留。
+6. 最终只需要一次总汇报和一个简历友好的规范报告，不要生成多份互相重复的结论文档。
+7. 算子 benchmark 使用工业 workload 优先，而不是为了好跑缩成 toy shape。第一优先级
+   是本项目正式 293.49M MoE 的真实 per-rank/per-layer shape；再加入 Mixtral-class
+   工业维度。如果完整工业 shape 超过单张 4090 24 GB，就用相同候选网格逐档逼近所有
+   对比 backend 的共同安全上限。最大显存占用不是优化目标：主结果选择正确性通过、
+   ≤92% peak-reserved VRAM 内的吞吐最优点或明确的平台拐点，同时保留 OOM、吞吐回落
+   和容量边界。
 
-## 阶段 0：只读预检
+## 阶段 1：逐 kernel benchmark
 
-先运行短检查，不启动实验：
+### 预检
 
 ```bash
 cd ~/mini-train-sys
@@ -39,52 +46,34 @@ git status --short
 git rev-parse HEAD
 nvidia-smi
 nvidia-smi topo -m
-python -m pytest tests/test_probe_diagnostics.py \
-  tests/test_predicted_first_report.py \
-  tests/test_operator_bench_utils.py \
-  tests/test_distributed_bench_utils.py -q
-python -m ruff check experiments/synbios_moe scripts tests minitrain
+python -m pytest tests/test_operator_bench_utils.py \
+  tests/test_server_benchmark_workflows.py -q
+python -m ruff check tests/operator_bench_utils.py \
+  tests/moe_operator_bench_runner.py scripts/run_server_notebook.py minitrain/kernels
 ```
 
-确认 `multi5_permute` 正式 backbone、formal first probes 和 probe cache 都存在。汇报预检
-结论与后续四阶段时间预算，然后先问我是否开始阶段 1。
-
-## 阶段 1：predicted-t1 whole probe
-
-先做精确 stage-two 输入的 batch 搜索，不沿用原 probe batch：
-
-```bash
-bash scripts/bash/synbios_predicted_first_batch_benchmark.sh \
-  multi5_permute_fsdp_4gpu latest
-```
-
-这个脚本分别扫描 P/Q training 和 validation，每种条件用两张独立 GPU 复测，并只在
-最优点不是搜索边界时生成 `recommended.env`。预计 30–90 分钟；启动后根据首个 candidate
-实测速率修正 ETA，告诉我回来检查的北京时间。
-
-batch 搜索通过后，停下来汇报 P/Q 训练和评测 batch、吞吐、显存峰值和扫描边界，并问我
-是否开始同一阶段的正式 pilot。得到同意后：
-
-```bash
-source <batch-result-directory>/recommended.env
-STEPS=3000 GPUS="0 1 2 3" \
-  bash scripts/bash/synbios_predicted_first_whole_pilot.sh \
-  multi5_permute multi5_permute_fsdp_4gpu latest
-```
-
-预计 1–4 小时，以第一波四个分类器的实测进度更新 ETA。最终必须有 10 个 JSON、10 个
-`.pt`、`summary.csv`、`summary.json`，以及 `figures/` 下 P/Q 的 PNG 和 PDF。检查
-`summary.json` 的 protocol、condition、identity 和任务数。完成并导出后，问我是否开始
-阶段 2。
-
-## 阶段 2：RTX 4090 MoE 算子 scaling
-
-不要直接用 `jupyter nbconvert --inplace`。统一通过安全执行器运行，它会指定正确 kernel、
-执行到临时副本、捕获 cell error，并只在整本成功后原子发布：
+确认四张 GPU 空闲后，安装明确的 notebook kernel，并构建正式模型需要的 sm89、head-dim
+64、BF16/FP16 CUDA FlashAttention：
 
 ```bash
 python -m ipykernel install --user --name mini-train-sys \
   --display-name mini-train-sys
+export MINITRAIN_CUDA_BUILD_PROFILE=rtx4090
+export MINITRAIN_CUDA_ARCHS=89
+export MINITRAIN_CUDA_MAX_JOBS=2
+export MINITRAIN_CUDA_VERBOSE=1
+python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
+```
+
+通过安全执行器运行两个现有 benchmark notebook，不允许 `--inplace`：
+
+```bash
+python scripts/run_server_notebook.py \
+  tests/operator_bench_linux_server.ipynb \
+  --kernel mini-train-sys \
+  --output-dir artifacts/notebooks \
+  --timeout-seconds -1
+
 python scripts/run_server_notebook.py \
   tests/moe_operator_bench_linux_server.ipynb \
   --kernel mini-train-sys \
@@ -92,30 +81,88 @@ python scripts/run_server_notebook.py \
   --timeout-seconds -1
 ```
 
-外层命令仍须放在 tmux。预计 3–6 小时，启动 15 分钟后先查看
-`artifacts/operator_benchmark/rtx4090_24gb/logs/`，再根据已完成 shape 更新 ETA。
+主表覆盖以下八类 kernel，并明确优化实现归属：
 
-该 notebook 的每个 shape 都在独立 CUDA 子进程中运行。必须保留 timeout/OOM case，
-核验 `summary.json`、`summary.csv`、raw/logs、三张统一风格图片，以及 executed notebook
-输出副本。重点解释：
+| Kernel | 项目中的优化实现 | 主对比 |
+|---|---|---|
+| RMSNorm | Triton | Torch vs Triton |
+| RoPE | Triton | Torch vs Triton |
+| SwiGLU | Triton | Torch vs Triton |
+| CrossEntropy | Triton | Torch vs Triton |
+| FusedLinearCrossEntropy | Triton | Torch vs Triton |
+| FlashAttention | Triton + native CUDA | Torch vs Triton vs native CUDA |
+| Router postprocess | Triton | Torch vs Triton |
+| Fused MoE | Triton | Torch vs Triton |
 
-- project-formal profile 是否跑到 57,344 tokens（112 × 512）；
-- Mixtral-class 4096/14336 profile 的安全边界；
-- Torch/Triton forward、backward、full-step 的正确性、速度和显存；
-- 是否通过 `quality_gate_passed`。
+CUDA backend 目前只有 attention 是本地 CUDA kernel；其他算子会沿
+CUDA → Triton → Torch fallback，因此不得把八个算子都描述成手写 CUDA。
 
-完成并导出后，问我是否开始阶段 3。
+项目正式工业 profile 固定来自当前成功训练的 293,494,272 参数 SynBioS MoE：
 
-## 阶段 3：正式 FSDP launch 的 Torch vs CUDA backend
+```text
+local batch = 112
+sequence length = 512
+tokens per rank/layer = 57,344
+hidden = 768
+intermediate = 1,024
+attention heads = 12
+head dim = 64
+vocab = 50,257
+experts = 8
+experts per token = 2
+dtype = BF16
+```
 
-先构建 RTX 4090 的 head-dim 64、BF16/FP16 CUDA FlashAttention，不要编译无关 bucket：
+RMSNorm、RoPE、SwiGLU、FlashAttention、Router、Fused MoE 和
+FusedLinearCrossEntropy 应优先包含这个项目 profile。普通 CrossEntropy 的显式
+`tokens × vocab` logits 可能超过 24 GB；若 Torch reference 无法完成完整 formal
+shape，就以相同 tokens/vocab 候选网格寻找 Torch 与优化实现的最大共同安全点，并把
+formal-shape OOM 作为 fused loss 空间价值的证据，而不是伪造速度比。
+
+Mixtral-class `H=4096, I=14336, E=8, K=2` 作为第二工业 profile。token 数按 4090
+实际容量逐档增加；若最大成功点仍是搜索边界，扩展一档。它是工业维度的容量/性能附录，
+不替代项目正式 profile 的简历 headline。
+
+每个 kernel 至少汇报：
+
+- benchmark shape、dtype 和 GPU；
+- forward、backward-only、full forward+backward 的 P50/P95；
+- 相对 Torch 的 speedup 和 latency reduction percentage；
+- peak allocated memory、memory reduction percentage；若工具能提供，同时保留 peak
+  reserved memory；
+- forward/backward correctness 和任何 unsupported/OOM/timeout。
+
+原始 sweep 全部保留。简历主表每个 kernel 的代表点按以下固定顺序选择，不能事后挑
+最好看的点：
+
+1. 项目 formal shape 若所有对比 backend 正确完成，使用 formal shape；
+2. 否则使用所有对比 backend 在 92% reserved-VRAM 内共同完成的吞吐最优点；
+3. 若吞吐在更大 shape 已进入平台或下降，使用平台拐点，并同时报告更大点；
+4. 若选中点位于扫描边界，扩展一档后才能形成 headline。
+
+将两本 notebook 的结果合并到：
+
+```text
+artifacts/operator_benchmark/resume_summary/
+├── kernel_benchmark_summary.csv
+├── kernel_benchmark_summary.json
+├── kernel_benchmark_overview.png
+└── README.md
+```
+
+`README.md` 必须说明比较条件、代表 shape 选择、正确性门槛、失败项和哪些 backend 真正
+调用了 native CUDA。阶段完成并导出后，汇报总耗时与结果，再问是否开始阶段 2。
+
+## 阶段 2：正式 FSDP4 端到端 benchmark
+
+服务器标准入口是
+`scripts/bash/synbios_backend_benchmark.sh`。它按本节固定参数依次执行 backend
+validation、2A、2B、两份 presentation 和结果导出；任何 correctness、进程或容量门槛
+失败都会立即停止。下列展开命令仍是审计规范和单阶段重跑入口。
+
+先用阶段 1 已构建的 CUDA extension 做一次正式 D64 attention 正确性检查：
 
 ```bash
-export MINITRAIN_CUDA_BUILD_PROFILE=workstation
-export MINITRAIN_CUDA_ARCHS=89
-export MINITRAIN_CUDA_MAX_JOBS=2
-export MINITRAIN_CUDA_VERBOSE=1
-python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
 python scripts/run_dist_bench.py validate-backend \
   --device cuda:0 \
   --batch-size 2 \
@@ -123,8 +170,28 @@ python scripts/run_dist_bench.py validate-backend \
   --output artifacts/distributed_benchmark/synbios_backend_torch_vs_cuda/backend_validation.json
 ```
 
-编译可能需要 30–120 分钟。编译和测试通过后，使用完全相同的正式 SynBioS model、
-FSDP4、BF16、local batch 112 比较 Torch 与 CUDA，各做 3 次：
+验证通过后，在完全相同的正式条件下比较三个 backend。端到端必须同时做两种口径，不能
+用其中一个冒充另一个：
+
+1. **固定工作量比较**：相同 local/global batch、相同 warmup/measure steps，比较吞吐和
+   显存。它回答“处理同样多 token 时节省多少内存、快多少”。
+2. **固定显存预算比较**：每个 backend 都受同一个 92% peak-reserved VRAM 上限约束，
+   分别选择该上限内吞吐最高的 batch。它回答“同样 24GB 空间能多训练多少 token/s”。
+
+共同条件：
+
+- 293,494,272 参数 SynBioS MoE；
+- 12 layers、8 experts、top-2、sequence length 512；
+- BF16、FSDP full shard、4 × RTX 4090；
+- 相同数据和训练 step 实现。
+
+整体训练 benchmark 只使用这个已经完成正式训练的约 300M MoE，不换成 125M 通用模型
+或 Mixtral 参考模型。Mixtral-class 只属于算子 microbenchmark 附录。
+
+### 2A：固定工作量
+
+优先使用正式 local/global batch 112/448，warmup 10 steps、measure 30 steps、每个
+backend 3 次：
 
 ```bash
 python scripts/run_dist_bench.py run \
@@ -146,34 +213,101 @@ python scripts/run_dist_bench.py present-backend \
   --output artifacts/distributed_benchmark/synbios_backend_torch_vs_cuda/presentation
 ```
 
-训练 benchmark 本身预计 30–60 分钟（不含首次编译）。Torch/CUDA 是目标对比，额外的
-Triton control 用来隔离“原生 CUDA attention”相对 fallback 栈的增量。汇报吞吐
-speedup、step time 下降比例、allocated/reserved 显存变化、均值和标准差。必须检查每个 CUDA case 的
-`backend_dispatch.attention.native_cuda > 0` 且 `fallback == 0`。说明 CUDA backend
-目前原生替换的是 attention，其余算子沿 CUDA→Triton→Torch fallback；不能把总体差异
-描述成“所有算子都是手写 CUDA”。完成并导出后，问我是否开始阶段 4。
+实际自动流程先做 2B，再从容量结果中确定三个 backend 共同在 92%
+reserved-memory 上限内完成的最大 common batch，最后用该 common batch 执行三组各
+3 次，作为固定工作量主比较。batch 112 只是工业级候选点，不得预设它对 Torch、
+Triton 和 CUDA 都可用；任一 OOM 都必须保留并进入容量边界报告。
 
-## 阶段 4：FSDP 1 卡与 4 卡 scaling 复核
+固定工作量主表：
 
-先复核已有证据，不要默认重跑：
+| Backend | Throughput tok/s | Step time ms | Peak allocated/GPU | Peak reserved/GPU | Repeats |
+|---|---:|---:|---:|---:|---:|
+| Torch | mean ± std | mean ± std | mean ± std | mean ± std | 3 |
+| Triton | mean ± std | mean ± std | mean ± std | mean ± std | 3 |
+| CUDA | mean ± std | mean ± std | mean ± std | mean ± std | 3 |
 
-- `results/benchmarks/synbios_moe_fsdp4/weak_b64/weak_summary.json`
-- `results/benchmarks/synbios_moe_fsdp4/weak_b64/presentation/`
-- `reports/distributed_bench.md`
-- `HISTORY.md` 中 “SynBioS exact-model FSDP weak-scaling verification”
-- 运行代码 `scripts/run_dist_bench.py`
-- notebook `tests/distributed_server_benchmark.ipynb`
+同时给出 CUDA vs Torch、Triton vs Torch、CUDA vs Triton 的吞吐 speedup 和 step-time
+下降比例，以及 allocated/reserved memory reduction percentage。每个 CUDA case必须满足：
 
-确认现有两次重复是否仍与当前报告一致：单卡约 93,302 tok/s，四卡约
-344,254 tok/s，即 3.69×、平均弱扩展效率 92.24%。这已经回答“是否四倍”：接近但不是
-四倍。
+```text
+backend_dispatch.attention.native_cuda > 0
+backend_dispatch.attention.fallback == 0
+```
 
-复核预计 10–20 分钟。先把复核结果告诉我，再问我是否真的要按当前 commit 重跑。只有我
-明确要求重跑，才使用相同 local batch 64、1/4 GPU、至少两次重复的 weak suite；不得
-用 local batch 112 的 capacity 数据冒充单卡/四卡公平 scaling。
+### 2B：固定 92% 显存预算
 
-最后给出四阶段总表：实验问题、准确比较条件、状态、核心指标、质量门槛、原始证据、
-图片、日志、executed notebook、`HISTORY.md` 条目和仍存在的限制。先让我审核，再准备
-提交，不要自行 push。
+对三个 backend 使用完全相同的 batch candidates。初始扫描：
+
+```bash
+python scripts/run_dist_bench.py run \
+  --suite capacity \
+  --strategies fsdp \
+  --world-sizes 4 \
+  --ops-backends torch triton cuda \
+  --batch-sizes 1 2 4 8 16 24 32 48 64 80 96 112 120 128 \
+  --warmup-steps 5 \
+  --measure-steps 20 \
+  --repeats 2 \
+  --case-config configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml \
+  --model-config configs/synbios_moe/model.yaml \
+  --output artifacts/distributed_benchmark/synbios_backend_capacity
+
+python scripts/run_dist_bench.py present-capacity \
+  --input artifacts/distributed_benchmark/synbios_backend_capacity/capacity_summary.json \
+  --memory-limit-percent 92 \
+  --min-repeats 2 \
+  --output artifacts/distributed_benchmark/synbios_backend_capacity/presentation
+```
+
+对每个 backend，只从以下 case 中选择最高吞吐点：
+
+```text
+status == completed
+peak_memory_reserved_mb / gpu_memory_total_mb <= 0.92
+两次重复都完成
+```
+
+如果某 backend 的最优点落在扫描最大 batch 边界，向上扩展一档后复测；OOM 和吞吐回落点
+都保留。不得按 allocated memory 选择，物理显存预算以 reserved memory 为准。
+
+固定空间主表：
+
+| Backend | Selected local/global batch | Reserved VRAM % | Throughput tok/s | vs Torch |
+|---|---:|---:|---:|---:|
+| Torch | best under 92% | ≤92% | mean ± std | baseline |
+| Triton | best under 92% | ≤92% | mean ± std | speedup |
+| CUDA | best under 92% | ≤92% | mean ± std | speedup |
+
+这个表是“同样显存空间下训练吞吐提升”的唯一 headline 来源。固定 batch 的 2A 结果不能
+替代这个结论。
+
+已有 1 卡与 4 卡 FSDP weak-scaling 结果只作为补充引用，不默认重跑：
+
+- 1 GPU：约 93,302 tok/s；
+- 4 GPU：约 344,254 tok/s；
+- 3.69× scaling，平均效率 92.24%。
+
+## 最终交付
+
+把两阶段结论合并成一个规范报告：
+
+```text
+reports/server_benchmark_resume.md
+```
+
+报告按以下顺序组织：
+
+1. 硬件、软件版本和 Git commit；
+2. 我优化的八个 kernel，以及各自代表 shape、正确性、P50/P95、speedup 和 memory
+   reduction；
+3. 固定工作量下三 backend 的吞吐、step time、allocated/reserved memory、均值、标准差
+   和显存节省比例；
+4. 固定 92% reserved-memory 上限下各 backend 的最佳 batch、吞吐和相对 Torch 提升；
+5. 已有 1→4 GPU scaling 作为补充；
+6. 原始 JSON/CSV、图片、日志、executed notebook 和 `HISTORY.md` 链接；
+7. 限制：单机 PCIe、单一模型尺寸、CUDA 原生实现当前只覆盖 attention。
+
+最终给出两条“可写进简历”的候选表述，但必须等真实数字产生后填写，不得预先编造或只挑
+最好的一次运行。先让我审核报告，不要自行 commit 或 push。
 
 ---

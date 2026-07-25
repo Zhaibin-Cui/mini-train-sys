@@ -41,6 +41,7 @@ scheduled-token exposure。唯一目标差异是 biography 数量、措辞和字
 | 22 person-held-out validations | 完成 | 完成 | `probe_pipeline/formal/validation/` |
 | Oracle true-`t1` Q-whole | 未运行 | 完成 | `probes/diagnostics/` |
 | Bad-case MoE route branching | 未运行 | 完成 | `probes/diagnostics/` |
+| Ground-truth-`t1` rank-matched whole heads | 未运行 | 修复后待重跑 | 待生成正式报告 |
 
 ## 主要结果
 

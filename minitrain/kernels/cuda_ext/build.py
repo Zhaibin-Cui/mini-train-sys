@@ -8,9 +8,12 @@ Three profiles make the same source tree practical on different machines:
 
 ``minimal``
     fp16, head-dim bucket 32. Intended for CI and compiler smoke tests.
-``workstation`` (default)
+``workstation``
     fp16/bf16, head-dim bucket 64. Matches this project's model defaults and
     keeps local Windows builds practical on the RTX 3050 development machine.
+``rtx4090`` (default)
+    fp16/bf16, head-dim bucket 64, compiled for sm89 with two workers. Matches
+    the persistent 4×RTX 4090 benchmark/training server.
 ``full``
     fp16/bf16, all upstream buckets through 256. Intended for build servers.
 
@@ -37,17 +40,16 @@ import torch
 # Change these values when this repository normally runs on a different class
 # of machine. Environment variables still take precedence, which lets a build
 # server override the local defaults without editing this file.
-# The repository is developed on a 16-GB Windows workstation.  Compiling all
-# 48 template translation units by default is both surprising and unnecessary
-# for the model sizes normally exercised there.  Build servers still select
-# ``full`` explicitly through MINITRAIN_CUDA_BUILD_PROFILE.
-_DEFAULT_BUILD_PROFILE = "workstation"
-_DEFAULT_CUDA_ARCHS = "86"  # Semicolon-separated values, for example "80;90".
-# A single D=256 backward nvcc process can consume most of the workstation's
-# host RAM.  Two such processes failed with cudafe "out of memory" in the full
-# sm86 build, so the conservative local default is one worker.  Large servers
-# should override this after measuring their per-process peak memory.
-_DEFAULT_MAX_JOBS = 1
+# This checkout's formal benchmark host is a 128-GB Linux server with four
+# RTX 4090 (sm89) GPUs. The formal model uses D=64 attention, so its default
+# profile compiles only the eight causal/non-causal, forward/backward,
+# fp16/bf16 translation units it actually dispatches. Broader serving coverage
+# remains an explicit ``full`` build.
+_DEFAULT_BUILD_PROFILE = "rtx4090"
+_DEFAULT_CUDA_ARCHS = "89"  # Semicolon-separated values, for example "80;90".
+# Two D=64 nvcc processes fit comfortably in 128 GB host RAM and shorten the
+# first build without the high peak of parallel D=192/256 full-profile builds.
+_DEFAULT_MAX_JOBS = 2
 _DEFAULT_VERBOSE = True  # Print nvcc command lines and verbose ninja output.
 
 # Each profile selects the dtype/head-dimension kernel matrix. Modify these
@@ -64,6 +66,8 @@ _PROFILES = {
     # coverage is required; keeping it explicit avoids surprise multi-hour
     # first builds on a memory-constrained Windows workstation.
     "workstation": ((64,), _DTYPES),
+    # Exact attention matrix used by the 293.49M SynBioS MoE on 4×RTX 4090.
+    "rtx4090": ((64,), _DTYPES),
     "full": (_HEAD_DIM_BUCKETS, _DTYPES),
 }
 

@@ -34,3 +34,18 @@ shard、local batch 64，以及 benchmark preset 产生的固定随机 token 流
 限制：这是单机四卡 PCIe 拓扑、随机 token 输入上的弱扩展结果，不等价于真实语料端到端
 吞吐、跨节点扩展，也不能外推到不同模型尺寸或不同互联。Torch/Triton/CUDA 的下一轮
 正式 launch 对比则显式使用 `multi5_permute` token shards。
+
+## 下一轮 backend 对比口径
+
+正式 293.49M SynBioS MoE 的 Torch/Triton/CUDA 对比将分成两个独立 headline：
+
+1. 固定 common batch：比较同样 token 工作量下的吞吐、step time 和
+   allocated/reserved 显存，回答相对 Torch 节省多少内存、提升多少速度；
+2. 固定每卡 92% peak-reserved VRAM 上限：每个 backend 选择重复完成的最高吞吐 batch，
+   回答同样显存空间下提升多少 tokens/s。
+
+两种口径尚未产生正式数据。容量聚合由
+`scripts/run_dist_bench.py present-capacity` 完成，完整执行计划见
+[`scripts/server_benchmark_codex_prompt.md`](../scripts/server_benchmark_codex_prompt.md)。
+该对比只使用当前正式约 300M MoE 和真实 `multi5_permute` token shards；125M 通用模型
+和 Mixtral-class shape 不进入整体训练 headline。

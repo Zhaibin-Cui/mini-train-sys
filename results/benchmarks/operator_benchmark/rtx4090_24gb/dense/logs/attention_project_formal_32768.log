@@ -1,0 +1,13 @@
+ninja: no work to do.
+   benchmark provider   size  ... num_warps num_stages  num_ctas
+0  attention   triton  32768  ...         4          3         1
+1  attention   triton  32768  ...         4          1         1
+
+[2 rows x 10 columns]
+
+--- STDERR ---
+Detected CUDA files, patching ldflags
+Emitting ninja build file /data/mini-train-sys/cache/cuda_ext/cpython-310_5217543196fa/minitrain_cuda_flash_8d01e50dc6dc/build.ninja...
+Building extension module minitrain_cuda_flash_8d01e50dc6dc...
+Using envvar MAX_JOBS (2) as the number of workers...
+Loading extension module minitrain_cuda_flash_8d01e50dc6dc...

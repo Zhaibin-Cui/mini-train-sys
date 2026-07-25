@@ -8,9 +8,9 @@ The legacy diagnostics in this module never update model or probe parameters:
   tests whether examples sharing token 1 use similar expert paths before
   branching at token 2.
 
-``train_predicted_first_whole_probe`` is intentionally different: it freezes a
-completed first-token probe, inserts its hard prediction, reruns the frozen
-backbone, and trains a fresh whole-value readout on the matched hidden state.
+``train_ground_truth_first_whole_probe`` inserts the cached ground-truth first
+token, reruns the frozen backbone, and trains a fresh whole-value probe with the
+same low-rank input-delta architecture and rank as the original formal probe.
 P reads the inserted token itself; Q reads the EOS immediately after it.
 
 Raw per-example evidence, tidy aggregates, and plots are deliberately kept
@@ -31,9 +31,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Sequence
 
+import numpy as np
 import torch
-from torch import nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
 from torch.torch_version import TorchVersion
 
 from experiments.synbios_moe.data import ATTRIBUTES
@@ -47,6 +47,7 @@ from experiments.synbios_moe.probes import (
 )
 from experiments.synbios_moe.router_analysis import normalized_mutual_information
 from minitrain.model.transformer import MiniTransformer
+from minitrain.runtime.monitoring import ProgressReporter
 
 
 WHOLE_ATTRIBUTES = tuple(attribute for attribute in ATTRIBUTES if attribute != "birth_date")
@@ -179,7 +180,7 @@ def _dataset_profile_index(dataset: CachedProbeDataset, index: int) -> int:
     return int(dataset.profile_indices[sample])
 
 
-def predicted_first_token_text(class_name: str, codec: GPT2Codec) -> tuple[int, str]:
+def first_token_text(class_name: str, codec: GPT2Codec) -> tuple[int, str]:
     """Recover one cached first-token class as its exact leading-space token text."""
 
     try:
@@ -198,7 +199,7 @@ def predicted_first_token_text(class_name: str, codec: GPT2Codec) -> tuple[int, 
     return token_id, text
 
 
-def build_predicted_first_input(
+def build_ground_truth_first_input(
     *,
     kind: str,
     item: ProbeBatchItem,
@@ -206,7 +207,7 @@ def build_predicted_first_input(
     token_id: int,
     eos_id: int,
 ) -> ProbeBatchItem:
-    """Insert a hard t1 prediction and select the requested matched readout."""
+    """Insert the ground-truth t1 and select the requested matched readout."""
 
     if kind == "p":
         if not 0 <= source_position < len(item.positions):
@@ -224,8 +225,8 @@ def build_predicted_first_input(
     raise ValueError(f"invalid probe kind: {kind}")
 
 
-class PredictedFirstWholeDataset(Dataset):
-    """Whole labels paired with inputs rebuilt from frozen first-probe predictions."""
+class GroundTruthFirstWholeDataset(Dataset):
+    """Whole labels paired with inputs rebuilt from cached ground-truth t1 labels."""
 
     def __init__(
         self,
@@ -233,23 +234,17 @@ class PredictedFirstWholeDataset(Dataset):
         kind: str,
         first_data: CachedProbeDataset,
         whole_data: CachedProbeDataset,
-        predicted_class_ids: Sequence[Sequence[int]],
         token_ids_by_class: Sequence[int],
         eos_id: int,
     ) -> None:
         if kind not in {"p", "q"}:
             raise ValueError("kind must be p or q")
-        if len(first_data) != len(whole_data) or len(first_data) != len(predicted_class_ids):
-            raise ValueError("first/whole datasets and predictions are not aligned")
+        if len(first_data) != len(whole_data):
+            raise ValueError("first/whole datasets are not aligned")
         expected_positions = 6 if kind == "p" else 1
-        if any(len(row) != expected_positions for row in predicted_class_ids):
-            raise ValueError(f"{kind.upper()} predictions must have {expected_positions} positions")
         self.kind = kind
         self.first_data = first_data
         self.whole_data = whole_data
-        self.predicted_class_ids = tuple(
-            tuple(int(value) for value in row) for row in predicted_class_ids
-        )
         self.token_ids_by_class = tuple(int(value) for value in token_ids_by_class)
         self.eos_id = int(eos_id)
         self.positions_per_source = expected_positions
@@ -286,114 +281,58 @@ class PredictedFirstWholeDataset(Dataset):
             or first_item.positions != whole_item.positions
         ):
             raise ValueError("first and whole cached items are not input-aligned")
-        predicted_class = self.predicted_class_ids[source_index][source_position]
-        if not 0 <= predicted_class < len(self.token_ids_by_class):
-            raise ValueError("predicted first-token class is out of range")
-        rebuilt = build_predicted_first_input(
+        ground_truth_class = int(first_item.label)
+        if not 0 <= ground_truth_class < len(self.token_ids_by_class):
+            raise ValueError("ground-truth first-token class is out of range")
+        rebuilt = build_ground_truth_first_input(
             kind=self.kind,
             item=first_item,
             source_position=source_position,
-            token_id=self.token_ids_by_class[predicted_class],
+            token_id=self.token_ids_by_class[ground_truth_class],
             eos_id=self.eos_id,
         )
         return ProbeBatchItem(rebuilt.input_ids, rebuilt.positions, whole_item.label)
 
 
-class PredictedFirstWholeProbe(nn.Module):
-    """Frozen backbone plus a matched whole head after a predicted t1 rerun."""
-
-    def __init__(self, backbone: MiniTransformer, num_classes: int, *, kind: str) -> None:
-        super().__init__()
-        if kind not in {"p", "q"}:
-            raise ValueError("kind must be p or q")
-        self.backbone = backbone
-        self.kind = kind
-        for parameter in backbone.parameters():
-            parameter.requires_grad_(False)
-        self.normalizer: nn.Module = (
-            nn.LayerNorm(backbone.cfg.hidden_size)
-            if kind == "p"
-            else nn.BatchNorm1d(backbone.cfg.hidden_size)
-        )
-        self.classifier = nn.Linear(backbone.cfg.hidden_size, num_classes)
-
-    def train(self, mode: bool = True):
-        super().train(mode)
-        # The second stage trains only the matched readout. Keep the frozen
-        # backbone deterministic so route changes come from the inserted token.
-        self.backbone.eval()
-        return self
-
-    def forward(self, input_ids: torch.Tensor, positions: torch.Tensor) -> torch.Tensor:
-        with torch.no_grad():
-            hidden = self.backbone.hidden_states(input_ids)
-        batch = torch.arange(hidden.shape[0], device=hidden.device)[:, None]
-        selected = hidden[batch, positions]
-        shape = selected.shape
-        normalized = self.normalizer(selected.reshape(-1, shape[-1]))
-        return self.classifier(normalized).view(shape[0], shape[1], -1)
-
-
 @torch.no_grad()
-def _predict_first_classes(
+def evaluate_ground_truth_first_whole_by_source_position(
     probe: AttributeProbe,
-    dataset: CachedProbeDataset,
+    dataset: GroundTruthFirstWholeDataset,
     *,
     device: torch.device,
     batch_size: int,
-    progress: Callable[[int], None] | None = None,
-) -> tuple[list[list[int]], list[float]]:
-    if batch_size <= 0:
-        raise ValueError("first-token prediction batch size must be positive")
+    max_examples: int | None = None,
+    logger=None,
+    log_interval: int | None = None,
+) -> dict[str, object]:
+    if max_examples is not None and max_examples <= 0:
+        raise ValueError("max_examples must be positive or None")
+    evaluation_data: Dataset = dataset
+    if max_examples is not None:
+        evaluation_data = Subset(dataset, range(min(max_examples, len(dataset))))
     loader = DataLoader(
-        dataset,
+        evaluation_data,
         batch_size=batch_size,
         collate_fn=collate_probe,
         pin_memory=device.type == "cuda",
     )
     probe.to(device).eval()
-    predictions: list[list[int]] = []
-    correct: list[int] | None = None
-    total = 0
-    for input_ids, positions, labels in loader:
-        logits = probe(
-            input_ids.to(device, non_blocking=True),
-            positions.to(device, non_blocking=True),
+    progress = (
+        ProgressReporter(
+            "ground_truth_probe_validation",
+            len(loader),
+            logger,
+            device,
+            log_interval=max(1, min(log_interval or 10, len(loader))),
+            unit="batch",
         )
-        predicted = logits.argmax(-1).cpu()
-        predictions.extend(predicted.tolist())
-        expanded = labels[:, None].expand_as(predicted)
-        batch_correct = (predicted == expanded).sum(0).tolist()
-        correct = (
-            batch_correct
-            if correct is None
-            else [left + right for left, right in zip(correct, batch_correct)]
-        )
-        total += len(labels)
-        if progress is not None:
-            progress(total)
-    return predictions, [value / max(total, 1) for value in (correct or [])]
-
-
-@torch.no_grad()
-def evaluate_predicted_first_whole_by_source_position(
-    probe: PredictedFirstWholeProbe,
-    dataset: PredictedFirstWholeDataset,
-    *,
-    device: torch.device,
-    batch_size: int,
-) -> list[float]:
-    loader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        collate_fn=collate_probe,
-        pin_memory=device.type == "cuda",
+        if logger is not None and len(loader) > 0
+        else None
     )
-    probe.to(device).eval()
     correct = [0] * dataset.positions_per_source
     total = [0] * dataset.positions_per_source
     offset = 0
-    for input_ids, positions, labels in loader:
+    for batch_index, (input_ids, positions, labels) in enumerate(loader, start=1):
         logits = probe(
             input_ids.to(device, non_blocking=True),
             positions.to(device, non_blocking=True),
@@ -404,10 +343,30 @@ def evaluate_predicted_first_whole_by_source_position(
             total[source_position] += 1
             correct[source_position] += int(prediction == label)
         offset += len(labels)
-    return [hits / max(count, 1) for hits, count in zip(correct, total)]
+        if progress is not None:
+            progress.update(
+                batch_index,
+                items=len(labels),
+                tokens=input_ids.numel(),
+                metrics={
+                    "accuracy_running": sum(correct) / max(sum(total), 1),
+                    "accuracy_by_position_running": [
+                        hits / max(count, 1) for hits, count in zip(correct, total)
+                    ],
+                },
+            )
+    return {
+        "accuracy": sum(correct) / max(sum(total), 1),
+        "accuracy_by_position": [
+            hits / max(count, 1) for hits, count in zip(correct, total)
+        ],
+        "correct_by_position": correct,
+        "total_by_position": total,
+        "monitoring": progress.summary() if progress is not None else {},
+    }
 
 
-def train_predicted_first_whole_probe(
+def train_ground_truth_first_whole_probe(
     *,
     backbone: MiniTransformer,
     cache_root: str | Path,
@@ -426,20 +385,17 @@ def train_predicted_first_whole_probe(
     checkpoint_interval_steps: int | None = None,
     resume: bool = True,
     evaluate_train: bool = False,
-    prediction_progress: Callable[[str, int], None] | None = None,
-) -> tuple[PredictedFirstWholeProbe, dict[str, object]]:
-    """Train one pilot-scale whole head after hard predicted-t1 insertion."""
+    max_validation_examples: int | None = None,
+) -> tuple[AttributeProbe, dict[str, object]]:
+    """Train a rank-matched whole probe after ground-truth-t1 insertion."""
 
-    prepared = prepare_predicted_first_whole_data(
+    prepared = prepare_ground_truth_first_whole_data(
         backbone=backbone,
         cache_root=cache_root,
         probe_dir=probe_dir,
         kind=kind,
         attribute=attribute,
-        device=device,
-        prediction_batch_size=evaluation_batch_size,
         backbone_checkpoint=backbone_checkpoint,
-        prediction_progress=prediction_progress,
     )
     cache_root = Path(cache_root)
     first_train = prepared.first_train
@@ -447,20 +403,36 @@ def train_predicted_first_whole_probe(
     train_data = prepared.train_data
     validation_data = prepared.validation_data
     token_entries = prepared.token_entries
-    first_checkpoint = prepared.first_checkpoint
+    reference_whole_checkpoint = prepared.reference_whole_checkpoint
     cache_manifest_sha256 = prepared.cache_manifest_sha256
-    train_first_accuracy = prepared.train_first_accuracy
-    validation_first_accuracy = prepared.validation_first_accuracy
-    probe = PredictedFirstWholeProbe(backbone, len(whole_train.class_names), kind=kind)
+    rank = prepared.rank
+    if max_validation_examples is not None and max_validation_examples <= 0:
+        raise ValueError("max_validation_examples must be positive or None")
+    validation_for_training: Dataset = validation_data
+    if max_validation_examples is not None:
+        validation_for_training = Subset(
+            validation_data,
+            range(min(max_validation_examples, len(validation_data))),
+        )
+    probe = AttributeProbe(
+        backbone,
+        len(whole_train.class_names),
+        rank=rank,
+        kind=kind,
+    )
     recovery_metadata = {
-        "protocol": "predicted_first_whole_pilot_v1",
+        "protocol": "ground_truth_first_whole_rank_matched_v1",
         "kind": kind,
         "attribute": attribute,
+        "rank": rank,
         "steps": steps,
         "batch_size": batch_size,
+        "evaluation_batch_size": evaluation_batch_size,
+        "max_validation_examples": max_validation_examples,
         "seed": seed,
-        "first_probe_checkpoint": str(first_checkpoint.resolve()),
-        "first_probe_checkpoint_sha256": _sha256(first_checkpoint),
+        "reference_whole_probe_checkpoint": str(reference_whole_checkpoint.resolve()),
+        "reference_whole_probe_checkpoint_sha256": _sha256(reference_whole_checkpoint),
+        "reference_whole_probe_rank": rank,
         "probe_cache_manifest_sha256": cache_manifest_sha256,
         "backbone_checkpoint": (
             str(Path(backbone_checkpoint).resolve()) if backbone_checkpoint is not None else None
@@ -469,7 +441,7 @@ def train_predicted_first_whole_probe(
     result = train_probe(
         probe,
         train_data,
-        validation_data,
+        validation_for_training,
         device=device,
         batch_size=batch_size,
         steps=steps,
@@ -481,8 +453,20 @@ def train_predicted_first_whole_probe(
         recovery_metadata=recovery_metadata,
         resume=resume,
         evaluate_train=evaluate_train,
+        evaluate_validation=False,
         evaluation_batch_size=evaluation_batch_size,
     )
+    validation = evaluate_ground_truth_first_whole_by_source_position(
+        probe,
+        validation_data,
+        device=device,
+        batch_size=evaluation_batch_size,
+        max_examples=max_validation_examples,
+        logger=logger,
+        log_interval=log_interval,
+    )
+    result["validation_accuracy"] = [float(validation["accuracy"])]
+    result["monitoring"]["validation"] = validation["monitoring"]
     result.update(
         {
             **recovery_metadata,
@@ -491,60 +475,77 @@ def train_predicted_first_whole_probe(
             "classes": len(whole_train.class_names),
             "first_token_class_names": list(first_train.class_names),
             "first_token_text": {str(token_id): text for token_id, text in token_entries},
-            "first_accuracy_train_by_position": train_first_accuracy,
-            "first_accuracy_validation_by_position": validation_first_accuracy,
-            "whole_accuracy_validation_by_source_position": (
-                evaluate_predicted_first_whole_by_source_position(
-                    probe,
-                    validation_data,
-                    device=device,
-                    batch_size=evaluation_batch_size,
-                )
-            ),
+            "ground_truth_first_token": True,
+            "ground_truth_first_accuracy_by_position": [1.0] * (6 if kind == "p" else 1),
+            "whole_accuracy_validation_by_source_position": validation[
+                "accuracy_by_position"
+            ],
+            "whole_correct_validation_by_source_position": validation[
+                "correct_by_position"
+            ],
+            "whole_total_validation_by_source_position": validation[
+                "total_by_position"
+            ],
+            "validation_examples_total": len(validation_data),
+            "validation_examples_evaluated": len(validation_for_training),
             "input_protocol": (
-                "P: biography prefix through original pre-attribute readout, append hard "
-                "predicted leading-space t1, read t1 final-layer hidden"
+                "P: biography prefix through original pre-attribute readout, append cached "
+                "ground-truth leading-space t1, read t1 final-layer hidden"
                 if kind == "p"
-                else "Q: [EOS, name, hard predicted leading-space t1, EOS], read final EOS "
+                else "Q: [EOS, name, ground-truth leading-space t1, EOS], read final EOS "
                 "final-layer hidden"
             ),
             "backbone_parameters_updated": False,
-            "first_probe_parameters_updated": False,
-            "stage_two_trainable_components": ["normalizer", "whole_classifier"],
+            "architecture_match": {
+                "probe_class": "AttributeProbe",
+                "rank": rank,
+                "reference_rank": rank,
+                "low_rank_embedding_delta": True,
+                "normalizer": "LayerNorm" if kind == "p" else "BatchNorm1d",
+                "classifier_classes": len(whole_train.class_names),
+            },
+            "alignment_checks": {
+                "first_whole_sample_indices_equal": True,
+                "first_whole_profile_indices_equal": True,
+                "first_whole_token_offsets_equal": True,
+                "first_whole_readout_positions_equal": True,
+                "person_disjoint_cache_split": True,
+            },
+            "stage_two_trainable_components": [
+                "low_rank_embedding_delta",
+                "normalizer",
+                "whole_classifier",
+            ],
         }
     )
     return probe, result
 
 
 @dataclass(frozen=True)
-class PredictedFirstWholeData:
+class GroundTruthFirstWholeData:
     first_train: CachedProbeDataset
     whole_train: CachedProbeDataset
-    train_data: PredictedFirstWholeDataset
-    validation_data: PredictedFirstWholeDataset
+    train_data: GroundTruthFirstWholeDataset
+    validation_data: GroundTruthFirstWholeDataset
     token_entries: list[tuple[int, str]]
-    first_checkpoint: Path
+    reference_whole_checkpoint: Path
     cache_manifest_sha256: str
-    train_first_accuracy: list[float]
-    validation_first_accuracy: list[float]
+    rank: int
 
 
-def prepare_predicted_first_whole_data(
+def prepare_ground_truth_first_whole_data(
     *,
     backbone: MiniTransformer,
     cache_root: str | Path,
     probe_dir: str | Path,
     kind: str,
     attribute: str,
-    device: torch.device,
-    prediction_batch_size: int,
     backbone_checkpoint: str | Path | None = None,
-    prediction_progress: Callable[[str, int], None] | None = None,
-) -> PredictedFirstWholeData:
-    """Freeze a formal t1 probe and materialize exact stage-two train/val inputs."""
+) -> GroundTruthFirstWholeData:
+    """Build true-t1 inputs and bind rank to the original formal whole probe."""
 
     if attribute not in WHOLE_ATTRIBUTES:
-        raise ValueError(f"predicted-t1 whole probe does not support {attribute!r}")
+        raise ValueError(f"ground-truth-t1 whole probe does not support {attribute!r}")
     cache_root, probe_dir = Path(cache_root), Path(probe_dir)
     codec = GPT2Codec()
     cache_manifest_sha256 = _sha256(cache_root / "manifest.json")
@@ -560,72 +561,94 @@ def prepare_predicted_first_whole_data(
     whole_validation = CachedProbeDataset(
         cache_root, kind=kind, attribute=attribute, target="whole", split="validation"
     )
-    token_entries = [predicted_first_token_text(name, codec) for name in first_train.class_names]
+    token_entries = [first_token_text(name, codec) for name in first_train.class_names]
     if first_train.class_names != first_validation.class_names:
         raise ValueError("first-token train/validation class mappings differ")
     if whole_train.class_names != whole_validation.class_names:
         raise ValueError("whole train/validation class mappings differ")
-    first_checkpoint = probe_dir / f"{kind}_{attribute}_first.pt"
-    first_probe = _load_probe(
-        first_checkpoint,
-        backbone=backbone,
-        dataset=first_train,
-        kind=kind,
-        attribute=attribute,
-        target="first",
-        backbone_checkpoint=backbone_checkpoint,
-        cache_manifest_sha256=cache_manifest_sha256,
-    )
-    train_predictions, train_first_accuracy = _predict_first_classes(
-        first_probe,
-        first_train,
-        device=device,
-        batch_size=prediction_batch_size,
-        progress=(
-            (lambda count: prediction_progress("train", count))
-            if prediction_progress is not None
-            else None
-        ),
-    )
-    validation_predictions, validation_first_accuracy = _predict_first_classes(
-        first_probe,
-        first_validation,
-        device=device,
-        batch_size=prediction_batch_size,
-        progress=(
-            (lambda count: prediction_progress("validation", count))
-            if prediction_progress is not None
-            else None
-        ),
-    )
-    del first_probe
+    for split, first_data, whole_data in (
+        ("train", first_train, whole_train),
+        ("validation", first_validation, whole_validation),
+    ):
+        if not np.array_equal(first_data.sample_indices, whole_data.sample_indices):
+            raise ValueError(f"{split} first/whole sample identities differ")
+        if not np.array_equal(first_data.profile_indices, whole_data.profile_indices):
+            raise ValueError(f"{split} first/whole person identities differ")
+        if not np.array_equal(first_data.offsets, whole_data.offsets):
+            raise ValueError(f"{split} first/whole token offsets differ")
+        if kind == "p" and not np.array_equal(first_data.positions, whole_data.positions):
+            raise ValueError(f"{split} first/whole P readout positions differ")
+    reference_whole_checkpoint = probe_dir / f"{kind}_{attribute}_whole.pt"
+    with torch.serialization.safe_globals([TorchVersion]):
+        reference_payload = torch.load(
+            reference_whole_checkpoint,
+            map_location="cpu",
+            weights_only=True,
+        )
+    metadata = reference_payload.get("result")
+    if not isinstance(metadata, dict):
+        raise ValueError(f"{reference_whole_checkpoint} is missing result metadata")
+    expected = {"kind": kind, "attribute": attribute, "target": "whole"}
+    if {key: metadata.get(key) for key in expected} != expected:
+        raise ValueError("reference whole probe task identity mismatch")
+    if list(metadata.get("class_names", ())) != whole_train.class_names:
+        raise ValueError("reference whole probe class mapping mismatch")
+    if metadata.get("probe_cache_manifest_sha256") != cache_manifest_sha256:
+        raise ValueError("reference whole probe cache manifest mismatch")
+    if (
+        backbone_checkpoint is not None
+        and Path(str(metadata.get("checkpoint"))).resolve()
+        != Path(backbone_checkpoint).resolve()
+    ):
+        raise ValueError("reference whole probe backbone checkpoint mismatch")
+    rank = int(metadata["rank"])
+    expected_rank = 2 if kind == "p" else 16
+    if rank != expected_rank:
+        raise ValueError(
+            f"reference {kind.upper()} whole probe rank is {rank}, expected {expected_rank}"
+        )
+    state = reference_payload.get("probe")
+    if not isinstance(state, dict):
+        raise ValueError("reference whole probe is missing its state dict")
+    expected_shapes = {
+        "delta.a.weight": (backbone.cfg.vocab_size, rank),
+        "delta.b.weight": (backbone.cfg.hidden_size, rank),
+        "normalizer.weight": (backbone.cfg.hidden_size,),
+        "normalizer.bias": (backbone.cfg.hidden_size,),
+        "classifier.weight": (len(whole_train.class_names), backbone.cfg.hidden_size),
+        "classifier.bias": (len(whole_train.class_names),),
+    }
+    actual_shapes = {
+        key: tuple(state[key].shape) if key in state else None for key in expected_shapes
+    }
+    if actual_shapes != expected_shapes:
+        raise ValueError(
+            f"reference whole probe trainable architecture mismatch: {actual_shapes}"
+        )
     token_ids = [token_id for token_id, _ in token_entries]
-    train_data = PredictedFirstWholeDataset(
+    train_data = GroundTruthFirstWholeDataset(
         kind=kind,
         first_data=first_train,
         whole_data=whole_train,
-        predicted_class_ids=train_predictions,
         token_ids_by_class=token_ids,
         eos_id=codec.eos,
     )
-    validation_data = PredictedFirstWholeDataset(
+    validation_data = GroundTruthFirstWholeDataset(
         kind=kind,
         first_data=first_validation,
         whole_data=whole_validation,
-        predicted_class_ids=validation_predictions,
         token_ids_by_class=token_ids,
         eos_id=codec.eos,
     )
-    return PredictedFirstWholeData(
+    return GroundTruthFirstWholeData(
         first_train=first_train,
         whole_train=whole_train,
         train_data=train_data,
         validation_data=validation_data,
         token_entries=token_entries,
-        first_checkpoint=first_checkpoint,
+        reference_whole_checkpoint=reference_whole_checkpoint,
         cache_manifest_sha256=cache_manifest_sha256,
-        train_first_accuracy=train_first_accuracy,
-        validation_first_accuracy=validation_first_accuracy,
+        rank=rank,
     )
 
 

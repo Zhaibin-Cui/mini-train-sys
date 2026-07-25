@@ -1,0 +1,73 @@
+{
+  "kernel": "fused_moe",
+  "profile": {
+    "name": "mixtral_7b",
+    "num_experts": 8,
+    "hidden": 4096,
+    "intermediate": 14336,
+    "top_k": 2,
+    "token_sizes": [
+      16,
+      64,
+      256
+    ]
+  },
+  "size": 256,
+  "dtype": "torch.bfloat16",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "total_memory_mb": 24217.3125,
+  "rows": [
+    {
+      "kernel": "fused_moe",
+      "provider": "torch",
+      "size": 256,
+      "size_label": "tokens; E=8, H=4096, I=14336, K=2",
+      "status": "ok",
+      "fwd_correct": true,
+      "fwd_max_abs": 0.0,
+      "fwd_max_rel": 0.0,
+      "bwd_correct": true,
+      "bwd_max_abs": 0.0,
+      "bwd_max_rel": 0.0,
+      "fwd_p50_ms": 4.788736343383789,
+      "fwd_p95_ms": 4.826521396636963,
+      "fwd_peak_mem_mb": 11.14453125,
+      "timer": "cuda_events_backward_only",
+      "full_p50_ms": 105.8150405883789,
+      "full_p95_ms": 105.8150405883789,
+      "full_peak_mem_mb": 4760.36376953125,
+      "bwd_p50_ms": 100.92280197143555,
+      "bwd_p95_ms": 101.12239685058594,
+      "bwd_peak_mem_mb": 4692.54248046875,
+      "fwd_speedup": 1.0,
+      "bwd_speedup": 1.0,
+      "full_speedup": 1.0
+    },
+    {
+      "kernel": "fused_moe",
+      "provider": "triton",
+      "size": 256,
+      "size_label": "tokens; E=8, H=4096, I=14336, K=2",
+      "status": "ok",
+      "fwd_correct": true,
+      "fwd_max_abs": 0.078125,
+      "fwd_max_rel": 3515625.0,
+      "bwd_correct": false,
+      "bwd_max_abs": 2.828125,
+      "bwd_max_rel": 4687500.0,
+      "fwd_p50_ms": 4.0366082191467285,
+      "fwd_p95_ms": 4.0486907958984375,
+      "fwd_peak_mem_mb": 48.00830078125,
+      "timer": "cuda_events_backward_only",
+      "full_p50_ms": 13.880319595336914,
+      "full_p95_ms": 13.932230949401855,
+      "full_peak_mem_mb": 2768.33203125,
+      "bwd_p50_ms": 10.380127906799316,
+      "bwd_p95_ms": 10.437555027008056,
+      "bwd_peak_mem_mb": 2738.00341796875,
+      "fwd_speedup": 1.1863267583585428,
+      "bwd_speedup": 9.722693484858494,
+      "full_speedup": 7.623386468992213
+    }
+  ]
+}

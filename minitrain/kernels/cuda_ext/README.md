@@ -45,13 +45,14 @@ PyTorch 则使用已审计架构表；未知架构保守地等待验证。这是
 | Profile | dtype | head-dim bucket | `.cu` 数量 |
 | --- | --- | --- | ---: |
 | `minimal` | fp16 | 32 | 4 |
-| `workstation`（默认） | fp16、bf16 | 64 | 8 |
+| `workstation` | fp16、bf16 | 64 | 8 |
+| `rtx4090`（服务器默认） | fp16、bf16 | 64 | 8 |
 | `full` | fp16、bf16 | 32、64、96、128、192、256 | 48 |
 
-本机是 Windows sm86 机器，项目模型默认使用 D=64，因此 `workstation` 只构建
-D=64 的 fp16/bf16 路径并使用一个 nvcc worker。原来的 32/64/128 矩阵保留在
-`build.py` 注释中，服务器应显式选择 `full`，并根据单个 D=256 backward 编译
-进程的峰值内存决定并行度。
+持久 benchmark 服务器是 4×RTX 4090、128 GB RAM。默认 `rtx4090` profile 构建
+sm89、D=64 的 fp16/bf16 路径并使用两个 nvcc worker，精确覆盖当前 293.49M MoE。
+`workstation` 保留给旧 sm86 开发环境；只有需要其它 head bucket 时才显式选择
+`full`，并根据 D=192/256 backward 编译进程的峰值内存降低并行度。
 
 本机先编译最小 profile：
 
@@ -71,12 +72,12 @@ $env:MINITRAIN_CUDA_MAX_JOBS="1"
 python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
 ```
 
-服务器完整构建示例：
+当前 RTX 4090 服务器正式模型构建：
 
 ```bash
-export MINITRAIN_CUDA_BUILD_PROFILE=full
-export MINITRAIN_CUDA_ARCHS="80;86;89;90"
-export MINITRAIN_CUDA_MAX_JOBS=8
+export MINITRAIN_CUDA_BUILD_PROFILE=rtx4090
+export MINITRAIN_CUDA_ARCHS=89
+export MINITRAIN_CUDA_MAX_JOBS=2
 python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
 ```
 

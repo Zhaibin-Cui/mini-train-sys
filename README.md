@@ -416,12 +416,16 @@ python -m ruff check minitrain scripts tests
 |---|---|
 | `tests/example_training.ipynb` | 模型、LR、checkpoint 小实验 |
 | `tests/synbios_moe_end_to_end.ipynb` | SynBioS 端到端结构测试 |
-| `tests/operator_bench.ipynb` | 通用算子正确性与性能 |
-| `tests/moe_operator_bench.ipynb` | Router 与 fused MoE |
+| `tests/operator_bench.ipynb` | 通用算子开发期完整正确性与性能 |
+| `tests/operator_bench_linux_server.ipynb` | RTX 4090 工业 dense shape 隔离 benchmark |
+| `tests/moe_operator_bench_linux_server.ipynb` | 隔离执行的 Router 与 fused MoE |
 | `tests/distributed_server_benchmark.ipynb` | 1/4/8 卡 DDP/FSDP 弱扩展和显存容量 |
 
 分布式 benchmark 不只报 tokens/s，还记录 step P50/P95、数据等待、单卡和全系统显存、
 OOM 边界、硬件拓扑及 Git 状态。协议见 [分布式 benchmark](docs/benchmarks/distributed_benchmark.md)。
+正式 backend 比较同时报告固定 batch 下的显存节省/吞吐提升，以及固定 92% reserved
+VRAM 上限下各 backend 的最高 tokens/s；执行计划见
+[服务器 benchmark 提示](scripts/server_benchmark_codex_prompt.md)。
 
 ## 目录地图
 

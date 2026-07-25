@@ -349,7 +349,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 
 ## 2026-07-21 04:51 — Paper-fidelity LR and GPU telemetry correction
 
-- Status: running
+- Status: completed
 - Local/UTC start: 2026-07-21 04:51 Asia/Shanghai / 2026-07-20 20:51 UTC
 - Purpose: replace the misleading post-step allocator ratio with interval-sampled NVML GPU
   compute/memory-controller utilization, validate 4-GPU FSDP, and restart the formal `single`
@@ -1720,3 +1720,1095 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `artifacts/logs/restore_main_20260724_0155.log`.
 - Result: GitHub accepted the forced update `ffd6d74...7c34608`; post-push fetch confirmed
   `origin/main` at `7c34608` and `origin/train` unchanged at `ffd6d74`.
+## 2026-07-25 12:05 — Predicted-t1 whole-probe batch search
+
+- Status: failed (2026-07-25 12:22 Asia/Shanghai; exit code 1)
+- Local start: 2026-07-25 12:05:38 Asia/Shanghai
+- UTC start: 2026-07-25 04:05:38 UTC
+- Purpose: benchmark the exact predicted-first-token stage-two P/Q training and held-out
+  validation inputs before the ten-task `multi5_permute` whole-probe pilot. Select throughput
+  optima under a 92% peak-reserved VRAM cap, with two independent GPU replicas per P/Q mode and
+  reject recommendations that land on the search boundary.
+- Git commit: `448aa09ccd0cab56ed9874feca7b2d5391d85fc7` on `train`.
+- Dirty state at launch: 11 tracked files modified by the resume-oriented benchmark task/code/
+  documentation update; no unrelated untracked files. The preflight completed 28 targeted tests
+  and ruff without failure.
+- Hardware: 4 × NVIDIA GeForce RTX 4090 24 GB; GPU 0/2 are the P replicas and GPU 1/3 are the Q
+  replicas. All GPUs reported 0 MiB used before launch; topology is single-node PCIe/SYS without
+  NVLink.
+- tmux session: `minitrain-predicted-t1-batch-20260725`
+- Command:
+
+  ```bash
+  PREDICTED_PROBE_BENCHMARK_RUN_ID=20260725T040538Z \
+    bash scripts/bash/synbios_predicted_first_batch_benchmark.sh \
+    multi5_permute_fsdp_4gpu latest
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_batch_20260725T040538Z.log`
+- Raw result path:
+  `artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T040538Z/`
+- Inputs:
+  - dataset: `artifacts/synbios_moe/multi5_permute/`
+  - probe cache: `artifacts/synbios_moe/multi5_permute/probe_cache/`
+  - backbone:
+    `artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388/`
+  - formal first probes:
+    `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training/`
+- Important overrides: the script defaults are retained: three warmup steps, ten measured steps,
+  prediction batch 512, 92% reserved-memory limit, independent P/Q training and validation
+  candidate grids.
+- Result: all eight P/Q × training/validation replica JSON files completed without OOM, but every
+  aggregate recommendation landed on the largest tested candidate. The completeness gate
+  correctly rejected the run and did not create `recommended.env`. Boundary recommendations were
+  P training 1,024, P validation 2,048, and Q training/validation 16,384. The raw matrix and
+  `summary.json` are retained as the lower half of the expanded search.
+
+## 2026-07-25 12:22 — Expanded predicted-t1 whole-probe batch search
+
+- Status: failed (2026-07-25 12:44 Asia/Shanghai; exit code 1)
+- Local start: 2026-07-25 12:22:10 Asia/Shanghai
+- UTC start: 2026-07-25 04:22:10 UTC
+- Purpose: extend every boundary from the preceding completed-but-rejected matrix until the
+  throughput optimum is bracketed by a larger tested point or a retained OOM/capacity boundary.
+  This separates the throughput knee from merely filling more VRAM.
+- Git commit/state and inputs: same `train@448aa09` dirty worktree, dataset, cache, final
+  multi5 checkpoint, and formal first probes recorded in the preceding entry.
+- Hardware: 4 × RTX 4090 24 GB; two independent replicas per P/Q mode, with all GPUs idle before
+  restart.
+- tmux session: `minitrain-predicted-t1-batch-expanded-20260725`
+- Command:
+
+  ```bash
+  PREDICTED_PROBE_BENCHMARK_RUN_ID=20260725T042210Z \
+  P_BATCHES=512,1024,1536,2048,3072,4096,6144,8192 \
+  Q_BATCHES=8192,12288,16384,24576,32768,40960,49152 \
+  P_VALIDATION_BATCHES=1024,2048,3072,4096,6144,8192 \
+  Q_VALIDATION_BATCHES=8192,12288,16384,24576,32768,40960,49152 \
+    bash scripts/bash/synbios_predicted_first_batch_benchmark.sh \
+    multi5_permute_fsdp_4gpu latest
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_batch_expanded_20260725T042210Z.log`
+- Raw result path:
+  `artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T042210Z/`
+- Important overrides: expanded candidate grids above; prediction batch 512, three warmup and ten
+  measured steps, and 92% reserved-memory limit remain unchanged.
+- Result: Q training and validation both found a reproduced non-boundary throughput optimum at
+  batch 40,960, followed by lower throughput at 49,152; peak reserved memory at the selected
+  points was 66.63% and 71.25%. P training and validation completed through batch 8,192 at
+  86.77% and 85.74% peak reserved memory, but their small throughput maxima remained on that
+  search boundary. The completeness gate correctly rejected only `p/training` and
+  `p/validation`; all expanded raw results are retained.
+
+## 2026-07-25 12:44 — P-only predicted-t1 batch boundary completion
+
+- Status: failed (2026-07-25 12:46 Asia/Shanghai; exit code 1)
+- Local start: 2026-07-25 12:44:27 Asia/Shanghai
+- UTC start: 2026-07-25 04:44:27 UTC
+- Purpose: complete only the two remaining P boundaries without rerunning the already-bracketed Q
+  matrices. Test batches 8,192/9,216/10,240 for P training and validation with two independent
+  replicas, then combine them with the expanded Q evidence into one formal-ready recommendation.
+- Git commit/state and scientific inputs: unchanged from the two preceding entries.
+- Hardware: 4 × RTX 4090 24 GB; P training replicas on GPU 0/2 and P validation replicas on
+  GPU 1/3.
+- tmux session: `minitrain-predicted-t1-p-boundary-20260725`
+- Command:
+
+  ```bash
+  bash scripts/bash/synbios_predicted_first_p_boundary.sh \
+    20260725T044427Z \
+    artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T042210Z \
+    8192,9216,10240
+  ```
+
+  The script launches four concurrent P benchmark processes and then runs
+  `summarize-probe-benchmarks --require-complete-search` over the new P results and retained
+  expanded Q results.
+- Console log:
+  `artifacts/logs/predicted_t1_p_boundary_20260725T044427Z.log`
+- Raw/final result path:
+  `artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T044427Z/`
+- Important overrides: prediction batch 512, three warmup and ten measured steps, 92% reserved
+  memory limit; training and validation use the same P boundary candidates.
+- Result: all four workers failed before model loading or benchmark execution because the first
+  version of the helper combined `CUDA_VISIBLE_DEVICES=<gpu>` with the unindexed
+  `--device cuda`. `ProgressReporter` requires a concrete device index and raised
+  `ValueError: Expected a torch.device with a specified index`. No result JSON or GPU measurement
+  was produced; the four failure logs are retained in the run directory.
+
+## 2026-07-25 12:46 — P-only predicted-t1 batch boundary retry
+
+- Status: completed (2026-07-25 12:55:55 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 12:46:50 Asia/Shanghai
+- UTC start: 2026-07-25 04:46:50 UTC
+- Purpose: rerun the immediately preceding boundary completion after changing the isolated
+  process device from `cuda` to `cuda:0`; scientific inputs, candidates, measurement settings,
+  GPU mapping, and retained Q evidence are otherwise identical.
+- Git commit/state: `train@448aa09`, dirty with the documented benchmark plan/code changes and
+  the corrected P-boundary helper.
+- Hardware: 4 × RTX 4090 24 GB; all GPUs idle before retry.
+- tmux session: `minitrain-predicted-t1-p-boundary-r2-20260725`
+- Command:
+
+  ```bash
+  bash scripts/bash/synbios_predicted_first_p_boundary.sh \
+    20260725T044650Z \
+    artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T042210Z \
+    8192,9216,10240
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_p_boundary_r2_20260725T044650Z.log`
+- Raw/final result path:
+  `artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T044650Z/`
+- Result: P training and validation batch 8,192 completed on both replicas at 86.69% and 85.74%
+  maximum peak-reserved memory. Batches 9,216 and 10,240 reproduced CUDA OOM on all four P
+  training/validation replicas, providing the required outer capacity evidence. Combining these
+  results with the retained expanded Q matrix selected Q training/validation batch 40,960 at
+  66.63%/71.25% peak reserved memory, with lower throughput at 49,152. The final
+  `summary.json` reports `ready_for_formal=true`, zero missing/insufficient/boundary items, and
+  atomically published `recommended.env`.
+- Final recommendation:
+  P train/validation 8,192/8,192; Q train/validation 40,960/40,960.
+- Final summary SHA256:
+  `3a25050dabf35391c9ea44df83ef1e187aa220c2b13c818a13efea6130e58a21`.
+- Recommended environment SHA256:
+  `0b36d48314028226a657229925a73591b7d653607fd3e050b66435b184e14225`.
+- Scientific launch limitation: this is a throughput/capacity recommendation, not an optimizer
+  update-budget decision. Keeping 3,000 updates would increase sampled-example exposure by
+  64× for P and 53.3× for Q relative to the planned 128/768 defaults; the pilot must not silently
+  conflate these two decisions.
+
+## 2026-07-25 13:01 — Predicted-t1 ten-task 300-step convergence pilot
+
+- Status: failed (2026-07-25 13:02 Asia/Shanghai; exit code 1)
+- Local start: 2026-07-25 13:01:41 Asia/Shanghai
+- UTC start: 2026-07-25 05:01:41 UTC
+- Purpose: run the complete P/Q × five-whole-attribute matched predicted-t1 matrix for 300
+  optimizer updates per head, using the completed throughput/capacity recommendations. This is a
+  bounded convergence calibration before any task is extended toward 3,000 updates.
+- Git commit: `448aa09ccd0cab56ed9874feca7b2d5391d85fc7` on `train`.
+- Dirty state: benchmark presentation code, combined execution plan, benchmark/probe reports,
+  exported Git-safe evidence, and the P-boundary helper are modified/untracked as documented by
+  the immediately preceding entries. Targeted tests, ruff, diff check, and exported manifest
+  verification passed before launch.
+- Hardware: 4 × NVIDIA GeForce RTX 4090 24 GB; one independent head per GPU, scheduled in waves
+  by `synbios_predicted_first_whole_pilot.sh`.
+- tmux session: `minitrain-predicted-t1-pilot300-20260725`
+- Command:
+
+  ```bash
+  source artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T044650Z/recommended.env
+  OUTPUT=artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T050141Z \
+  STEPS=300 GPUS="0 1 2 3" CHECKPOINT_INTERVAL_STEPS=100 LOG_INTERVAL_STEPS=10 \
+    bash scripts/bash/synbios_predicted_first_whole_pilot.sh \
+    multi5_permute multi5_permute_fsdp_4gpu latest
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_pilot300_20260725T050141Z.log`
+- Result path:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T050141Z/`
+- Scientific inputs: final multi5 checkpoint, formal first probes, person-disjoint probe cache,
+  and model configuration recorded in the preceding batch-search entries.
+- Important overrides: 300 updates/head; P/Q training batch 8,192/40,960; P/Q validation batch
+  8,192/40,960; recovery every 100 updates; log every 10 updates. This corresponds to 2,457,600
+  sampled P examples or 12,288,000 sampled Q examples per task before DataLoader wraparound.
+- Expected outputs: ten JSON, ten `.pt`, recovery checkpoints, `summary.csv`, `summary.json`, and
+  P/Q PNG+PDF figures.
+- Result: all first-wave workers failed before model loading or optimizer updates because the
+  official pilot helper combined `CUDA_VISIBLE_DEVICES=<gpu>` with `--device cuda`.
+  `ProgressReporter` requires a concrete index and raised the same pre-execution device error
+  found by the P-boundary helper. No task JSON, probe head, recovery checkpoint, or scientific
+  metric was produced. The empty result directory and console failure log are retained.
+
+## 2026-07-25 13:03 — Predicted-t1 ten-task 300-step convergence pilot retry
+
+- Status: failed (2026-07-25 13:05 Asia/Shanghai; exit code 1)
+- Local start: 2026-07-25 13:03:18 Asia/Shanghai
+- UTC start: 2026-07-25 05:03:18 UTC
+- Purpose/configuration: exact retry of the preceding ten-task calibration after changing the
+  isolated worker device in `synbios_predicted_first_whole_pilot.sh` from `cuda` to `cuda:0`.
+  All scientific inputs, update counts, batches, GPU scheduling, logging, and recovery settings
+  are unchanged.
+- Git commit/state: `train@448aa09`, dirty with the documented helper fix and preceding
+  experiment/benchmark/report work.
+- Hardware: 4 × RTX 4090 24 GB; all GPUs idle before retry.
+- tmux session: `minitrain-predicted-t1-pilot300-r2-20260725`
+- Command:
+
+  ```bash
+  source artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T044650Z/recommended.env
+  OUTPUT=artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T050318Z \
+  STEPS=300 GPUS="0 1 2 3" CHECKPOINT_INTERVAL_STEPS=100 LOG_INTERVAL_STEPS=10 \
+    bash scripts/bash/synbios_predicted_first_whole_pilot.sh \
+    multi5_permute multi5_permute_fsdp_4gpu latest
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_pilot300_r2_20260725T050318Z.log`
+- Result path:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T050318Z/`
+- Result: all four first-wave P workers loaded the backbone and formal first probe, then failed
+  during frozen first-token prediction before any optimizer update. The command had reused the
+  selected P validation batch 8,192 for this distinct two-model-resident preprocessing phase.
+  Each worker reproduced CUDA OOM while attempting a 2.06 GiB allocation with approximately
+  22.95 GiB already in use. No task JSON, probe head, recovery checkpoint, or scientific metric
+  was produced. The failure establishes that stage-two train/evaluation capacity cannot be
+  reused as the first-token materialization capacity; the retained batch benchmark had
+  successfully exercised this exact preparation at prediction batch 512.
+
+## 2026-07-25 13:06 — Predicted-t1 ten-task 300-step pilot retry with isolated prediction batch
+
+- Status: failed (2026-07-25 13:13 Asia/Shanghai; exit code 1)
+- Local start: 2026-07-25 13:06:51 Asia/Shanghai
+- UTC start: 2026-07-25 05:06:51 UTC
+- Purpose: complete the same ten-task convergence calibration after separating frozen first-token
+  materialization capacity from stage-two train/evaluation capacity. This is a runtime correction,
+  not a change to the scientific intervention or optimizer budget.
+- Git commit/state: `train@448aa09`, dirty with 34 documented modified/untracked paths from the
+  benchmark/probe work, including the isolated prediction-batch implementation and regression
+  test. Before launch, 16 targeted tests, Ruff, shell syntax, and `git diff --check` passed.
+- Hardware: 4 × RTX 4090 24 GB; all GPUs idle before launch; one independent task per GPU in
+  three scheduled waves.
+- tmux session: `minitrain-predicted-t1-pilot300-r3-20260725`
+- Command:
+
+  ```bash
+  source artifacts/synbios_moe/results/predicted_first_batch_benchmark/20260725T044650Z/recommended.env
+  OUTPUT=artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T050651Z \
+  STEPS=300 GPUS="0 1 2 3" CHECKPOINT_INTERVAL_STEPS=100 LOG_INTERVAL_STEPS=10 \
+  P_PREDICTION_BATCH_SIZE=512 Q_PREDICTION_BATCH_SIZE=512 \
+    bash scripts/bash/synbios_predicted_first_whole_pilot.sh \
+    multi5_permute multi5_permute_fsdp_4gpu latest
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_pilot300_r3_20260725T050651Z.log`
+- Exit-status file:
+  `artifacts/logs/predicted_t1_pilot300_r3_20260725T050651Z.status`
+- Result path:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T050651Z/`
+- Important overrides: 300 updates/head; P/Q train batch 8,192/40,960; P/Q validation batch
+  8,192/40,960; P/Q frozen-prediction batch 512/512; recovery every 100 updates; log every 10.
+  Prediction batch 512 is supported by the successful preparation phase of the retained batch
+  benchmark; train/evaluation batches remain the measured throughput recommendations.
+- Result: the isolated prediction batch fixed the preceding failure: all four tasks completed
+  frozen-first-probe prediction over 249,410 train and 250,590 validation examples without OOM.
+  Each worker then completed optimizer step 1 at about 115k tokens/s with approximately
+  18.4/23.65 GiB peak allocated memory and emitted a roughly 29-minute per-task ETA. All four
+  failed consistently while allocating the next forward activation because about 5 GiB remained
+  reserved-but-unallocated after the two-model preprocessing phase. No final task JSON or
+  recovery checkpoint was produced. The retained console log is the authoritative failure
+  evidence. Before another matrix launch, a one-task transition gate must prove preparation plus
+  at least three consecutive capacity-sized optimizer updates.
+
+## 2026-07-25 13:17 — Predicted-t1 P transition capacity gate
+
+- Status: failed (2026-07-25 13:26 Asia/Shanghai; exit code 1)
+- Local start: 2026-07-25 13:17:28 Asia/Shanghai
+- UTC start: 2026-07-25 05:17:28 UTC
+- Purpose: validate the repaired lifecycle boundary with one representative P/university task
+  before spending four GPUs on another complete matrix. The gate includes full train/validation
+  first-token materialization, three consecutive optimizer updates at batch 8,192, and final
+  validation at batch 8,192.
+- Git commit/state: `train@448aa09`, dirty with the documented work and lifecycle fix. Before
+  launch, 45 relevant tests, Ruff, shell syntax, and diff checks passed.
+- Hardware: GPU 0 of 4 × RTX 4090 24 GB; all GPUs idle before launch.
+- tmux session: `minitrain-predicted-t1-transition-gate-20260725`
+- Command:
+
+  ```bash
+  python scripts/synbios_moe.py train-predicted-first-whole \
+    --data artifacts/synbios_moe/multi5_permute \
+    --probe-cache artifacts/synbios_moe/multi5_permute/probe_cache \
+    --probe-dir artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training \
+    --model-config configs/synbios_moe/model.yaml \
+    --checkpoint artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388 \
+    --kind p --attribute university --steps 3 \
+    --batch-size 8192 --evaluation-batch-size 8192 --prediction-batch-size 512 \
+    --checkpoint-interval-steps 100 --log-interval 1 --device cuda:0 \
+    --no-resume-probe \
+    --output artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_transition_gate_20260725T051728Z/p_university.json
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_transition_gate_20260725T051728Z.log`
+- Exit-status file:
+  `artifacts/logs/predicted_t1_transition_gate_20260725T051728Z.status`
+- Result path:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_transition_gate_20260725T051728Z/`
+- Result: full first-token materialization completed for 249,410 train and 250,590 validation
+  examples. Optimizer step 1 completed at 119.3k tokens/s and approximately 18.41 GiB peak
+  allocated memory, but step 2 again OOMed. The process held about 22.16/23.65 GiB physical
+  memory (93.7%, above the accepted 92% limit) with 3.99 GiB reserved-but-unallocated when a
+  1.97 GiB forward allocation was requested. This proves batch 8,192 is not safe in the real
+  consecutive DataLoader lifecycle even after phase cleanup; the synthetic capacity benchmark's
+  reuse of a single GPU-resident batch understated this boundary. No final JSON was produced.
+
+## 2026-07-25 13:27 — Predicted-t1 real-lifecycle P/Q capacity gate
+
+- Status: stopped after acceptance evidence (2026-07-25 13:44:46 Asia/Shanghai; interrupted
+  intentionally, no process exit code retained)
+- Local start: 2026-07-25 13:27:46 Asia/Shanghai
+- UTC start: 2026-07-25 05:27:46 UTC
+- Purpose: simultaneously validate the next-lower P batch 7,168 and retained Q batch 40,960
+  through the complete predicted-t1 lifecycle. Each task must complete full train/validation
+  materialization, three consecutive optimizer updates, and final validation before the ten-task
+  pilot can relaunch.
+- Git commit/state: `train@448aa09`, dirty with the documented lifecycle work; the preceding
+  45-test/Ruff/diff gate applies unchanged.
+- Hardware: GPU 0 (P/university) and GPU 1 (Q/university) of 4 × RTX 4090 24 GB; GPUs idle at
+  launch.
+- tmux session: `minitrain-predicted-t1-pq-gate-20260725`
+- Commands:
+
+  ```bash
+  CUDA_VISIBLE_DEVICES=0 python scripts/synbios_moe.py train-predicted-first-whole \
+    ... --kind p --attribute university --steps 3 \
+    --batch-size 7168 --evaluation-batch-size 7168 --prediction-batch-size 512 \
+    --device cuda:0 --no-resume-probe \
+    --output .../predicted_first_pq_transition_gate_20260725T052746Z/p_university.json
+
+  CUDA_VISIBLE_DEVICES=1 python scripts/synbios_moe.py train-predicted-first-whole \
+    ... --kind q --attribute university --steps 3 \
+    --batch-size 40960 --evaluation-batch-size 40960 --prediction-batch-size 512 \
+    --device cuda:0 --no-resume-probe \
+    --output .../predicted_first_pq_transition_gate_20260725T052746Z/q_university.json
+  ```
+
+  Both commands use the exact dataset, probe cache, formal first-probe directory, model config,
+  and committed epoch-108/step-17,388 checkpoint recorded in the preceding gate.
+- Console log:
+  `artifacts/logs/predicted_t1_pq_gate_20260725T052746Z.log`
+- Exit-status file:
+  `artifacts/logs/predicted_t1_pq_gate_20260725T052746Z.status`
+- Result path:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_pq_transition_gate_20260725T052746Z/`
+- Result: Q completed the entire gate at batch 40,960: 49,882 train and 50,118 validation
+  first-token predictions, three consecutive optimizer steps, and two final validation batches.
+  It sustained about 97k tokens/s with 14.83/23.65 GiB peak allocated memory and persisted both
+  JSON and `.pt`. P completed all 249,410 train and 250,590 validation first-token predictions,
+  then passed three consecutive training updates at batch 7,168 at about 121k tokens/s and
+  16.62 GiB peak allocated. Its larger 7,168 final-validation batch then ran 111 of 210 batches
+  without error at about 125k tokens/s. The remaining P validation was intentionally interrupted
+  because the gate's continuity evidence was already sufficient and the pilot will use the safer
+  P validation batch 6,144. This saved about eight idle-gate minutes; the incomplete P gate is
+  not a scientific result.
+
+## 2026-07-25 13:44 — Predicted-t1 ten-task 300-step convergence pilot, accepted batches
+
+- Status: stopped after completed first wave (2026-07-25 14:52:30 Asia/Shanghai; exit code 130)
+- Local start: 2026-07-25 13:44:53 Asia/Shanghai
+- UTC start: 2026-07-25 05:44:53 UTC
+- Purpose: run the actual ten-task P/Q × five-attribute predicted-t1 convergence pilot at the
+  previously accepted 300-update budget, using batches corrected by real-lifecycle evidence.
+- Git commit/state: `train@448aa09`, dirty with all documented probe/benchmark/report changes.
+  The latest code gate was 45 relevant tests plus Ruff and diff checks; subsequent server gates
+  established the runtime batch corrections.
+- Hardware: 4 × RTX 4090 24 GB; one independent task per GPU in three waves; all GPUs idle before
+  launch.
+- tmux session: `minitrain-predicted-t1-pilot300-r4-20260725`
+- Command:
+
+  ```bash
+  OUTPUT=artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T054453Z \
+  STEPS=300 GPUS="0 1 2 3" \
+  P_BATCH_SIZE=7168 P_EVAL_BATCH_SIZE=6144 \
+  Q_BATCH_SIZE=40960 Q_EVAL_BATCH_SIZE=40960 \
+  P_PREDICTION_BATCH_SIZE=512 Q_PREDICTION_BATCH_SIZE=512 \
+  CHECKPOINT_INTERVAL_STEPS=100 LOG_INTERVAL_STEPS=10 \
+    bash scripts/bash/synbios_predicted_first_whole_pilot.sh \
+    multi5_permute multi5_permute_fsdp_4gpu latest
+  ```
+
+- Console log:
+  `artifacts/logs/predicted_t1_pilot300_r4_20260725T054453Z.log`
+- Exit-status file:
+  `artifacts/logs/predicted_t1_pilot300_r4_20260725T054453Z.status`
+- Result path:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T054453Z/`
+- Budget/batch identity: exactly 300 optimizer updates per task; P train/validation 7,168/6,144;
+  Q train/validation 40,960/40,960; frozen first-token materialization 512 for both kinds;
+  recovery every 100 updates and metrics every 10.
+- Result before controlled stop: the first four P tasks completed and persisted JSON, `.pt`, and
+  recovery evidence. Held-out whole accuracies were birth_city 42.17%, university 48.68%, major
+  81.18%, and company 93.05%. The second fixed wave had only begun preprocessing and had not
+  produced a task result or recovery checkpoint when it was interrupted. The run was stopped
+  deliberately after adding tested dynamic GPU refill plus completed-result skipping to the
+  helper: under the old fixed-wave scheduler, three GPUs would have idled behind the remaining
+  long P task before the final two Q tasks, adding roughly 25 minutes. The four completed outputs
+  are retained and will be reused unchanged.
+
+## 2026-07-25 14:52 — Predicted-t1 300-step pilot dynamic-scheduler continuation
+
+- Status: completed (2026-07-25 15:57:23 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 14:52:30 Asia/Shanghai
+- UTC start: 2026-07-25 06:52:30 UTC
+- Purpose: continue the preceding pilot in the same result directory, skip the four complete P
+  task pairs, and execute the remaining P/company_city plus five Q tasks with immediate GPU refill.
+  Scientific inputs, batches, update counts, seeds, and output identity are unchanged.
+- Git commit/state: `train@448aa09`, dirty with the documented work and scheduler improvement.
+  Before continuation, shell syntax, seven targeted scheduler/workflow tests, Ruff, and diff checks
+  passed.
+- Hardware: 4 × RTX 4090 24 GB; all GPUs idle before continuation.
+- tmux session: `minitrain-predicted-t1-pilot300-r5-20260725`
+- Command: identical environment and helper invocation to the preceding pilot, reusing
+  `predicted_first_whole_pilot_300step_20260725T054453Z`; the helper now requires both task JSON
+  and `.pt` before skipping a completed task and dynamically assigns the next task to the first
+  available GPU.
+- Console log:
+  `artifacts/logs/predicted_t1_pilot300_r5_20260725T065230Z.log`
+- Exit-status file:
+  `artifacts/logs/predicted_t1_pilot300_r5_20260725T065230Z.status`
+- Result path:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/predicted_first_whole_pilot_300step_20260725T054453Z/`
+- Result: all remaining six tasks completed, after which the helper validated the full ten-task
+  identity and atomically wrote `summary.csv`, schema-v2 `summary.json`, and P/Q PNG+PDF figures.
+  Together with the four retained first-wave tasks, the run contains exactly ten JSON results,
+  ten probe heads, ten recovery checkpoints, 35 position-level summary rows, and no worker
+  failure. The dynamic scheduler launched Q/company and Q/company-city as soon as earlier Q jobs
+  released GPUs, eliminating the old fixed-wave tail.
+- Held-out result summary: mean-over-position P original→predicted whole was birth_city
+  13.19→42.17%, university 8.66→48.68%, major 49.46→81.18%, company 75.33→93.05%, and
+  company_city 79.78→51.09%. Q original→predicted whole was 12.92→11.31%, 8.48→7.39%,
+  47.32→23.62%, 45.97→25.51%, and 51.04→25.92%, respectively. Q frozen-first accuracy
+  remained 97.26%-99.61%, so first-token prediction errors do not explain the Q deficit.
+- Final summary SHA256:
+  `502e617761140f883fc034ccfa9647b42b03834858464c17f72f093f8a8487a4`.
+- Canonical narrative:
+  `reports/synbios_moe/probes/predicted_first_whole.md`.
+
+## 2026-07-25 16:08 — RTX 4090 D64 CUDA FlashAttention build
+
+- Status: completed (2026-07-25 16:17:27 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 16:08 Asia/Shanghai
+- UTC start: 2026-07-25 08:08 UTC
+- Purpose: build the native CUDA attention extension required by the industrial kernel benchmark
+  and subsequent end-to-end CUDA-backend comparison.
+- Git commit/state: `train@448aa09`, dirty with 62 documented modified/untracked benchmark,
+  predicted-t1, report, and exported-result paths. The CUDA-specific changes set the repository
+  default to the exact server profile. Before launch, generated sources matched, 14 operator/server
+  workflow tests passed, Ruff and diff checks passed, and `minitrain-check-server --expected-gpus
+  4 --require-nvcc` passed.
+- Environment: PyTorch 2.5.1+cu118, CUDA toolkit/runtime 11.8, nvcc 11.8.89, driver 525.105.17,
+  GCC 11.4, Ninja 1.13, Python ABI with `_GLIBCXX_USE_CXX11_ABI=0`; 4 × RTX 4090 sm89.
+- Build configuration: `rtx4090`, sm89 cubin + PTX, head-dim 64, FP16+BF16, causal/non-causal
+  forward/backward (8 `.cu` translation units), two nvcc workers, verbose output. Build and Torch
+  caches are on `/data`; about 17 GiB was free before launch.
+- tmux session: `minitrain-cuda-build-sm89-d64-20260725`
+- Command:
+
+  ```bash
+  MINITRAIN_CUDA_BUILD_PROFILE=rtx4090 \
+  MINITRAIN_CUDA_ARCHS=89 \
+  MINITRAIN_CUDA_MAX_JOBS=2 \
+  MINITRAIN_CUDA_VERBOSE=1 \
+    python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
+  ```
+
+- Console log: `artifacts/logs/cuda_build_sm89_d64_20260725T080800Z.log`
+- Exit-status file: `artifacts/logs/cuda_build_sm89_d64_20260725T080800Z.status`
+- Build outputs: `${MINITRAIN_CUDA_BUILD_ROOT}/<runtime-ABI>/minitrain_cuda_flash_<config-hash>/`;
+  the exact resolved path and binary checksum will be added on completion.
+- Result: all eight CUDA translation units and the C++ bridge compiled, linked, loaded, and were
+  reused by a second process with `ninja: no work to do`. Binary:
+  `/data/mini-train-sys/cache/cuda_ext/cpython-310_5217543196fa/minitrain_cuda_flash_8d01e50dc6dc/minitrain_cuda_flash_8d01e50dc6dc.so`,
+  8,016,112 bytes, SHA256
+  `85d0a9327eff4a862d7bd1950937c0b01ef088a1a15a7ab59849e1d4fa00263c`.
+- Correctness smoke: BF16 shape `(2,12,512,64)`, causal forward and backward against PyTorch SDPA
+  passed. Maximum absolute differences were 0.00098 forward, 0.00098 dq, 0.00391 dk, and
+  0.00195 dv.
+
+## 2026-07-25 16:25 — RTX 4090 industrial per-kernel benchmark
+
+- Status: completed with quality-gate follow-up required (2026-07-25 16:40 Asia/Shanghai;
+  exit code 0)
+- Local start: 2026-07-25 16:25 Asia/Shanghai
+- UTC start: 2026-07-25 08:25 UTC
+- Purpose: benchmark the six dense and two MoE/router optimized kernels at the exact per-rank
+  293,494,272-parameter SynBioS shapes, plus a Mixtral-class industrial appendix. Each shape is
+  isolated in a fresh CUDA process so OOM/timeout evidence cannot corrupt later cases.
+- Git commit/state: `train@448aa09`, dirty with the documented predicted-t1 results, benchmark
+  workflow improvements, RTX 4090 CUDA build profile, and report/index updates. Before launch,
+  14 targeted tests and Ruff passed; a formal-profile RMSNorm Torch-vs-Triton worker smoke passed
+  forward and backward correctness.
+- Hardware: one otherwise-idle RTX 4090 24 GB (GPU 0) for single-GPU kernel microbenchmarks;
+  four RTX 4090 GPUs detected and idle before launch. BF16, CUDA 11.8, sm89 native attention D64.
+- tmux session: `minitrain-kernel-industrial-20260725`
+- Commands, executed sequentially:
+
+  ```bash
+  CUDA_VISIBLE_DEVICES=0 python scripts/run_server_notebook.py \
+    tests/operator_bench_linux_server.ipynb \
+    --kernel mini-train-sys --output-dir artifacts/notebooks --timeout-seconds -1
+  CUDA_VISIBLE_DEVICES=0 python scripts/run_server_notebook.py \
+    tests/moe_operator_bench_linux_server.ipynb \
+    --kernel mini-train-sys --output-dir artifacts/notebooks --timeout-seconds -1
+  ```
+
+- Console log: `artifacts/logs/kernel_industrial_20260725T082500Z.log`
+- Exit-status file: `artifacts/logs/kernel_industrial_20260725T082500Z.status`
+- Raw/result roots: `artifacts/operator_benchmark/rtx4090_24gb/dense/`,
+  `artifacts/operator_benchmark/rtx4090_24gb/`, and `artifacts/notebooks/`.
+- Important overrides: dense warmup/measure 50/200 ms, MoE warmup/measure 50/200 ms, per-shape
+  timeout 1,200 seconds; CUDA build profile `rtx4090`, arch 89, D64 BF16/FP16.
+- Result: both notebooks completed in about 14 minutes. Dense produced 113 rows with zero process
+  or numerical-correctness failures and seven retained OOM rows. Formal attention at
+  `(B=112,H=12,S=512,D=64)` completed all backends; full-step P50 was 3.203 ms Torch,
+  2.623 ms Triton, and 2.776 ms native CUDA. MoE/router produced 26 rows and no process failures,
+  but the old fixed elementwise BF16 threshold rejected six large-token Triton fused-MoE backward
+  rows. This is retained as an initial failed quality gate, not a headline result.
+- Follow-up evidence: an independent formal 8,192-token gradient diagnostic found per-tensor
+  relative L2 error 0.40%-0.49% and cosine similarity 0.999988-0.999992 despite maximum absolute
+  differences up to 0.125. The validation is therefore rerun below with scale-aware, chunked
+  relative-L2/cosine metrics while preserving elementwise results.
+
+## 2026-07-25 16:46 — MoE relative-gradient gate and fused-loss capacity follow-up
+
+- Status: completed (2026-07-25 16:48 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 16:46 Asia/Shanghai
+- UTC start: 2026-07-25 08:46 UTC
+- Purpose: rerun Router/Fused-MoE in a new result directory with chunked relative L2 and cosine
+  gradient metrics, and separately measure the formal 57,344-token Triton fused loss without
+  constructing the same-shape Torch correctness reference that caused the first harness OOM.
+- Git commit/state: `train@448aa09`, dirty as documented. Fourteen targeted tests and Ruff passed
+  after the measurement changes.
+- Hardware: one idle RTX 4090 24 GB (GPU 0); CUDA 11.8, BF16.
+- tmux session: `minitrain-kernel-quality-r2-20260725`
+- Commands:
+
+  ```bash
+  CUDA_VISIBLE_DEVICES=0 python tests/moe_operator_bench_runner.py run \
+    --output artifacts/operator_benchmark/rtx4090_24gb/moe_r2_relative_gate \
+    --warmup-ms 50 --rep-ms 200 --case-timeout-seconds 1200
+  CUDA_VISIBLE_DEVICES=0 python tests/dense_operator_bench_runner.py _capacity_worker \
+    --profile project_formal --tokens 57344 --validation-tokens 32768 \
+    --warmup-ms 50 --rep-ms 200 \
+    --output artifacts/operator_benchmark/rtx4090_24gb/dense_capacity/\
+fused_linear_cross_entropy_project_formal_57344_triton.json
+  ```
+
+- Console log: `artifacts/logs/kernel_quality_r2_20260725T084600Z.log`
+- Exit-status file: `artifacts/logs/kernel_quality_r2_20260725T084600Z.status`
+- Result roots: `artifacts/operator_benchmark/rtx4090_24gb/moe_r2_relative_gate/` and
+  `artifacts/operator_benchmark/rtx4090_24gb/dense_capacity/`.
+- Result: the rerun passed with 26 rows, zero process failures, and zero accepted correctness
+  failures. The six scale-aware BF16 cases had relative L2 error 0.425%-0.552% and cosine
+  similarity 0.999985-0.999991; their original elementwise results remain recorded. The
+  performance-only formal Triton fused-loss case completed at 57,344 tokens after correctness
+  had passed at 32,768 tokens: full-step P50 163.12 ms and peak allocated delta 356.06 MiB.
+
+## 2026-07-25 16:51 — Industrial kernel scan boundary extensions
+
+- Status: completed (2026-07-25 16:55 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 16:51 Asia/Shanghai
+- UTC start: 2026-07-25 08:51 UTC
+- Purpose: add the exact 57,344-token formal Router point and extend every successful
+  Mixtral-class/router scan boundary by one candidate before selecting headline results.
+- Git commit/state: `train@448aa09`, dirty as documented; the extension grid is recorded in the
+  runner constants and operator report.
+- Hardware: one idle RTX 4090 24 GB (GPU 0), BF16.
+- tmux session: `minitrain-kernel-extensions-20260725`
+- Workload: Router 57,344 and 524,288 tokens; fused MoE Mixtral-class 512 tokens; six dense
+  Mixtral-class kernels at 1,024 tokens. Each case remains isolated in a new CUDA process.
+- Console log: `artifacts/logs/kernel_extensions_20260725T085100Z.log`
+- Exit-status file: `artifacts/logs/kernel_extensions_20260725T085100Z.status`
+- Result root: `artifacts/operator_benchmark/rtx4090_24gb/extensions/`.
+- Result: all nine extension cases completed with Torch/Triton forward and backward correctness.
+  The exact Router formal point completed at 57,344 tokens; the outer points reached Router
+  524,288 tokens, Mixtral-class fused MoE 512 tokens, and six Mixtral-class dense kernels at
+  1,024 tokens. No OOM, timeout, or unsupported result occurred in the extensions.
+
+## 2026-07-25 16:55 — Withdraw flawed predicted-t1 fresh-whole pilot
+
+- Status: completed
+- Decision: the predicted-t1 fresh-whole pilot is withdrawn and must not be cited. Audit found
+  that its fresh readout omitted the original probe's `LowRankEmbeddingDelta` (P rank 2, Q rank
+  16) and used first-probe predictions rather than the requested ground-truth first token.
+- Removed at the user's explicit request: the narrative report and index entries, four pilot
+  result directories, two capacity-gate directories, predicted-first batch benchmark exports,
+  and their artifact/Git-safe logs. These deleted outputs are not recoverable from this checkout;
+  the immutable lifecycle entries above remain solely to document why the run was invalidated.
+- Preserved: the separate no-training oracle validation, whose protocol uses the existing formal
+  Q-whole head with `[EOS, name, true_t1, EOS]`; it is not the flawed fresh-probe run.
+- Replacement requirement: ground-truth `t1`, original `AttributeProbe` architecture, P rank 2,
+  Q rank 16, identical held-out labels/splits/checkpoint binding, and the original validation and
+  recovery gates before any new result is interpreted.
+
+## 2026-07-25 17:01 — Publish industrial kernel benchmark summary
+
+- Status: completed (exit code 0)
+- Purpose: apply the predeclared representative-shape rules, merge dense/MoE/capacity/extension
+  evidence, render the résumé table, and export the complete 5.9 MiB operator result tree.
+- Quality gates: 14 operator/server workflow tests and Ruff passed immediately before export;
+  every selected paired row passed forward/backward correctness. Native CUDA is claimed only for
+  attention.
+- Canonical artifacts: `artifacts/operator_benchmark/resume_summary/` and Git-safe mirror
+  `results/benchmarks/operator_benchmark/resume_summary/`.
+- Summary SHA256:
+  `a8595c70ba77a12be2e59e5e805f3d903b99255a5ae33bab89bc8c82f6b2ee9e`;
+  CSV SHA256:
+  `046269b0912ad3607fab876bce24ad72d1dc7c712e1d28e39593388c645f1546`.
+- Headline full-step Triton speedups vs Torch: RMSNorm 6.51×, RoPE 2.57×, SwiGLU 1.42×,
+  CrossEntropy 4.54×, FusedLinearCrossEntropy 1.39×, FlashAttention 1.22×, Router 2.43×,
+  and Fused MoE 1.46×. Native CUDA FlashAttention was 1.15× Torch and slower than Triton.
+- Log: `artifacts/logs/kernel_export_20260725T090000Z.log`; export copied raw JSON, case logs,
+  CSV, figures, summaries, and executed notebooks without a file over 50 MiB.
+
+## 2026-07-25 17:23 — Ground-truth-t1 rank-matched fresh-probe semantic audit
+
+- Status: failed immediately (exit code 1)
+- Local start: 2026-07-25 17:23 Asia/Shanghai
+- UTC start: 2026-07-25 09:23 UTC
+- Purpose: audit all ten P/Q × five-attribute tasks on the real cache and formal checkpoint before
+  any corrected training. The gate checks exact true-t1 insertion, P/Q readout positions, whole
+  labels, person/split/sample alignment, reference checkpoint hashes, original P=2/Q=16 ranks,
+  trainable state shapes, and complete backbone freezing.
+- Git commit/state: `train@448aa09`, dirty as documented. Seventeen targeted semantic/report/
+  workflow tests, shell syntax, CLI discovery, and Ruff passed before launch.
+- Hardware: one idle RTX 4090 24 GB (GPU 0); all four GPUs idle before launch.
+- tmux session: `minitrain-ground-truth-probe-audit-20260725`
+- Command:
+
+  ```bash
+  CUDA_VISIBLE_DEVICES=0 python scripts/audit_ground_truth_first_probe.py \
+    --data artifacts/synbios_moe/multi5_permute \
+    --probe-cache artifacts/synbios_moe/multi5_permute/probe_cache \
+    --probe-dir artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training \
+    --model-config configs/synbios_moe/model.yaml \
+    --checkpoint artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388 \
+    --device cuda:0 \
+    --output artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_semantic_audit/audit.json
+  ```
+
+- Console log: `artifacts/logs/ground_truth_first_semantic_audit_20260725T092300Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_semantic_audit_20260725T092300Z.status`
+- Failure: the standalone script did not prepend the repository root before importing
+  `scripts.synbios_moe`, so it exited before loading CUDA, model, checkpoint, or data. No result
+  directory was written.
+
+## 2026-07-25 17:24 — Ground-truth-t1 semantic audit import-path retry
+
+- Status: failed during the first P task (exit code 1)
+- Change: prepend the resolved repository root to `sys.path` before project imports; Ruff passed.
+- tmux session: `minitrain-ground-truth-probe-audit-r2-20260725`
+- Command and inputs: identical to the preceding audit.
+- Console log: `artifacts/logs/ground_truth_first_semantic_audit_r2_20260725T092400Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_semantic_audit_r2_20260725T092400Z.status`
+- Failure: the audit compared the entire rebuilt dataclass against a helper result that
+  intentionally retained the *first-token* label, whereas the dataset correctly substitutes the
+  *whole-value* label. Input IDs and positions had not disagreed. The audit assertion—not the
+  training dataset—was corrected to compare input/position fields separately and require the
+  whole label explicitly.
+
+## 2026-07-25 17:27 — Ground-truth-t1 semantic audit assertion retry
+
+- Status: completed (2026-07-25 17:29 Asia/Shanghai; exit code 0)
+- tmux session: `minitrain-ground-truth-probe-audit-r3-20260725`
+- Command and inputs: identical to the original audit with the corrected assertion.
+- Console log: `artifacts/logs/ground_truth_first_semantic_audit_r3_20260725T092700Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_semantic_audit_r3_20260725T092700Z.status`
+- Result: all ten tasks passed. The audit checked 210 reconstructed real-cache items across
+  train/validation and source positions, exact `[... true_t1]` P and
+  `[EOS, name, true_t1, EOS]` Q protocols, whole labels, shared sample/person/token identities,
+  reference checkpoint hashes, P rank 2/Q rank 16, low-rank-delta tensor shapes, and the exact
+  six trainable parameter tensors. Output:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_semantic_audit/audit.json`.
+
+## 2026-07-25 17:31 — Ground-truth-t1 rank-matched probe capacity gate
+
+- Status: completed scan but failed formal readiness gate (2026-07-25 17:34 Asia/Shanghai;
+  exit code 1)
+- Local start: 2026-07-25 17:31 Asia/Shanghai
+- UTC start: 2026-07-25 09:31 UTC
+- Purpose: select throughput-optimal train/validation batches for the corrected P-rank-2 and
+  Q-rank-16 `AttributeProbe` lifecycle under 92% reserved VRAM, using two independent replicas
+  per workload and fresh real DataLoader batches.
+- Prerequisites: ten-task semantic audit passed; 17 targeted tests, Ruff, shell syntax, exact CLI
+  discovery, cache validation, checkpoint/rank/state-shape binding all passed.
+- Hardware: 4 × idle RTX 4090 24 GB; two P and two Q replicas run concurrently.
+- tmux session: `minitrain-ground-truth-probe-capacity-20260725`
+- Command:
+
+  ```bash
+  GROUND_TRUTH_PROBE_BENCHMARK_RUN_ID=20260725T093100Z \
+    bash scripts/bash/synbios_ground_truth_first_batch_benchmark.sh \
+    multi5_permute_fsdp_4gpu \
+    artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388
+  ```
+
+- Console log: `artifacts/logs/ground_truth_first_capacity_20260725T093100Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_capacity_20260725T093100Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T093100Z/`.
+- Result: both training recommendations were interior and reproduced: P=128 at 619.62 examples/s
+  and Q=1,024 at 3,862.18 examples/s, with 42.32% and 48.67% maximum reserved memory. Validation
+  selected the largest tested P=2,048 and Q=16,384, so the required boundary gate rejected the
+  run. The first grid also omitted the paper-default P=50/Q=200 candidates, making its
+  `paper_batch_safe_on_all` check false. No training result is accepted from this gate.
+
+## 2026-07-25 17:35 — Expanded ground-truth-t1 capacity and paper-default gate
+
+- Status: completed scan but failed the P-validation boundary gate (2026-07-25 17:43
+  Asia/Shanghai; exit code 1)
+- Change: include exact paper-default P=50/Q=200 training batches and extend validation through
+  P=7,168 and Q=49,152 to bracket the throughput optimum or physical capacity boundary.
+- tmux session: `minitrain-ground-truth-probe-capacity-r2-20260725`
+- Command: identical helper with
+  `GROUND_TRUTH_PROBE_BENCHMARK_RUN_ID=20260725T093500Z`.
+- Console log: `artifacts/logs/ground_truth_first_capacity_r2_20260725T093500Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_capacity_r2_20260725T093500Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T093500Z/`.
+- Result: the paper-default P=50/Q=200 batches were safe on both replicas. The reproduced
+  throughput-optimal training batches were P=128 (632.52 examples/s, 42.31% maximum reserved)
+  and Q=768 (3,780.62 examples/s, 36.99% maximum reserved). Q validation selected the interior
+  3,072 batch (10,124.56 examples/s); P validation selected the largest tested 7,168 batch
+  (1,594.40 examples/s, 83.08% reserved), so only that workload remained unbracketed. No formal
+  settings were published from this incomplete gate.
+
+## 2026-07-25 17:46 — P-validation capacity boundary extension
+
+- Status: completed (2026-07-25 17:50 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 17:46 Asia/Shanghai
+- UTC start: 2026-07-25 09:46 UTC
+- Purpose: extend only the unresolved P-validation search through batch 8,192 on two independent
+  GPUs, then combine those measurements with the completed expanded training/Q-validation runs.
+  This is a continuation of the immediately preceding immutable benchmark inputs, not a new
+  dataset or model condition.
+- Git commit/state: `train@448aa09`, dirty with the documented corrected-probe and benchmark work.
+- Hardware: 2 × RTX 4090 24 GB (GPUs 0 and 2); all four GPUs idle before launch.
+- tmux session: `minitrain-ground-truth-pval-boundary-20260725`
+- Command: two concurrent
+  `benchmark-ground-truth-first-whole-batches --kind p --mode validation` replicas over
+  `256,512,768,1024,1536,2048,3072,4096,6144,7168,8192`, followed by
+  `summarize-probe-benchmarks --require-complete-search` using the preceding run's six completed
+  P/Q-training and Q-validation JSON files plus the two new P-validation JSON files.
+- Console log: `artifacts/logs/ground_truth_first_pval_boundary_20260725T094600Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_pval_boundary_20260725T094600Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T094600Z/`.
+- Result: formal readiness passed. Batch 8,192 reached 98.53% reserved memory and was rejected
+  by the accepted 92% ceiling, bracketing the P-validation search. Across both replicas, the
+  accepted throughput-optimal settings are P train=128, Q train=768, P validation=3,072, and
+  Q validation=3,072. P=50 and Q=200 paper-default batches were also safe on both replicas.
+  Machine-readable settings:
+  `artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T094600Z/recommended.env`.
+
+## 2026-07-25 17:52 — Corrected ground-truth-t1 P/Q lifecycle and recovery smoke
+
+- Status: stopped (2026-07-25 17:53 Asia/Shanghai; interrupted by the agent)
+- Local start: 2026-07-25 17:52 Asia/Shanghai
+- UTC start: 2026-07-25 09:52 UTC
+- Purpose: exercise the real corrected P-rank-2 and Q-rank-16 train/evaluate/save lifecycle,
+  create a step-10 recovery checkpoint, rerun the identical 20-step command, and require exact
+  resume from step 10 plus finite losses, frozen backbone, matched low-rank-delta architecture,
+  true-t1 protocol, alignment gates, and both JSON/PT outputs.
+- Git commit/state: `train@448aa09`, dirty with the documented corrected-probe and benchmark work.
+- Hardware: 2 × RTX 4090 24 GB (GPUs 0 and 1); all four GPUs idle before launch.
+- tmux session: `minitrain-ground-truth-probe-smoke-20260725`
+- Command:
+
+  ```bash
+  OUTPUT=artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_smoke/20260725T095200Z \
+    bash scripts/bash/synbios_ground_truth_first_smoke.sh \
+    multi5_permute_fsdp_4gpu \
+    artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388
+  ```
+
+- Console log: `artifacts/logs/ground_truth_first_smoke_20260725T095200Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_smoke_20260725T095200Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_smoke/20260725T095200Z/`.
+- Stop reason: the real P validation expansion contains about 1.5 million items, so two full
+  validation passes in a lifecycle-only gate would have wasted roughly 30 minutes. The partial
+  outputs are retained as failed-run provenance but are not accepted. Formal runs still require
+  the complete validation set; the retry uses a deterministic 12,288-item prefix solely for the
+  pre-launch smoke/recovery gate.
+
+## 2026-07-25 17:55 — Corrected P/Q lifecycle and bounded-validation recovery retry
+
+- Status: stopped (2026-07-25 17:56 Asia/Shanghai; interrupted by the agent)
+- Local start: 2026-07-25 17:55 Asia/Shanghai
+- UTC start: 2026-07-25 09:55 UTC
+- Purpose and conditions: identical to the preceding lifecycle/recovery gate, except each smoke
+  validation is explicitly limited to the first 12,288 aligned derived examples. The production
+  CLI default remains the complete validation set, and the formal runner does not set this limit.
+- Git commit/state: `train@448aa09`, dirty with the documented corrected-probe and benchmark work.
+- Hardware: 2 × RTX 4090 24 GB (GPUs 0 and 1); all four GPUs idle before launch.
+- tmux session: `minitrain-ground-truth-probe-smoke-r2-20260725`
+- Command: the preceding command with output run ID `20260725T095500Z`.
+- Console log: `artifacts/logs/ground_truth_first_smoke_r2_20260725T095500Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_smoke_r2_20260725T095500Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_smoke/20260725T095500Z/`.
+- Stop reason: the new validation-limit argument was mistakenly forwarded in the legacy
+  `train-probe` command instead of the corrected ground-truth command. Consequently the P/Q
+  smoke still attempted complete validation. The run was stopped, the forwarding site was
+  corrected, and the partial result is not accepted.
+
+## 2026-07-25 17:55 — Corrected probe final-budget decision
+
+- Decision: the user selected the previously established pilot update budget for the complete
+  corrected P/Q × five-attribute run: 4,000 steps per head rather than the original formal
+  12,000 steps. This is one third of the optimizer updates, while preserving the original
+  P-rank-2/Q-rank-16 architecture, the complete ten-task matrix, the capacity-selected P=128 and
+  Q=768 training batches, and complete held-out validation. Reports must call this a
+  `pilot-budget full-matrix run`, not an original-formal-budget reproduction.
+
+## 2026-07-25 17:58 — Corrected P/Q bounded-validation lifecycle retry 2
+
+- Status: completed (2026-07-25 17:58 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 17:58 Asia/Shanghai
+- UTC start: 2026-07-25 09:58 UTC
+- Purpose and conditions: retry the exact P/Q lifecycle/recovery gate after correcting the CLI
+  forwarding site. Seventeen targeted diagnostic/report/workflow tests and Ruff passed before
+  launch; the formal helper is also regression-tested to omit the smoke-only validation cap.
+- Git commit/state: `train@448aa09`, dirty with the documented corrected-probe and benchmark work.
+- Hardware: 2 × RTX 4090 24 GB (GPUs 0 and 1); all four GPUs idle before launch.
+- tmux session: `minitrain-ground-truth-probe-smoke-r3-20260725`
+- Command: the preceding bounded smoke command with output run ID `20260725T095800Z`.
+- Console log: `artifacts/logs/ground_truth_first_smoke_r3_20260725T095800Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_smoke_r3_20260725T095800Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_smoke/20260725T095800Z/`.
+- Result: both P and Q trained, evaluated exactly 12,288 derived examples, saved JSON/PT and
+  step-10 recovery files, then reproduced the identical final losses/metrics after resuming at
+  step 10. The accepted outputs report P rank 2, Q rank 16, active low-rank embedding deltas,
+  true-t1 input protocol, frozen backbones, and all alignment gates true.
+
+## 2026-07-25 17:59 — Corrected probe pre-launch full regression
+
+- Status: completed (2026-07-25 17:59 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 17:59 Asia/Shanghai
+- UTC start: 2026-07-25 09:59 UTC
+- Purpose: run the repository-wide pytest suite after the corrected probe semantic, capacity,
+  and exact recovery gates and before launching the complete ten-task run.
+- Git commit/state: `train@448aa09`, dirty with the documented corrected-probe and benchmark work.
+- Hardware: 4 × RTX 4090 available; pytest controls its own skips/devices.
+- tmux session: `minitrain-ground-truth-full-regression-20260725`
+- Command: `PYTHONPATH=. pytest -q`
+- Console log: `artifacts/logs/ground_truth_first_full_regression_20260725T095900Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_full_regression_20260725T095900Z.status`
+- Result: 115 passed, 0 failed, with five expected single-process distributed-checkpoint
+  warnings. The earlier targeted suite also passed 17/17 and Ruff passed.
+
+## 2026-07-25 18:01 — Ground-truth-t1 rank-matched full matrix, pilot budget
+
+- Status: stopped for efficiency correction (2026-07-25 18:07 Asia/Shanghai; interrupted by
+  the agent after all four workers had durable step-1,000 recovery checkpoints)
+- Local start: 2026-07-25 18:01 Asia/Shanghai
+- UTC start: 2026-07-25 10:01 UTC
+- Purpose: train and completely validate the corrected fresh whole-value P/Q probes for all five
+  non-date attributes after supplying cached ground-truth `t1`; compare them against the original
+  formal no-`t1` whole probes and generate tables plus P/Q PNG/PDF figures.
+- Configuration decision: user-selected 4,000-step pilot budget per head (one third of the prior
+  12,000-step whole formal updates); P rank 2/batch 128, Q rank 16/batch 768, P/Q evaluation batch
+  3,072, seed 1337, AdamW defaults, checkpoint interval 1,000, complete held-out validation.
+- Inputs: `multi5_permute` data/cache (manifest SHA256
+  `acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f`), original formal probe
+  heads under `probe_pipeline/formal/training`, and committed backbone checkpoint epoch 108 /
+  step 17,388.
+- Gates: ten-task real-cache semantic audit passed; replicated 92%-ceiling capacity search passed;
+  P/Q train/evaluate/save/exact-recovery smoke passed; full regression passed 115/115; Ruff and
+  shell syntax passed.
+- Git commit/state: `train@448aa09`, dirty with 54 documented corrected-probe, benchmark, report,
+  result, and provenance paths.
+- Hardware: 4 × idle RTX 4090 24 GB; dynamic task scheduler refills a GPU as each head completes.
+- tmux session: `minitrain-ground-truth-probe-pilot4000-20260725`
+- Command:
+
+  ```bash
+  OUTPUT=artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z \
+    STEPS=4000 P_BATCH_SIZE=128 Q_BATCH_SIZE=768 \
+    P_EVAL_BATCH_SIZE=3072 Q_EVAL_BATCH_SIZE=3072 GPUS="0 1 2 3" \
+    bash scripts/bash/synbios_ground_truth_first_whole.sh \
+    multi5_permute multi5_permute_fsdp_4gpu \
+    artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388
+  ```
+
+- Console log: `artifacts/logs/ground_truth_first_pilot4000_20260725T100100Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_pilot4000_20260725T100100Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`.
+- Local end: 2026-07-25 19:13 Asia/Shanghai
+- UTC end: 2026-07-25 11:13 UTC
+- Exit code: 0
+- Result summary: all 10 fresh rank-matched heads and one complete held-out validation pass per
+  head completed. Aggregate original-vs-ground-truth-`t1` whole accuracy was 45.28% vs 96.38%
+  for P across 30 attribute/source-position cells (+51.09 pp), 32.59% vs 95.62% for P0
+  (+63.03 pp), and 33.15% vs 48.56% for Q (+15.42 pp). Q detail was birth city 14.10%,
+  university 9.07%, major 74.61%, company 57.61%, and company city 87.42%. The 4,000-step
+  Q birth-city/university heads remain visibly budget-limited and are not treated as negative
+  evidence for the intervention.
+- Retained outputs: `summary.json`, `summary.csv`, structured `README.md`, four PNG/PDF figures,
+  10 task JSON/PT files, recovery checkpoints, and operation logs under the result root above.
+
+## 2026-07-25 19:14 — 293M SynBioS MoE 4-GPU backend benchmark
+
+- Status: failed
+- Local start: 2026-07-25 19:14 Asia/Shanghai
+- UTC start: 2026-07-25 11:14 UTC
+- Purpose: measure end-to-end 4-GPU FSDP training throughput and memory for the exact 293M
+  SynBioS MoE across Torch, Triton, and native-CUDA operator backends, first at a common fixed
+  local batch and then at each backend's largest repeatable batch below the accepted 92% reserved
+  memory boundary.
+- Exact command:
+  `SYNBIOS_BACKEND_BENCHMARK_RUN_ID=20260725T111400Z bash scripts/bash/synbios_backend_benchmark.sh`
+- Configuration: `configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml` plus
+  `configs/synbios_moe/model.yaml`; fixed-workload local batch 112, 10 warmup + 30 measured steps,
+  3 repeats; capacity sweep local batches 32, 48, 64, 80, 96, 112, 120, 128, 5 warmup +
+  20 measured steps, 2 repeats.
+- Correctness gate: backend forward/backward validation at BF16, causal `D=64`, including native
+  CUDA dispatch/fallback evidence. Prior full regression was 115/115.
+- Git commit/state: `train@448aa09`, dirty with the documented benchmark and corrected-probe work.
+- Hardware/topology: 4 × RTX 4090 24 GB; all four GPUs verified at 0 MiB before launch; PCIe
+  `SYS` topology without NVLink; NVIDIA driver 525.105.17, Torch 2.5.1+cu118.
+- Torch attention baseline: PyTorch fused CUDA Flash-SDPA
+  (`aten::_scaled_dot_product_flash_attention`), not naive eager attention and not the external
+  Dao-AILab `flash-attn` package.
+- tmux session: `minitrain-synbios-backend-formal-20260725`
+- Console log: `artifacts/logs/synbios_backend_benchmark_20260725T111400Z.log`
+- Exit-status file: `artifacts/logs/synbios_backend_benchmark_20260725T111400Z.status`
+- Fixed-workload result root:
+  `artifacts/distributed_benchmark/synbios_backend_fixed/20260725T111400Z/`
+- Fixed-space result root:
+  `artifacts/distributed_benchmark/synbios_backend_capacity/20260725T111400Z/`
+- Local end: 2026-07-25 19:21 Asia/Shanghai
+- UTC end: 2026-07-25 11:21 UTC
+- Exit code: 1
+- Failure summary: fixed local batch 112 was not a valid common comparison point. Torch OOMed in
+  all three repeats while Triton and native CUDA completed. The strict presenter correctly
+  rejected the incomplete comparison before the capacity stage. Raw OOM traces, successful
+  optimized-backend results, validation output, and the partial summary are retained under the
+  fixed-workload result root. The workflow was then changed and tested to run the capacity sweep
+  first, derive the largest repeated sub-92%-reserved batch common to all three backends, and only
+  then run the fixed-workload comparison.
+
+## 2026-07-25 19:24 — Capacity-first 293M SynBioS backend benchmark retry
+
+- Status: stopped
+- Local start: 2026-07-25 19:24 Asia/Shanghai
+- UTC start: 2026-07-25 11:24 UTC
+- Purpose: retry the same formal 4-GPU FSDP Torch/Triton/native-CUDA benchmark with a corrected
+  ordering: complete the two-repeat capacity sweep first, select the largest batch that all three
+  backends repeat successfully below 92% peak reserved VRAM, then run the three-repeat fixed
+  comparison at that mechanically selected common batch.
+- Exact command:
+  `SYNBIOS_BACKEND_BENCHMARK_RUN_ID=20260725T112400Z bash scripts/bash/synbios_backend_benchmark.sh`
+- Configuration/hardware/gates: same model, run YAML, hardware topology, BF16 D64 correctness
+  gate, batch candidates, and measurement budgets as the 19:14 attempt. Workflow regression:
+  Ruff and shell syntax passed; benchmark-workflow suite 8/8 passed after the correction.
+- Git commit/state: `train@448aa09`, dirty with documented benchmark/probe work and this recovery.
+- tmux session: `minitrain-synbios-backend-capacity-first-20260725`
+- Console log: `artifacts/logs/synbios_backend_benchmark_20260725T112400Z.log`
+- Exit-status file: `artifacts/logs/synbios_backend_benchmark_20260725T112400Z.status`
+- Fixed-workload result root:
+  `artifacts/distributed_benchmark/synbios_backend_fixed/20260725T112400Z/`
+- Fixed-space result root:
+  `artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/`
+- Local end: 2026-07-25 19:34 Asia/Shanghai
+- UTC end: 2026-07-25 11:34 UTC
+- Exit code: interrupted by operator after the candidate-range defect was established; no status
+  file was emitted because the tmux shell received the interrupt.
+- Result summary: all attempted Torch cases from local batch 32 upward OOMed. At batch 32 the
+  unoptimized Torch MoE backward requested an additional 3.07 GiB with roughly 22 GiB already in
+  use, proving that the candidate lower bound was too high to obtain a Torch baseline. Logs and
+  the partial capacity summary are retained. The next retry extends the common candidate grid
+  downward to 1/2/4/8/16/24 while preserving the industrial upper range through 128.
+
+## 2026-07-25 19:36 — Expanded capacity-first 293M SynBioS backend benchmark
+
+- Status: running
+- Local start: 2026-07-25 19:36 Asia/Shanghai
+- UTC start: 2026-07-25 11:36 UTC
+- Purpose: complete the formal benchmark after expanding the two-repeat capacity candidates to
+  local batches 1, 2, 4, 8, 16, 24, 32, 48, 64, 80, 96, 112, 120, and 128. The workflow then
+  chooses the maximum sub-92%-reserved batch repeated by all three backends and performs the
+  three-repeat fixed-workload comparison there.
+- Exact command:
+  `SYNBIOS_BACKEND_BENCHMARK_RUN_ID=20260725T113500Z bash scripts/bash/synbios_backend_benchmark.sh`
+- Configuration/hardware/gates: same exact 293.49M BF16 SynBioS MoE, 4-GPU FSDP launch YAML,
+  Torch/Triton/native-CUDA backends, RTX 4090 topology, and D64 correctness gate as the retained
+  predecessors. Ruff, shell syntax, and benchmark-workflow tests 8/8 passed.
+- Git commit/state: `train@448aa09`, dirty with documented benchmark/probe work and recovery.
+- tmux session: `minitrain-synbios-backend-expanded-capacity-20260725`
+- Console log: `artifacts/logs/synbios_backend_benchmark_20260725T113500Z.log`
+- Exit-status file: `artifacts/logs/synbios_backend_benchmark_20260725T113500Z.status`
+- Fixed-workload result root:
+  `artifacts/distributed_benchmark/synbios_backend_fixed/20260725T113500Z/`
+- Fixed-space result root:
+  `artifacts/distributed_benchmark/synbios_backend_capacity/20260725T113500Z/`
+- Training-decision report:
+  `reports/synbios_moe/probes/ground_truth_first_training_decision.md`.
+- Stop reason: the fresh-probe path performed one complete generic validation pass and then a
+  second complete pass to aggregate source-position metrics. This duplicated identical held-out
+  inference and would add about 34 minutes of wall time without adding evidence. No final result
+  JSON/PT had been published. The retry resumes the four exact recovery states and performs one
+  complete pass that emits aggregate and per-position counts/accuracies plus progress telemetry.
+
+## 2026-07-25 18:01 — Torch attention runtime-dispatch verification
+
+- Status: completed (2026-07-25 18:01 Asia/Shanghai; exit code 0)
+- Purpose: identify the actual Torch attention baseline used by the operator benchmark rather
+  than inferring it from the high-level API.
+- Command: profile one BF16 causal forward/backward call to
+  `torch.nn.functional.scaled_dot_product_attention` at B=2, H=12, S=512, D=64 on GPU 0 and list
+  profiler keys containing scaled-dot-product/flash/efficient attention.
+- Git commit/state: `train@448aa09`, dirty with documented benchmark work.
+- Hardware/software: RTX 4090 sm89, driver 525.105.17, PyTorch 2.5.1+cu118, CUDA runtime 11.8.
+- Result: forward dispatched through `aten::_scaled_dot_product_flash_attention` and
+  `aten::_flash_attention_forward`; backward dispatched through
+  `aten::_scaled_dot_product_flash_attention_backward` and
+  `aten::_flash_attention_backward`. Torch Flash, memory-efficient, and math SDPA backends were
+  enabled, and the runtime selected Flash-SDPA for the measured formal shape. This is PyTorch's
+  integrated fused CUDA backend, not the separately installed Dao-AILab `flash-attn` package.
+- Evidence:
+  `results/benchmarks/operator_benchmark/resume_summary/torch_attention_backend.json`.
+- Reporting decision: Triton 1.22× and native CUDA 1.15× attention results are explicitly stated
+  relative to PyTorch fused Flash-SDPA, never relative to naive eager attention.
+
+## 2026-07-25 18:09 — Single-pass corrected validation smoke
+
+- Status: completed (2026-07-25 18:10 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-25 18:09 Asia/Shanghai
+- UTC start: 2026-07-25 10:09 UTC
+- Purpose: rerun the bounded P/Q lifecycle and exact-recovery gate after consolidating aggregate
+  and per-position validation into one pass. Require 12,288 evaluated items, exact resume from
+  step 10, and explicit per-position correct/total counts. Nineteen targeted tests and Ruff
+  passed before launch.
+- Git commit/state: `train@448aa09`, dirty with documented corrected-probe/benchmark work.
+- Hardware: 2 × RTX 4090 (GPUs 0 and 1); all GPUs idle before launch.
+- tmux session: `minitrain-ground-truth-single-pass-smoke-20260725`
+- Command: `scripts/bash/synbios_ground_truth_first_smoke.sh` with output run ID
+  `20260725T100900Z`.
+- Console log: `artifacts/logs/ground_truth_single_pass_smoke_20260725T100900Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_single_pass_smoke_20260725T100900Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_smoke/20260725T100900Z/`.
+- Result: both P/Q initial and recovery passes completed; each final result resumed exactly at
+  step 10, evaluated 12,288 examples once, and recorded per-position correct/total counts whose
+  totals equal the evaluated population.
+
+## 2026-07-25 18:11 — Ground-truth-t1 full matrix single-pass-validation retry
+
+- Status: running
+- Local start: 2026-07-25 18:11 Asia/Shanghai
+- UTC start: 2026-07-25 10:11 UTC
+- Purpose/configuration/inputs: identical to the 18:01 pilot-budget full-matrix launch, with one
+  consolidated complete validation pass. The first four P heads resume exactly from their
+  retained step-1,000 recovery checkpoints; the remaining six heads start normally.
+- Gate: post-change targeted suite 19/19, Ruff, shell syntax, and real P/Q single-pass exact
+  recovery smoke all passed.
+- Git commit/state: `train@448aa09`, dirty with documented corrected-probe/benchmark work.
+- Hardware: 4 × idle RTX 4090 24 GB; dynamic task scheduler.
+- tmux session: `minitrain-ground-truth-probe-pilot4000-r2-20260725`
+- Command: same as the 18:01 launch and the same recovery/result root.
+- Console log: `artifacts/logs/ground_truth_first_pilot4000_r2_20260725T101100Z.log`
+- Exit-status file: `artifacts/logs/ground_truth_first_pilot4000_r2_20260725T101100Z.status`
+- Result root:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`.

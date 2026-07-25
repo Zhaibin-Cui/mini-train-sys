@@ -47,8 +47,26 @@ Capacity sweep 将每个 batch case 放在独立 `torchrun` 子进程中，默�
 OOM 被记录为结果而不是让整套实验停止，前一个 case 的 allocator 状态也不会污染
 后一个 case。它覆盖真正的 single 1 卡、DDP 1/4/8 卡和 FSDP 1/4/8 卡（按机器实际
 可见拓扑选择），并报告各策略/卡数下最大的成功 local/global batch。正式训练应选择
-成功且 peak allocated 显存不超过 90% 的最大 local batch，而不是盲目使用最后一个
-未 OOM 的点。
+重复成功、吞吐最优且 peak reserved 显存不超过当前服务器门槛的 local batch，而不是
+盲目使用最后一个未 OOM 的点。当前 4×RTX 4090 正式 backend 对比使用 92% reserved
+VRAM 上限；allocated memory 仍保留用于诊断，但不是物理容量选择指标。
+
+对不同 backend 做容量比较时，必须区分：
+
+- 固定 batch：比较同样 token 工作量下的吞吐和显存；
+- 固定 reserved-VRAM 上限：每个 backend 选择各自最高吞吐安全 batch，比较同样空间
+  下的训练吞吐。
+
+`scripts/run_dist_bench.py present-capacity` 会按第二种口径生成逐 batch 聚合、选中
+frontier、相对 Torch speedup 和边界检查。
+
+正式 293.49M SynBioS 三 backend 全流程可用
+`scripts/bash/synbios_backend_benchmark.sh` 启动。该 helper 先执行 batches
+1/2/4/8/16/24/32/48/64/80/96/112/120/128 各两次的容量扫描，在 92% reserved-VRAM
+门槛下机械选择
+Torch/Triton/CUDA 都重复成功的最大 common batch，再在该 batch 下各跑三次同工作量
+比较，最后统一导出。它不会把两种口径合并成一个数字，也不会预设某个 optimized
+backend 能运行的 batch 对 Torch 同样安全。
 
 ## 记录内容
 
@@ -81,9 +99,10 @@ raw case、逐 case 日志、硬件清单和 summary JSON 保存在同一 suite 
 后可用 `bench.load("weak").show()` 或 `bench.load("capacity").show()` 直接重建展示，无需
 重新训练。
 
-建议验收门槛是 weak scaling efficiency ≥80%、data stall ≤5%、稳定训练时 allocated
-显存 ≤90%。门槛失败并不自动说明 DDP/FSDP 错误：先看 topology、降频、DataLoader
-等待和专家负载，再区分通信瓶颈与计算瓶颈。
+建议验收门槛是 weak scaling efficiency ≥80%、data stall ≤5%；容量门槛以具体机器
+记录的 peak reserved 比例为准，当前正式 4090 流程为 ≤92%。门槛失败并不自动说明
+DDP/FSDP 错误：先看 topology、降频、DataLoader 等待和专家负载，再区分通信瓶颈与
+计算瓶颈。
 
 配置在 `configs/server/rtx4090_24gb/`。每个 1/4/8 卡 preset 都包含
 `expected_world_size`，进程数不匹配会立即失败。默认 local batch=4 是安全 weak

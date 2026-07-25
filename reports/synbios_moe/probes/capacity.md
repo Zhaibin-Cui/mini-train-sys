@@ -55,3 +55,22 @@ sequence construction, or GPU type invalidates reuse through the pipeline identi
 Smoke and pilot P/Q training plus independent held-out validation completed for `single` and
 `multi5_permute` with the generated `recommended.env`. The formal duration decision retains these
 throughput-optimal batches and is recorded in `formal_training_decision.md`.
+
+## Ground-truth-`t1` fresh-whole extension (2026-07-25)
+
+The corrected fresh-whole protocol changes P into separate prefix-plus-`t1` sequences and
+therefore has its own replicated capacity gate. It must not silently reuse the preceding original
+probe measurements.
+
+| Workload | Selected batch | Mean examples/s | Maximum reserved memory |
+|---|---:|---:|---:|
+| P training | 128 | 632.52 | 42.31% |
+| Q training | 768 | 3,780.62 | 36.99% |
+| P validation | 3,072 | 1,616.36 | 38.34% |
+| Q validation | 3,072 | 10,124.56 | 9.90% |
+
+Both replicas passed. P validation batch 8,192 reached 98.53% reserved and was rejected, so the
+accepted recommendation is bracketed rather than a search boundary. Raw evidence is under
+`artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T094600Z/`; launch
+interpretation and the user-selected 4,000-step budget are documented in
+`ground_truth_first_training_decision.md`.

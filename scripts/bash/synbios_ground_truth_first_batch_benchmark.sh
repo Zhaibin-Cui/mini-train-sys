@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 [[ -f "$ROOT/.minitrain-storage.env" ]] && source "$ROOT/.minitrain-storage.env"
 
-# Resolve the multi5+permute inputs used by the final pilot.
+# Resolve the multi5+permute inputs used by the rank-matched true-t1 run.
 RUN_NAME="${1:-multi5_permute_fsdp_4gpu}"
 CHECKPOINT="${2:-latest}"
 DATA="artifacts/synbios_moe/multi5_permute"
@@ -22,22 +22,21 @@ fi
   echo "missing committed checkpoint: $CHECKPOINT" >&2
   exit 2
 }
-[[ -f "$PROBE_DIR/q_university_first.pt" ]] || {
-  echo "missing formal first probes: $PROBE_DIR" >&2
+[[ -f "$PROBE_DIR/q_university_whole.pt" ]] || {
+  echo "missing formal whole probes: $PROBE_DIR" >&2
   exit 2
 }
 
 # Candidate lists are independent because P biographies and Q name queries have different lengths.
-P_BATCHES="${P_BATCHES:-128,256,384,512,768,1024}"
-Q_BATCHES="${Q_BATCHES:-1024,2048,4096,6144,8192,12288,16384}"
-P_VALIDATION_BATCHES="${P_VALIDATION_BATCHES:-256,512,768,1024,1536,2048}"
-Q_VALIDATION_BATCHES="${Q_VALIDATION_BATCHES:-2048,4096,6144,8192,12288,16384}"
+P_BATCHES="${P_BATCHES:-50,64,128,256,384,512,768,1024}"
+Q_BATCHES="${Q_BATCHES:-200,384,768,1024,1536,2048,4096}"
+P_VALIDATION_BATCHES="${P_VALIDATION_BATCHES:-256,512,768,1024,1536,2048,3072,4096,6144,7168}"
+Q_VALIDATION_BATCHES="${Q_VALIDATION_BATCHES:-3072,6144,8192,12288,16384,24576,32768,40960,49152}"
 MEMORY_LIMIT_PERCENT="${PROBE_MEMORY_LIMIT_PERCENT:-92}"
 WARMUP_STEPS="${PROBE_BENCHMARK_WARMUP_STEPS:-3}"
 MEASURE_STEPS="${PROBE_BENCHMARK_MEASURE_STEPS:-10}"
-PREDICTION_BATCH_SIZE="${PREDICTION_BATCH_SIZE:-512}"
-RUN_ID="${PREDICTED_PROBE_BENCHMARK_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
-OUTPUT="${PREDICTED_PROBE_BENCHMARK_OUTPUT:-artifacts/synbios_moe/results/predicted_first_batch_benchmark/$RUN_ID}"
+RUN_ID="${GROUND_TRUTH_PROBE_BENCHMARK_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
+OUTPUT="${GROUND_TRUTH_PROBE_BENCHMARK_OUTPUT:-artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/$RUN_ID}"
 mkdir -p "$OUTPUT/logs"
 cleanup() {
   while read -r pid; do kill "$pid" 2>/dev/null || true; done < <(jobs -pr)
@@ -70,11 +69,11 @@ run_mode() {
     "p:2:b:$p_candidates" "q:3:b:$q_candidates"; do
     IFS=: read -r kind gpu replica candidates <<<"$specification"
     result="$OUTPUT/${kind}_${replica}_${mode}.json"
-    python scripts/synbios_moe.py benchmark-predicted-first-whole-batches \
+    python scripts/synbios_moe.py benchmark-ground-truth-first-whole-batches \
       --data "$DATA" --probe-cache "$CACHE" --probe-dir "$PROBE_DIR" \
       --model-config "$MODEL" --checkpoint "$CHECKPOINT" \
       --kind "$kind" --attribute university --mode "$mode" \
-      --batch-sizes "$candidates" --prediction-batch-size "$PREDICTION_BATCH_SIZE" \
+      --batch-sizes "$candidates" \
       --warmup-steps "$WARMUP_STEPS" --measure-steps "$MEASURE_STEPS" \
       --memory-limit-percent "$MEMORY_LIMIT_PERCENT" \
       --device "cuda:$gpu" --output "$result" \

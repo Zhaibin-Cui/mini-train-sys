@@ -509,26 +509,42 @@ def present_backend(args: argparse.Namespace) -> None:
             aggregate[f"{metric}_stdev"] = statistics.stdev(samples)
         aggregates.append(aggregate)
     by_backend = {row["ops_backend"]: row for row in aggregates}
-    torch_row, cuda_row = by_backend["torch"], by_backend["cuda"]
-    comparison = {
-        "throughput_speedup_cuda_vs_torch": (
-            cuda_row["throughput_tokens_per_sec_mean"] / torch_row["throughput_tokens_per_sec_mean"]
-        ),
-        "step_time_reduction_percent": 100
-        * (torch_row["step_time_ms_mean_mean"] - cuda_row["step_time_ms_mean_mean"])
-        / torch_row["step_time_ms_mean_mean"],
-        "allocated_memory_reduction_percent": 100
-        * (torch_row["peak_memory_allocated_mb_mean"] - cuda_row["peak_memory_allocated_mb_mean"])
-        / torch_row["peak_memory_allocated_mb_mean"],
-        "reserved_memory_reduction_percent": 100
-        * (torch_row["peak_memory_reserved_mb_mean"] - cuda_row["peak_memory_reserved_mb_mean"])
-        / torch_row["peak_memory_reserved_mb_mean"],
-    }
-    if "triton" in by_backend:
-        comparison["throughput_speedup_cuda_vs_triton"] = (
-            cuda_row["throughput_tokens_per_sec_mean"]
-            / by_backend["triton"]["throughput_tokens_per_sec_mean"]
+    comparison = {}
+    for candidate, baseline in (
+        ("triton", "torch"),
+        ("cuda", "torch"),
+        ("cuda", "triton"),
+    ):
+        if candidate not in by_backend or baseline not in by_backend:
+            continue
+        candidate_row = by_backend[candidate]
+        baseline_row = by_backend[baseline]
+        suffix = f"{candidate}_vs_{baseline}"
+        comparison[f"throughput_speedup_{suffix}"] = (
+            candidate_row["throughput_tokens_per_sec_mean"]
+            / baseline_row["throughput_tokens_per_sec_mean"]
         )
+        comparison[f"step_time_reduction_percent_{suffix}"] = 100 * (
+            baseline_row["step_time_ms_mean_mean"] - candidate_row["step_time_ms_mean_mean"]
+        ) / baseline_row["step_time_ms_mean_mean"]
+        comparison[f"allocated_memory_reduction_percent_{suffix}"] = 100 * (
+            baseline_row["peak_memory_allocated_mb_mean"]
+            - candidate_row["peak_memory_allocated_mb_mean"]
+        ) / baseline_row["peak_memory_allocated_mb_mean"]
+        comparison[f"reserved_memory_reduction_percent_{suffix}"] = 100 * (
+            baseline_row["peak_memory_reserved_mb_mean"]
+            - candidate_row["peak_memory_reserved_mb_mean"]
+        ) / baseline_row["peak_memory_reserved_mb_mean"]
+    # Preserve the original CUDA-vs-Torch keys for existing report consumers.
+    comparison["step_time_reduction_percent"] = comparison[
+        "step_time_reduction_percent_cuda_vs_torch"
+    ]
+    comparison["allocated_memory_reduction_percent"] = comparison[
+        "allocated_memory_reduction_percent_cuda_vs_torch"
+    ]
+    comparison["reserved_memory_reduction_percent"] = comparison[
+        "reserved_memory_reduction_percent_cuda_vs_torch"
+    ]
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
     with (output / "backend_aggregates.csv").open("w", newline="", encoding="utf-8") as handle:
@@ -590,6 +606,188 @@ def present_backend(args: argparse.Namespace) -> None:
         "figure": str(figure_path),
     }
     (output / "backend_comparison.json").write_text(
+        json.dumps(result, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps(result, indent=2))
+
+
+def present_backend_capacity(args: argparse.Namespace) -> None:
+    """Select each backend's fastest repeated case under one reserved-VRAM cap."""
+
+    source = Path(args.input)
+    report = json.loads(source.read_text(encoding="utf-8"))
+    if report.get("suite") != "capacity":
+        raise ValueError(f"{source} is not a capacity benchmark")
+    rows = report.get("results", [])
+    if not rows:
+        raise ValueError("capacity benchmark contains no successful cases")
+    expected_repeats = int(report.get("settings", {}).get("repeats", args.min_repeats))
+    required_repeats = max(args.min_repeats, expected_repeats)
+    tested_batches = sorted(
+        {
+            int(batch)
+            for batch in report.get("settings", {}).get("batch_sizes", [])
+        }
+        or {int(row["local_batch_size"]) for row in rows}
+    )
+    grouped: dict[tuple[str, int], list[dict[str, object]]] = {}
+    for row in rows:
+        backend = str(row.get("ops_backend"))
+        if backend not in {"torch", "triton", "cuda"}:
+            continue
+        grouped.setdefault((backend, int(row["local_batch_size"])), []).append(row)
+
+    aggregates = []
+    for (backend, batch_size), values in sorted(grouped.items()):
+        reserved_percent = [
+            100
+            * float(row["peak_memory_reserved_mb"])
+            / float(row["gpu_memory_total_mb"])
+            for row in values
+        ]
+        dispatch_valid = True
+        if backend == "cuda":
+            dispatch_valid = all(
+                int(((row.get("backend_dispatch") or {}).get("attention") or {}).get(
+                    "native_cuda", 0
+                ))
+                > 0
+                and int(((row.get("backend_dispatch") or {}).get("attention") or {}).get(
+                    "fallback", 0
+                ))
+                == 0
+                for row in values
+            )
+        throughputs = [float(row["throughput_tokens_per_sec"]) for row in values]
+        aggregate = {
+            "ops_backend": backend,
+            "local_batch_size": batch_size,
+            "global_batch_size": int(values[0]["global_batch_size"]),
+            "repeats_successful": len(values),
+            "throughput_tokens_per_sec_mean": statistics.mean(throughputs),
+            "throughput_tokens_per_sec_stdev": (
+                statistics.stdev(throughputs) if len(throughputs) > 1 else 0.0
+            ),
+            "peak_memory_allocated_mb_mean": statistics.mean(
+                float(row["peak_memory_allocated_mb"]) for row in values
+            ),
+            "peak_memory_reserved_mb_mean": statistics.mean(
+                float(row["peak_memory_reserved_mb"]) for row in values
+            ),
+            "peak_reserved_percent_max": max(reserved_percent),
+            "native_cuda_dispatch_valid": dispatch_valid,
+        }
+        aggregate["eligible"] = (
+            len(values) >= required_repeats
+            and max(reserved_percent) <= args.memory_limit_percent
+            and dispatch_valid
+        )
+        aggregates.append(aggregate)
+
+    selected = {}
+    for backend in ("torch", "triton", "cuda"):
+        candidates = [
+            row
+            for row in aggregates
+            if row["ops_backend"] == backend and row["eligible"]
+        ]
+        if not candidates:
+            raise ValueError(
+                f"{backend} has no case with {required_repeats} repeats under "
+                f"{args.memory_limit_percent:.1f}% reserved VRAM"
+            )
+        selected[backend] = max(
+            candidates, key=lambda row: float(row["throughput_tokens_per_sec_mean"])
+        )
+    torch_throughput = float(selected["torch"]["throughput_tokens_per_sec_mean"])
+    selected_rows = []
+    for backend in ("torch", "triton", "cuda"):
+        row = dict(selected[backend])
+        row["throughput_speedup_vs_torch"] = (
+            float(row["throughput_tokens_per_sec_mean"]) / torch_throughput
+        )
+        row["selected_is_largest_tested_batch"] = (
+            int(row["local_batch_size"]) == max(tested_batches)
+        )
+        selected_rows.append(row)
+    eligible_batches_by_backend = {
+        backend: {
+            int(row["local_batch_size"])
+            for row in aggregates
+            if row["ops_backend"] == backend and row["eligible"]
+        }
+        for backend in ("torch", "triton", "cuda")
+    }
+    common_eligible_batches = sorted(
+        set.intersection(*eligible_batches_by_backend.values())
+    )
+    if not common_eligible_batches:
+        raise ValueError(
+            "Torch, Triton, and CUDA have no common repeated batch under the VRAM limit"
+        )
+    common_fixed_batch = max(common_eligible_batches)
+
+    output = Path(args.output)
+    output.mkdir(parents=True, exist_ok=True)
+    for name, values in (
+        ("capacity_aggregates.csv", aggregates),
+        ("capacity_selected.csv", selected_rows),
+    ):
+        with (output / name).open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(values[0]))
+            writer.writeheader()
+            writer.writerows(values)
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    labels = [str(row["ops_backend"]).title() for row in selected_rows]
+    throughputs = [
+        float(row["throughput_tokens_per_sec_mean"]) for row in selected_rows
+    ]
+    reserved = [float(row["peak_reserved_percent_max"]) for row in selected_rows]
+    colors = ["#3B6EA8", "#E87722", "#2E8B57"]
+    figure, axes = plt.subplots(1, 2, figsize=(10.5, 4.3), constrained_layout=True)
+    axes[0].bar(labels, throughputs, color=colors)
+    axes[0].set_title("Best throughput under fixed VRAM cap")
+    axes[0].set_ylabel("tokens/s")
+    axes[1].bar(labels, reserved, color=colors)
+    axes[1].axhline(args.memory_limit_percent, color="#b91c1c", linestyle="--")
+    axes[1].set_title("Peak reserved VRAM")
+    axes[1].set_ylabel("% per GPU")
+    for axis in axes:
+        axis.spines[["top", "right"]].set_visible(False)
+    figure_path = output / "capacity_backend_comparison.png"
+    figure.savefig(figure_path, dpi=180, bbox_inches="tight")
+    plt.close(figure)
+
+    result = {
+        "schema_version": 1,
+        "source": str(source.resolve()),
+        "selection_rule": {
+            "memory_metric": "peak_memory_reserved_mb / gpu_memory_total_mb",
+            "memory_limit_percent": args.memory_limit_percent,
+            "minimum_successful_repeats": required_repeats,
+            "objective": "maximum mean training throughput among eligible cases",
+        },
+        "tested_batches": tested_batches,
+        "common_eligible_batches": common_eligible_batches,
+        "common_fixed_batch": common_fixed_batch,
+        "selected": selected_rows,
+        "boundary_recommendations": [
+            row["ops_backend"]
+            for row in selected_rows
+            if row["selected_is_largest_tested_batch"]
+        ],
+        "quality_gate_passed": not any(
+            row["selected_is_largest_tested_batch"] for row in selected_rows
+        ),
+        "figure": str(figure_path),
+    }
+    (output / "capacity_backend_comparison.json").write_text(
         json.dumps(result, indent=2) + "\n",
         encoding="utf-8",
     )
@@ -689,6 +887,11 @@ def parser() -> argparse.ArgumentParser:
     presentation.add_argument("--input", required=True)
     presentation.add_argument("--validation", required=True)
     presentation.add_argument("--output", required=True)
+    capacity_presentation = commands.add_parser("present-capacity")
+    capacity_presentation.add_argument("--input", required=True)
+    capacity_presentation.add_argument("--output", required=True)
+    capacity_presentation.add_argument("--memory-limit-percent", type=float, default=92.0)
+    capacity_presentation.add_argument("--min-repeats", type=int, default=2)
     validation = commands.add_parser("validate-backend")
     validation.add_argument("--device", default="cuda:0")
     validation.add_argument("--batch-size", type=int, default=2)
@@ -738,6 +941,8 @@ def main() -> None:
         inventory(Path(args.output))
     elif args.command == "present-backend":
         present_backend(args)
+    elif args.command == "present-capacity":
+        present_backend_capacity(args)
     elif args.command == "validate-backend":
         validate_backend(args)
     else:

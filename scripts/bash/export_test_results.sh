@@ -27,6 +27,7 @@ copy_tree() {
 }
 
 copy_tree "$ROOT/artifacts/distributed_benchmark" "$DEST/benchmarks"
+copy_tree "$ROOT/artifacts/operator_benchmark" "$DEST/benchmarks/operator_benchmark"
 copy_tree "$ROOT/artifacts/logs" "$DEST/logs"
 # Preserve validation reports, event logs, runtime/RNG metadata, and COMMITTED
 # markers in Git. Multi-gigabyte DCP shards and model exports remain on the
@@ -78,6 +79,9 @@ done
 copy_tree \
   "$ROOT/artifacts/synbios_moe/results/probe_batch_benchmark" \
   "$DEST/benchmarks/synbios_moe/probe_batch_benchmark"
+copy_tree \
+  "$ROOT/artifacts/synbios_moe/results/ground_truth_first_batch_benchmark" \
+  "$DEST/benchmarks/synbios_moe/ground_truth_first_batch_benchmark"
 
 # Persist formal metrics and recovery metadata, never multi-gigabyte tensor
 # payloads. COMMITTED/runtime/RNG files prove a checkpoint was publishable.
@@ -86,6 +90,7 @@ if [[ -d "$ROOT/artifacts/synbios_moe/results" ]]; then
   mkdir -p "$DEST/formal_runs/synbios_moe/results"
   rsync -a \
     --exclude='probe_batch_benchmark/' \
+    --exclude='ground_truth_first_batch_benchmark/' \
     --exclude='*.pt' \
     --exclude='*/diagnostics/*/records.csv' \
     --exclude='*/diagnostics/*/bad_cases.csv' \

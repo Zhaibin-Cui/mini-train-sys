@@ -1,7 +1,27 @@
 # RTX 4090 benchmark and validation summary
 
-Snapshot date: 2026-07-23 (Asia/Shanghai). Hardware: 4 × NVIDIA GeForce RTX 4090 24 GB; PyTorch
+Snapshot date: 2026-07-25 (Asia/Shanghai). Hardware: 4 × NVIDIA GeForce RTX 4090 24 GB; PyTorch
 2.5.1+cu118; CUDA Toolkit 11.8; Triton 3.1.0; BF16.
+
+## Industrial kernel benchmark (2026-07-25)
+
+The quality-gated single-GPU scan covers eight optimized kernel categories at the exact
+293.49M-MoE per-rank shape wherever all paired backends fit. Triton full-step speedups versus
+shape-matched Torch were RMSNorm 6.51×, RoPE 2.57×, SwiGLU 1.42×, CrossEntropy 4.54×,
+FusedLinearCrossEntropy 1.39×, FlashAttention 1.22×, Router 2.43×, and Fused MoE 1.46×.
+Native CUDA FlashAttention achieved 1.15× Torch; it was slower than Triton and is reported as
+measured. Peak allocated reductions ranged from 5.3% (Fused MoE) to 94.0% (fused loss).
+The Torch attention baseline itself uses `torch.nn.functional.scaled_dot_product_attention`;
+an on-server BF16 causal D=64 profile dispatched to PyTorch CUDA fused Flash-SDPA forward and
+backward kernels. Thus the 1.22×/1.15× figures are improvements over fused Flash-SDPA, not over
+naive eager attention. Dispatch evidence is retained in
+`results/benchmarks/operator_benchmark/resume_summary/torch_attention_backend.json`.
+
+All selected paired rows passed forward/backward checks. Explicit loss comparisons use the
+8,192-token largest common throughput-optimal point because Torch OOMed at larger formal shapes;
+Triton fused loss separately completed 57,344 tokens without claiming a same-shape speedup.
+Canonical artifacts are under `results/benchmarks/operator_benchmark/resume_summary/`; lifecycle
+and limitations are in `HISTORY.md` and `reports/operator_bench.md`.
 
 ## Formal SynBioS model
 
@@ -48,6 +68,29 @@ benchmark directory for the full evidence and limitations.
 | 4 | 344,254 tok/s | 92.24% |
 
 Both four-GPU repeats passed (92.08% and 92.40%); data stall was 0.09–0.12%.
+
+## Resume-oriented backend benchmark plan (pending)
+
+The next formal performance milestone has two separate acceptance views on the exact 293.49M
+SynBioS MoE:
+
+- fixed workload: one common FSDP4 batch across Torch, Triton, and CUDA, reporting throughput,
+  step time, peak allocated/reserved memory, and pairwise speed/memory changes;
+- fixed space: a common 92% peak-reserved VRAM cap, selecting each backend's fastest repeated safe
+  batch and reporting tokens/s relative to Torch.
+
+The matching operator table covers RMSNorm, RoPE, SwiGLU, CrossEntropy,
+FusedLinearCrossEntropy, FlashAttention, router postprocess, and fused MoE, with
+forward/backward/full-step latency and peak-memory changes. These measurements are pending and
+must not be quoted as completed results. The executable contract is
+`scripts/server_benchmark_codex_prompt.md`; fixed-space aggregation is implemented by
+`scripts/run_dist_bench.py present-capacity`.
+
+Operator headline shapes prioritize the exact formal per-rank workload (57,344 tokens,
+H=768/I=1024/D=64/V=50,257/E=8/K=2). Mixtral-class dimensions are retained as an industrial
+appendix; if a complete profile exceeds 24 GB, the benchmark reports the common safe frontier
+and throughput knee rather than treating maximum memory occupancy as the objective. End-to-end
+results use only the completed 293,494,272-parameter SynBioS MoE.
 
 ## Generic 125M-class server matrix
 

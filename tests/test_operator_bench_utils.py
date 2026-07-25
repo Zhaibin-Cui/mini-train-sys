@@ -34,7 +34,13 @@ def test_close_stats_rejects_tensor_metadata_mismatch():
         rtol=0.0,
     )
 
-    assert stats == {"correct": False, "max_abs": float("inf"), "max_rel": float("inf")}
+    assert stats == {
+        "correct": False,
+        "max_abs": float("inf"),
+        "max_rel": float("inf"),
+        "relative_l2": float("inf"),
+        "cosine_similarity": -1.0,
+    }
 
 
 def test_release_cache_attempts_empty_cache_after_synchronize_failure(monkeypatch):
