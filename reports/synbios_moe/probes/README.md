@@ -45,6 +45,8 @@
 |---|---|---|
 | [`formal_comparison.md`](formal_comparison.md) | single vs multi5+permute 正式主报告 | **规范 formal 结论** |
 | [`diagnostics/README.md`](diagnostics/README.md) | 两个 Q-whole val、全量 whole 对比与重建入口 | **规范诊断结论** |
+| [`company_pair_position_fit.md`](company_pair_position_fit.md) | Company/company-city P-whole 位置增长的组合概率拟合 | 已完成 |
+| [`attribute_token_distribution.md`](attribute_token_distribution.md) | 六类属性的 leading-space GPT-2 token 分布 | 已完成 |
 | [`diagnostics/oracle_first_token.md`](diagnostics/oracle_first_token.md) | 原 Q-whole 与 `+ true t1` 全五属性对照 | 已完成 |
 | [`diagnostics/bad_case_routes.md`](diagnostics/bad_case_routes.md) | bad-case 五属性×12层 MoE route 分支 | 已完成 |
 | [`formal_protocol.md`](formal_protocol.md) | probe 任务、rank、batch、预算与端点定义 | 已执行 |

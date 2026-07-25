@@ -34,12 +34,16 @@ from experiments.synbios_moe.probe_data import (
     validate_probe_cache,
 )
 from experiments.synbios_moe.probe_diagnostics import (
+    PredictedFirstWholeProbe,
     WHOLE_ATTRIBUTES,
     bad_case_route_validation,
     oracle_first_token_validation,
+    prepare_predicted_first_whole_data,
+    train_predicted_first_whole_probe,
 )
 from experiments.synbios_moe.repository_audit import build_repository_audit
 from experiments.synbios_moe.probe_checkpoint import save_probe_result
+from experiments.synbios_moe.predicted_first_report import summarize_predicted_first_whole
 from experiments.synbios_moe.probe_benchmark import (
     benchmark_probe_batches,
     parse_batch_sizes,
@@ -374,7 +378,9 @@ def command_validate_probe(args: argparse.Namespace) -> None:
         if args.probe_cache and saved_cache_sha is not None:
             current_cache_sha = _sha256_file(Path(args.probe_cache) / "manifest.json")
             if saved_cache_sha != current_cache_sha:
-                raise SystemExit("probe checkpoint was trained with a different probe cache manifest")
+                raise SystemExit(
+                    "probe checkpoint was trained with a different probe cache manifest"
+                )
         saved_model_sha = metadata.get("checkpoint_model_sha256")
         if saved_model_sha is not None:
             current_model_sha = args.checkpoint_model_sha256 or _sha256_file(
@@ -595,6 +601,140 @@ def command_validate_probe_oracle_first_token(args: argparse.Namespace) -> None:
         )
         result["log_dir"] = str(log_dir) if log_dir is not None else None
         print(json.dumps(result, indent=2))
+
+
+def command_train_predicted_first_whole(args: argparse.Namespace) -> None:
+    """Train a matched whole head after inserting a frozen first-probe prediction."""
+
+    _require_multi5_permute(args.data)
+    validate_probe_cache(args.probe_cache, args.data, include_missing_classes=False)
+    device = torch.device(args.device)
+    batch_size = args.batch_size or (128 if args.kind == "p" else 768)
+    evaluation_batch_size = args.evaluation_batch_size or (512 if args.kind == "p" else 6144)
+    with command_monitor(args, f"{args.kind}_predicted_first_whole_pilot") as (logger, log_dir):
+        model = load_model(args.model_config, args.checkpoint, device, logger=logger)
+
+        def prediction_progress(split: str, examples: int) -> None:
+            logger.log_event(
+                {
+                    "event": "probe_diagnostic",
+                    "diagnostic": "predicted_first_whole_pilot",
+                    "phase": "first_token_prediction",
+                    "kind": args.kind,
+                    "attribute": args.attribute,
+                    "split": split,
+                    "examples": examples,
+                }
+            )
+
+        probe, result = train_predicted_first_whole_probe(
+            backbone=model,
+            cache_root=args.probe_cache,
+            probe_dir=args.probe_dir,
+            kind=args.kind,
+            attribute=args.attribute,
+            device=device,
+            batch_size=batch_size,
+            evaluation_batch_size=evaluation_batch_size,
+            steps=args.steps,
+            seed=args.seed,
+            backbone_checkpoint=args.checkpoint,
+            logger=logger,
+            log_interval=args.log_interval,
+            recovery_path=args.recovery_checkpoint,
+            checkpoint_interval_steps=args.checkpoint_interval_steps,
+            resume=args.resume_probe,
+            evaluate_train=args.evaluate_train,
+            prediction_progress=prediction_progress,
+        )
+        result.update(
+            {
+                "data": str(Path(args.data).resolve()),
+                "probe_cache": str(Path(args.probe_cache).resolve()),
+                "probe_dir": str(Path(args.probe_dir).resolve()),
+                "checkpoint": str(Path(args.checkpoint).resolve()),
+                "model_parameters": active_parameter_estimate(model),
+                "provenance": collect_provenance(ROOT),
+                "log_dir": str(log_dir) if log_dir is not None else None,
+            }
+        )
+        output = Path(args.output)
+        write_json_atomic(output, result)
+        save_probe_result(output.with_suffix(".pt"), probe=probe, result=result)
+        print(json.dumps(result))
+
+
+def command_summarize_predicted_first_whole(args: argparse.Namespace) -> None:
+    """Validate and render a complete ten-task predicted-t1 pilot."""
+
+    result = summarize_predicted_first_whole(args.run)
+    print(json.dumps(result, indent=2))
+
+
+def command_benchmark_predicted_first_whole(args: argparse.Namespace) -> None:
+    """Capacity-test the exact rerun input and matched stage-two classifier."""
+
+    _require_multi5_permute(args.data)
+    validate_probe_cache(args.probe_cache, args.data, include_missing_classes=False)
+    device = torch.device(args.device)
+    sizes = parse_batch_sizes(args.batch_sizes)
+    with command_monitor(args, f"{args.kind}_predicted_first_batch_benchmark") as (
+        logger,
+        log_dir,
+    ):
+        model = load_model(args.model_config, args.checkpoint, device, logger=logger)
+        prepared = prepare_predicted_first_whole_data(
+            backbone=model,
+            cache_root=args.probe_cache,
+            probe_dir=args.probe_dir,
+            kind=args.kind,
+            attribute=args.attribute,
+            device=device,
+            prediction_batch_size=args.prediction_batch_size,
+            backbone_checkpoint=args.checkpoint,
+        )
+        dataset = prepared.train_data if args.mode == "training" else prepared.validation_data
+        result = benchmark_probe_batches(
+            model,
+            dataset,
+            kind=args.kind,
+            num_classes=len(prepared.whole_train.class_names),
+            rank=0,
+            batch_sizes=sizes,
+            device=device,
+            mode=args.mode,
+            warmup_steps=args.warmup_steps,
+            measure_steps=args.measure_steps,
+            memory_limit_percent=args.memory_limit_percent,
+            probe_factory=lambda: PredictedFirstWholeProbe(
+                model,
+                len(prepared.whole_train.class_names),
+                kind=args.kind,
+            ),
+        )
+        result.update(
+            {
+                "protocol": "predicted_first_whole_batch_benchmark_v1",
+                "attribute": args.attribute,
+                "checkpoint": str(Path(args.checkpoint).resolve()),
+                "probe_cache": str(Path(args.probe_cache).resolve()),
+                "probe_dir": str(Path(args.probe_dir).resolve()),
+                "prediction_batch_size": args.prediction_batch_size,
+                "log_dir": str(log_dir) if log_dir is not None else None,
+                "provenance": collect_provenance(ROOT),
+            }
+        )
+        write_json_atomic(args.output, result)
+        print(json.dumps(result, indent=2))
+
+
+def _require_multi5_permute(data: str | Path) -> None:
+    manifest_path = Path(data) / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("variant") != "multi5+permute":
+        raise ValueError(
+            "predicted-first-token experiments are restricted to the multi5+permute dataset"
+        )
 
 
 def command_validate_probe_bad_case_routes(args: argparse.Namespace) -> None:
@@ -1082,6 +1222,60 @@ def build_parser() -> argparse.ArgumentParser:
     add_monitoring_arguments(validate_probe)
     validate_probe.set_defaults(func=command_validate_probe)
 
+    predicted_first_whole = commands.add_parser("train-predicted-first-whole")
+    predicted_first_whole.add_argument("--data", required=True)
+    predicted_first_whole.add_argument("--probe-cache", required=True)
+    predicted_first_whole.add_argument("--probe-dir", required=True)
+    predicted_first_whole.add_argument("--model-config", required=True)
+    predicted_first_whole.add_argument("--checkpoint", required=True)
+    predicted_first_whole.add_argument("--kind", choices=("p", "q"), required=True)
+    predicted_first_whole.add_argument("--attribute", choices=WHOLE_ATTRIBUTES, required=True)
+    predicted_first_whole.add_argument("--steps", type=int, default=3_000)
+    predicted_first_whole.add_argument("--batch-size", type=int)
+    predicted_first_whole.add_argument("--evaluation-batch-size", type=int)
+    predicted_first_whole.add_argument("--seed", type=int, default=1337)
+    predicted_first_whole.add_argument("--recovery-checkpoint")
+    predicted_first_whole.add_argument("--checkpoint-interval-steps", type=int, default=1_000)
+    predicted_first_whole.add_argument(
+        "--resume-probe",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    predicted_first_whole.add_argument("--evaluate-train", action="store_true")
+    predicted_first_whole.add_argument(
+        "--device", default="cuda" if torch.cuda.is_available() else "cpu"
+    )
+    predicted_first_whole.add_argument("--output", required=True)
+    add_monitoring_arguments(predicted_first_whole)
+    predicted_first_whole.set_defaults(func=command_train_predicted_first_whole)
+
+    predicted_summary = commands.add_parser("summarize-predicted-first-whole")
+    predicted_summary.add_argument("--run", required=True)
+    predicted_summary.set_defaults(func=command_summarize_predicted_first_whole)
+
+    predicted_benchmark = commands.add_parser("benchmark-predicted-first-whole-batches")
+    predicted_benchmark.add_argument("--data", required=True)
+    predicted_benchmark.add_argument("--probe-cache", required=True)
+    predicted_benchmark.add_argument("--probe-dir", required=True)
+    predicted_benchmark.add_argument("--model-config", required=True)
+    predicted_benchmark.add_argument("--checkpoint", required=True)
+    predicted_benchmark.add_argument("--kind", choices=("p", "q"), required=True)
+    predicted_benchmark.add_argument("--attribute", choices=WHOLE_ATTRIBUTES, default="university")
+    predicted_benchmark.add_argument(
+        "--mode", choices=("training", "validation"), default="training"
+    )
+    predicted_benchmark.add_argument("--batch-sizes", required=True)
+    predicted_benchmark.add_argument("--prediction-batch-size", type=int, default=512)
+    predicted_benchmark.add_argument("--warmup-steps", type=int, default=3)
+    predicted_benchmark.add_argument("--measure-steps", type=int, default=10)
+    predicted_benchmark.add_argument("--memory-limit-percent", type=float, default=92.0)
+    predicted_benchmark.add_argument(
+        "--device", default="cuda" if torch.cuda.is_available() else "cpu"
+    )
+    predicted_benchmark.add_argument("--output", required=True)
+    add_monitoring_arguments(predicted_benchmark)
+    predicted_benchmark.set_defaults(func=command_benchmark_predicted_first_whole)
+
     for name, function in (
         ("validate-probe-oracle-first-token", command_validate_probe_oracle_first_token),
         ("validate-probe-bad-case-routes", command_validate_probe_bad_case_routes),
@@ -1100,9 +1294,7 @@ def build_parser() -> argparse.ArgumentParser:
         )
         diagnostic.add_argument("--batch-size", type=int, default=512)
         diagnostic.add_argument("--max-examples", type=int)
-        diagnostic.add_argument(
-            "--device", default="cuda" if torch.cuda.is_available() else "cpu"
-        )
+        diagnostic.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
         diagnostic.add_argument("--output", required=True)
         if name == "validate-probe-bad-case-routes":
             diagnostic.add_argument("--pair-limit", type=int, default=2000)
@@ -1115,9 +1307,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark_probe.add_argument("--model-config", required=True)
     benchmark_probe.add_argument("--checkpoint", required=True)
     benchmark_probe.add_argument("--kind", choices=("p", "q"), required=True)
-    benchmark_probe.add_argument(
-        "--mode", choices=("training", "validation"), default="training"
-    )
+    benchmark_probe.add_argument("--mode", choices=("training", "validation"), default="training")
     benchmark_probe.add_argument("--attribute", choices=ATTRIBUTES, default="university")
     benchmark_probe.add_argument("--target", choices=("first", "whole"), default="whole")
     benchmark_probe.add_argument("--rank", type=int)

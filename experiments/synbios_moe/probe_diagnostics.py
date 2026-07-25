@@ -1,12 +1,17 @@
-"""Inference-only diagnostics for Q-probe failures and MoE routing paths.
+"""Matched sequential probes and inference diagnostics for probe failures.
 
-The diagnostics in this module never update model or probe parameters:
+The legacy diagnostics in this module never update model or probe parameters:
 
 * ``oracle_first_token_validation`` measures whether inserting the ground-truth
   first attribute token before the Q readout EOS unlocks a trained Q-whole head.
 * ``bad_case_route_validation`` finds Q-first-correct/Q-whole-wrong examples and
   tests whether examples sharing token 1 use similar expert paths before
   branching at token 2.
+
+``train_predicted_first_whole_probe`` is intentionally different: it freezes a
+completed first-token probe, inserts its hard prediction, reruns the frozen
+backbone, and trains a fresh whole-value readout on the matched hidden state.
+P reads the inserted token itself; Q reads the EOS immediately after it.
 
 Raw per-example evidence, tidy aggregates, and plots are deliberately kept
 separate so conclusions remain auditable.
@@ -16,6 +21,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import heapq
 import json
 import math
 import random
@@ -26,6 +32,8 @@ from pathlib import Path
 from typing import Callable, Sequence
 
 import torch
+from torch import nn
+from torch.utils.data import DataLoader, Dataset
 from torch.torch_version import TorchVersion
 
 from experiments.synbios_moe.data import ATTRIBUTES
@@ -35,6 +43,7 @@ from experiments.synbios_moe.probes import (
     GPT2Codec,
     ProbeBatchItem,
     collate_probe,
+    train_probe,
 )
 from experiments.synbios_moe.router_analysis import normalized_mutual_information
 from minitrain.model.transformer import MiniTransformer
@@ -125,6 +134,7 @@ def _load_probe(
     *,
     backbone: MiniTransformer,
     dataset: CachedProbeDataset,
+    kind: str,
     attribute: str,
     target: str,
     backbone_checkpoint: str | Path | None,
@@ -135,7 +145,9 @@ def _load_probe(
     metadata = payload.get("result")
     if not isinstance(metadata, dict):
         raise ValueError(f"{path} is missing probe result metadata")
-    expected = {"kind": "q", "attribute": attribute, "target": target}
+    if kind not in {"p", "q"}:
+        raise ValueError(f"invalid probe kind: {kind}")
+    expected = {"kind": kind, "attribute": attribute, "target": target}
     actual = {key: metadata.get(key) for key in expected}
     if actual != expected:
         raise ValueError(f"{path} metadata is {actual}, expected {expected}")
@@ -143,15 +155,16 @@ def _load_probe(
         raise ValueError(f"{path} class mapping does not match the probe cache")
     if metadata.get("probe_cache_manifest_sha256") != cache_manifest_sha256:
         raise ValueError(f"{path} was trained with a different probe cache")
-    if backbone_checkpoint is not None and Path(str(metadata.get("checkpoint"))).resolve() != Path(
-        backbone_checkpoint
-    ).resolve():
+    if (
+        backbone_checkpoint is not None
+        and Path(str(metadata.get("checkpoint"))).resolve() != Path(backbone_checkpoint).resolve()
+    ):
         raise ValueError(f"{path} was trained with a different backbone checkpoint")
     probe = AttributeProbe(
         backbone,
         len(dataset.class_names),
         rank=int(metadata["rank"]),
-        kind="q",
+        kind=kind,
     )
     incompatible = probe.load_state_dict(payload["probe"], strict=False)
     if incompatible.unexpected_keys or any(
@@ -164,6 +177,456 @@ def _load_probe(
 def _dataset_profile_index(dataset: CachedProbeDataset, index: int) -> int:
     sample = int(dataset.sample_indices[index])
     return int(dataset.profile_indices[sample])
+
+
+def predicted_first_token_text(class_name: str, codec: GPT2Codec) -> tuple[int, str]:
+    """Recover one cached first-token class as its exact leading-space token text."""
+
+    try:
+        token_id = int(class_name)
+    except ValueError as exc:
+        raise ValueError(f"first-token class is not a token ID: {class_name!r}") from exc
+    if not 0 <= token_id < codec.vocab_size or token_id == codec.eos:
+        raise ValueError(f"invalid first-token ID: {token_id}")
+    text = codec.encoding.decode([token_id])
+    if not text.startswith(" "):
+        raise ValueError(
+            f"first-token {token_id} decodes to {text!r}, expected an ASCII leading space"
+        )
+    if codec.encode(text) != [token_id]:
+        raise ValueError(f"first-token {token_id} does not round-trip through its decoded text")
+    return token_id, text
+
+
+def build_predicted_first_input(
+    *,
+    kind: str,
+    item: ProbeBatchItem,
+    source_position: int,
+    token_id: int,
+    eos_id: int,
+) -> ProbeBatchItem:
+    """Insert a hard t1 prediction and select the requested matched readout."""
+
+    if kind == "p":
+        if not 0 <= source_position < len(item.positions):
+            raise IndexError("P source position is outside the cached item")
+        prefix = item.input_ids[: item.positions[source_position] + 1]
+        input_ids = [*prefix, int(token_id)]
+        return ProbeBatchItem(input_ids, [len(input_ids) - 1], item.label)
+    if kind == "q":
+        if source_position != 0 or len(item.positions) != 1:
+            raise ValueError("Q has exactly one source position")
+        if not item.input_ids or item.input_ids[-1] != eos_id:
+            raise ValueError("Q input must end in its readout EOS")
+        input_ids = [*item.input_ids[:-1], int(token_id), eos_id]
+        return ProbeBatchItem(input_ids, [len(input_ids) - 1], item.label)
+    raise ValueError(f"invalid probe kind: {kind}")
+
+
+class PredictedFirstWholeDataset(Dataset):
+    """Whole labels paired with inputs rebuilt from frozen first-probe predictions."""
+
+    def __init__(
+        self,
+        *,
+        kind: str,
+        first_data: CachedProbeDataset,
+        whole_data: CachedProbeDataset,
+        predicted_class_ids: Sequence[Sequence[int]],
+        token_ids_by_class: Sequence[int],
+        eos_id: int,
+    ) -> None:
+        if kind not in {"p", "q"}:
+            raise ValueError("kind must be p or q")
+        if len(first_data) != len(whole_data) or len(first_data) != len(predicted_class_ids):
+            raise ValueError("first/whole datasets and predictions are not aligned")
+        expected_positions = 6 if kind == "p" else 1
+        if any(len(row) != expected_positions for row in predicted_class_ids):
+            raise ValueError(f"{kind.upper()} predictions must have {expected_positions} positions")
+        self.kind = kind
+        self.first_data = first_data
+        self.whole_data = whole_data
+        self.predicted_class_ids = tuple(
+            tuple(int(value) for value in row) for row in predicted_class_ids
+        )
+        self.token_ids_by_class = tuple(int(value) for value in token_ids_by_class)
+        self.eos_id = int(eos_id)
+        self.positions_per_source = expected_positions
+        self.class_names = list(whole_data.class_names)
+
+    def __len__(self) -> int:
+        return len(self.first_data) * self.positions_per_source
+
+    def source_position(self, index: int) -> int:
+        return index % self.positions_per_source
+
+    def longest_items(self, limit: int) -> list[ProbeBatchItem]:
+        """Return exact rebuilt inputs with the largest sequence lengths."""
+
+        if limit <= 0:
+            raise ValueError("limit must be positive")
+
+        def input_length(index: int) -> int:
+            source_index, source_position = divmod(index, self.positions_per_source)
+            sample = int(self.first_data.sample_indices[source_index])
+            if self.kind == "p":
+                return int(self.first_data.positions[sample][source_position]) + 2
+            return int(self.first_data.offsets[sample + 1] - self.first_data.offsets[sample]) + 1
+
+        selected = heapq.nlargest(min(limit, len(self)), range(len(self)), key=input_length)
+        return [self[index] for index in selected]
+
+    def __getitem__(self, index: int) -> ProbeBatchItem:
+        source_index, source_position = divmod(index, self.positions_per_source)
+        first_item = self.first_data[source_index]
+        whole_item = self.whole_data[source_index]
+        if (
+            first_item.input_ids != whole_item.input_ids
+            or first_item.positions != whole_item.positions
+        ):
+            raise ValueError("first and whole cached items are not input-aligned")
+        predicted_class = self.predicted_class_ids[source_index][source_position]
+        if not 0 <= predicted_class < len(self.token_ids_by_class):
+            raise ValueError("predicted first-token class is out of range")
+        rebuilt = build_predicted_first_input(
+            kind=self.kind,
+            item=first_item,
+            source_position=source_position,
+            token_id=self.token_ids_by_class[predicted_class],
+            eos_id=self.eos_id,
+        )
+        return ProbeBatchItem(rebuilt.input_ids, rebuilt.positions, whole_item.label)
+
+
+class PredictedFirstWholeProbe(nn.Module):
+    """Frozen backbone plus a matched whole head after a predicted t1 rerun."""
+
+    def __init__(self, backbone: MiniTransformer, num_classes: int, *, kind: str) -> None:
+        super().__init__()
+        if kind not in {"p", "q"}:
+            raise ValueError("kind must be p or q")
+        self.backbone = backbone
+        self.kind = kind
+        for parameter in backbone.parameters():
+            parameter.requires_grad_(False)
+        self.normalizer: nn.Module = (
+            nn.LayerNorm(backbone.cfg.hidden_size)
+            if kind == "p"
+            else nn.BatchNorm1d(backbone.cfg.hidden_size)
+        )
+        self.classifier = nn.Linear(backbone.cfg.hidden_size, num_classes)
+
+    def train(self, mode: bool = True):
+        super().train(mode)
+        # The second stage trains only the matched readout. Keep the frozen
+        # backbone deterministic so route changes come from the inserted token.
+        self.backbone.eval()
+        return self
+
+    def forward(self, input_ids: torch.Tensor, positions: torch.Tensor) -> torch.Tensor:
+        with torch.no_grad():
+            hidden = self.backbone.hidden_states(input_ids)
+        batch = torch.arange(hidden.shape[0], device=hidden.device)[:, None]
+        selected = hidden[batch, positions]
+        shape = selected.shape
+        normalized = self.normalizer(selected.reshape(-1, shape[-1]))
+        return self.classifier(normalized).view(shape[0], shape[1], -1)
+
+
+@torch.no_grad()
+def _predict_first_classes(
+    probe: AttributeProbe,
+    dataset: CachedProbeDataset,
+    *,
+    device: torch.device,
+    batch_size: int,
+    progress: Callable[[int], None] | None = None,
+) -> tuple[list[list[int]], list[float]]:
+    if batch_size <= 0:
+        raise ValueError("first-token prediction batch size must be positive")
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        collate_fn=collate_probe,
+        pin_memory=device.type == "cuda",
+    )
+    probe.to(device).eval()
+    predictions: list[list[int]] = []
+    correct: list[int] | None = None
+    total = 0
+    for input_ids, positions, labels in loader:
+        logits = probe(
+            input_ids.to(device, non_blocking=True),
+            positions.to(device, non_blocking=True),
+        )
+        predicted = logits.argmax(-1).cpu()
+        predictions.extend(predicted.tolist())
+        expanded = labels[:, None].expand_as(predicted)
+        batch_correct = (predicted == expanded).sum(0).tolist()
+        correct = (
+            batch_correct
+            if correct is None
+            else [left + right for left, right in zip(correct, batch_correct)]
+        )
+        total += len(labels)
+        if progress is not None:
+            progress(total)
+    return predictions, [value / max(total, 1) for value in (correct or [])]
+
+
+@torch.no_grad()
+def evaluate_predicted_first_whole_by_source_position(
+    probe: PredictedFirstWholeProbe,
+    dataset: PredictedFirstWholeDataset,
+    *,
+    device: torch.device,
+    batch_size: int,
+) -> list[float]:
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        collate_fn=collate_probe,
+        pin_memory=device.type == "cuda",
+    )
+    probe.to(device).eval()
+    correct = [0] * dataset.positions_per_source
+    total = [0] * dataset.positions_per_source
+    offset = 0
+    for input_ids, positions, labels in loader:
+        logits = probe(
+            input_ids.to(device, non_blocking=True),
+            positions.to(device, non_blocking=True),
+        )[:, 0]
+        predictions = logits.argmax(-1).cpu()
+        for local_index, (prediction, label) in enumerate(zip(predictions, labels)):
+            source_position = dataset.source_position(offset + local_index)
+            total[source_position] += 1
+            correct[source_position] += int(prediction == label)
+        offset += len(labels)
+    return [hits / max(count, 1) for hits, count in zip(correct, total)]
+
+
+def train_predicted_first_whole_probe(
+    *,
+    backbone: MiniTransformer,
+    cache_root: str | Path,
+    probe_dir: str | Path,
+    kind: str,
+    attribute: str,
+    device: torch.device,
+    batch_size: int,
+    evaluation_batch_size: int,
+    steps: int = 3_000,
+    seed: int = 1337,
+    backbone_checkpoint: str | Path | None = None,
+    logger=None,
+    log_interval: int | None = None,
+    recovery_path: str | Path | None = None,
+    checkpoint_interval_steps: int | None = None,
+    resume: bool = True,
+    evaluate_train: bool = False,
+    prediction_progress: Callable[[str, int], None] | None = None,
+) -> tuple[PredictedFirstWholeProbe, dict[str, object]]:
+    """Train one pilot-scale whole head after hard predicted-t1 insertion."""
+
+    prepared = prepare_predicted_first_whole_data(
+        backbone=backbone,
+        cache_root=cache_root,
+        probe_dir=probe_dir,
+        kind=kind,
+        attribute=attribute,
+        device=device,
+        prediction_batch_size=evaluation_batch_size,
+        backbone_checkpoint=backbone_checkpoint,
+        prediction_progress=prediction_progress,
+    )
+    cache_root = Path(cache_root)
+    first_train = prepared.first_train
+    whole_train = prepared.whole_train
+    train_data = prepared.train_data
+    validation_data = prepared.validation_data
+    token_entries = prepared.token_entries
+    first_checkpoint = prepared.first_checkpoint
+    cache_manifest_sha256 = prepared.cache_manifest_sha256
+    train_first_accuracy = prepared.train_first_accuracy
+    validation_first_accuracy = prepared.validation_first_accuracy
+    probe = PredictedFirstWholeProbe(backbone, len(whole_train.class_names), kind=kind)
+    recovery_metadata = {
+        "protocol": "predicted_first_whole_pilot_v1",
+        "kind": kind,
+        "attribute": attribute,
+        "steps": steps,
+        "batch_size": batch_size,
+        "seed": seed,
+        "first_probe_checkpoint": str(first_checkpoint.resolve()),
+        "first_probe_checkpoint_sha256": _sha256(first_checkpoint),
+        "probe_cache_manifest_sha256": cache_manifest_sha256,
+        "backbone_checkpoint": (
+            str(Path(backbone_checkpoint).resolve()) if backbone_checkpoint is not None else None
+        ),
+    }
+    result = train_probe(
+        probe,
+        train_data,
+        validation_data,
+        device=device,
+        batch_size=batch_size,
+        steps=steps,
+        seed=seed,
+        logger=logger,
+        log_interval=log_interval,
+        recovery_path=recovery_path,
+        checkpoint_interval_steps=checkpoint_interval_steps,
+        recovery_metadata=recovery_metadata,
+        resume=resume,
+        evaluate_train=evaluate_train,
+        evaluation_batch_size=evaluation_batch_size,
+    )
+    result.update(
+        {
+            **recovery_metadata,
+            "target": "whole",
+            "class_names": list(whole_train.class_names),
+            "classes": len(whole_train.class_names),
+            "first_token_class_names": list(first_train.class_names),
+            "first_token_text": {str(token_id): text for token_id, text in token_entries},
+            "first_accuracy_train_by_position": train_first_accuracy,
+            "first_accuracy_validation_by_position": validation_first_accuracy,
+            "whole_accuracy_validation_by_source_position": (
+                evaluate_predicted_first_whole_by_source_position(
+                    probe,
+                    validation_data,
+                    device=device,
+                    batch_size=evaluation_batch_size,
+                )
+            ),
+            "input_protocol": (
+                "P: biography prefix through original pre-attribute readout, append hard "
+                "predicted leading-space t1, read t1 final-layer hidden"
+                if kind == "p"
+                else "Q: [EOS, name, hard predicted leading-space t1, EOS], read final EOS "
+                "final-layer hidden"
+            ),
+            "backbone_parameters_updated": False,
+            "first_probe_parameters_updated": False,
+            "stage_two_trainable_components": ["normalizer", "whole_classifier"],
+        }
+    )
+    return probe, result
+
+
+@dataclass(frozen=True)
+class PredictedFirstWholeData:
+    first_train: CachedProbeDataset
+    whole_train: CachedProbeDataset
+    train_data: PredictedFirstWholeDataset
+    validation_data: PredictedFirstWholeDataset
+    token_entries: list[tuple[int, str]]
+    first_checkpoint: Path
+    cache_manifest_sha256: str
+    train_first_accuracy: list[float]
+    validation_first_accuracy: list[float]
+
+
+def prepare_predicted_first_whole_data(
+    *,
+    backbone: MiniTransformer,
+    cache_root: str | Path,
+    probe_dir: str | Path,
+    kind: str,
+    attribute: str,
+    device: torch.device,
+    prediction_batch_size: int,
+    backbone_checkpoint: str | Path | None = None,
+    prediction_progress: Callable[[str, int], None] | None = None,
+) -> PredictedFirstWholeData:
+    """Freeze a formal t1 probe and materialize exact stage-two train/val inputs."""
+
+    if attribute not in WHOLE_ATTRIBUTES:
+        raise ValueError(f"predicted-t1 whole probe does not support {attribute!r}")
+    cache_root, probe_dir = Path(cache_root), Path(probe_dir)
+    codec = GPT2Codec()
+    cache_manifest_sha256 = _sha256(cache_root / "manifest.json")
+    first_train = CachedProbeDataset(
+        cache_root, kind=kind, attribute=attribute, target="first", split="train"
+    )
+    first_validation = CachedProbeDataset(
+        cache_root, kind=kind, attribute=attribute, target="first", split="validation"
+    )
+    whole_train = CachedProbeDataset(
+        cache_root, kind=kind, attribute=attribute, target="whole", split="train"
+    )
+    whole_validation = CachedProbeDataset(
+        cache_root, kind=kind, attribute=attribute, target="whole", split="validation"
+    )
+    token_entries = [predicted_first_token_text(name, codec) for name in first_train.class_names]
+    if first_train.class_names != first_validation.class_names:
+        raise ValueError("first-token train/validation class mappings differ")
+    if whole_train.class_names != whole_validation.class_names:
+        raise ValueError("whole train/validation class mappings differ")
+    first_checkpoint = probe_dir / f"{kind}_{attribute}_first.pt"
+    first_probe = _load_probe(
+        first_checkpoint,
+        backbone=backbone,
+        dataset=first_train,
+        kind=kind,
+        attribute=attribute,
+        target="first",
+        backbone_checkpoint=backbone_checkpoint,
+        cache_manifest_sha256=cache_manifest_sha256,
+    )
+    train_predictions, train_first_accuracy = _predict_first_classes(
+        first_probe,
+        first_train,
+        device=device,
+        batch_size=prediction_batch_size,
+        progress=(
+            (lambda count: prediction_progress("train", count))
+            if prediction_progress is not None
+            else None
+        ),
+    )
+    validation_predictions, validation_first_accuracy = _predict_first_classes(
+        first_probe,
+        first_validation,
+        device=device,
+        batch_size=prediction_batch_size,
+        progress=(
+            (lambda count: prediction_progress("validation", count))
+            if prediction_progress is not None
+            else None
+        ),
+    )
+    del first_probe
+    token_ids = [token_id for token_id, _ in token_entries]
+    train_data = PredictedFirstWholeDataset(
+        kind=kind,
+        first_data=first_train,
+        whole_data=whole_train,
+        predicted_class_ids=train_predictions,
+        token_ids_by_class=token_ids,
+        eos_id=codec.eos,
+    )
+    validation_data = PredictedFirstWholeDataset(
+        kind=kind,
+        first_data=first_validation,
+        whole_data=whole_validation,
+        predicted_class_ids=validation_predictions,
+        token_ids_by_class=token_ids,
+        eos_id=codec.eos,
+    )
+    return PredictedFirstWholeData(
+        first_train=first_train,
+        whole_train=whole_train,
+        train_data=train_data,
+        validation_data=validation_data,
+        token_entries=token_entries,
+        first_checkpoint=first_checkpoint,
+        cache_manifest_sha256=cache_manifest_sha256,
+        train_first_accuracy=train_first_accuracy,
+        validation_first_accuracy=validation_first_accuracy,
+    )
 
 
 @torch.no_grad()
@@ -197,6 +660,7 @@ def collect_q_predictions(
         probe_dir / f"q_{attribute}_first.pt",
         backbone=backbone,
         dataset=first_data,
+        kind="q",
         attribute=attribute,
         target="first",
         backbone_checkpoint=backbone_checkpoint,
@@ -206,6 +670,7 @@ def collect_q_predictions(
         probe_dir / f"q_{attribute}_whole.pt",
         backbone=backbone,
         dataset=whole_data,
+        kind="q",
         attribute=attribute,
         target="whole",
         backbone_checkpoint=backbone_checkpoint,
@@ -227,9 +692,7 @@ def collect_q_predictions(
         whole_logits = whole_probe(whole_ids.to(device), whole_positions.to(device))[:, 0]
         first_predictions = first_logits.argmax(-1).cpu()
         whole_predictions = whole_logits.argmax(-1).cpu()
-        whole_probabilities = whole_logits.softmax(-1).gather(
-            1, whole_labels.to(device)[:, None]
-        )
+        whole_probabilities = whole_logits.softmax(-1).gather(1, whole_labels.to(device)[:, None])
         for offset, index in enumerate(range(start, end)):
             profile_index = _dataset_profile_index(first_data, index)
             profile = profiles[profile_index]
@@ -426,6 +889,8 @@ def oracle_first_token_validation(
     figures.mkdir(exist_ok=True)
     _plot_oracle(summary_rows, figures / "accuracy_before_after.png")
     return summary
+
+
 @contextmanager
 def _capture_router_indices(model: MiniTransformer):
     captured: list[torch.Tensor] = []
@@ -512,9 +977,9 @@ def pairwise_route_summary(
         lambda: defaultdict(list)
     )
     for index, case in enumerate(cases):
-        by_attribute_t1[(str(case["attribute"]), int(case["t1_id"]))][
-            int(case["t2_id"])
-        ].append(index)
+        by_attribute_t1[(str(case["attribute"]), int(case["t1_id"]))][int(case["t2_id"])].append(
+            index
+        )
     accumulators: dict[tuple[str, int, str], list[tuple[float, float]]] = defaultdict(list)
     for (attribute, _t1), t2_groups in by_attribute_t1.items():
         for label, same in (("same_t2", True), ("different_t2", False)):
@@ -529,15 +994,9 @@ def pairwise_route_summary(
                 left_routes = left["routes"]
                 right_routes = right["routes"]
                 for layer in range(layers):
-                    t1_overlap = _route_jaccard(
-                        left_routes[0][layer], right_routes[0][layer]
-                    )
-                    t2_overlap = _route_jaccard(
-                        left_routes[1][layer], right_routes[1][layer]
-                    )
-                    accumulators[(attribute, layer, label)].append(
-                        (t1_overlap, t2_overlap)
-                    )
+                    t1_overlap = _route_jaccard(left_routes[0][layer], right_routes[0][layer])
+                    t2_overlap = _route_jaccard(left_routes[1][layer], right_routes[1][layer])
+                    accumulators[(attribute, layer, label)].append((t1_overlap, t2_overlap))
     rows = []
     for (attribute, layer, label), values in sorted(accumulators.items()):
         t1_mean = sum(value[0] for value in values) / len(values)
@@ -577,11 +1036,7 @@ def _plot_route_overlap(rows: Sequence[dict[str, object]], output: Path) -> None
             ("t2", "t2_route_overlap", "--"),
         ):
             means = [
-                sum(
-                    float(row[field])
-                    for row in selected
-                    if int(row["layer"]) == layer
-                )
+                sum(float(row[field]) for row in selected if int(row["layer"]) == layer)
                 / max(
                     sum(int(row["layer"]) == layer for row in selected),
                     1,

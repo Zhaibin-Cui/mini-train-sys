@@ -47,6 +47,7 @@ def benchmark_probe_batches(
     measure_steps: int = 10,
     memory_limit_percent: float = 92.0,
     on_result: Callable[[dict[str, object]], None] | None = None,
+    probe_factory: Callable[[], torch.nn.Module] | None = None,
 ) -> dict[str, object]:
     """Measure worst-length train or validation steps under a memory cap."""
 
@@ -75,7 +76,11 @@ def benchmark_probe_batches(
         probe = optimizer = input_ids = positions = labels = None
         logits = loss = expanded = None
         try:
-            probe = AttributeProbe(backbone, num_classes, rank=rank, kind=kind).to(device)
+            probe = (
+                AttributeProbe(backbone, num_classes, rank=rank, kind=kind)
+                if probe_factory is None
+                else probe_factory()
+            ).to(device)
             probe.train(mode == "training")
             optimizer = (
                 torch.optim.AdamW(
@@ -236,8 +241,7 @@ def summarize_probe_benchmarks(paths: Sequence[str | Path]) -> dict[str, object]
                 int(selected["batch_size"]) if selected is not None else None
             ),
             "recommended_is_search_boundary": bool(
-                selected is not None
-                and int(selected["batch_size"]) == max(candidate_sets[0])
+                selected is not None and int(selected["batch_size"]) == max(candidate_sets[0])
             ),
             "safe_candidates": aggregate,
         }
@@ -249,14 +253,11 @@ def summarize_probe_benchmarks(paths: Sequence[str | Path]) -> dict[str, object]
         training_runs = [
             payload for payload in kind_runs if payload.get("mode", "training") == "training"
         ]
-        validation_runs = [
-            payload for payload in kind_runs if payload.get("mode") == "validation"
-        ]
+        validation_runs = [payload for payload in kind_runs if payload.get("mode") == "validation"]
         training = aggregate_runs(training_runs) if training_runs else None
         validation = aggregate_runs(validation_runs) if validation_runs else training
         training_safe = {
-            int(item["batch_size"])
-            for item in (training or {}).get("safe_candidates", [])
+            int(item["batch_size"]) for item in (training or {}).get("safe_candidates", [])
         }
         recommendations[kind] = {
             "training_replicas": len(training_runs),
@@ -286,10 +287,11 @@ def summarize_probe_benchmarks(paths: Sequence[str | Path]) -> dict[str, object]
                 else False
             ),
         }
-    expected_matrix = {(kind, mode) for kind in PAPER_BATCH_SIZES for mode in ("training", "validation")}
+    expected_matrix = {
+        (kind, mode) for kind in PAPER_BATCH_SIZES for mode in ("training", "validation")
+    }
     actual_matrix = {
-        (str(payload.get("kind")), str(payload.get("mode", "training")))
-        for payload in payloads
+        (str(payload.get("kind")), str(payload.get("mode", "training"))) for payload in payloads
     }
     missing_matrix = sorted(f"{kind}/{mode}" for kind, mode in expected_matrix - actual_matrix)
     insufficient_replicas = sorted(
@@ -342,11 +344,7 @@ def probe_batch_environment(summary: dict[str, object]) -> str:
     values = {
         "P_BATCH_SIZE": recommendations["p"]["recommended_training_batch_size"],
         "Q_BATCH_SIZE": recommendations["q"]["recommended_training_batch_size"],
-        "P_VALIDATION_BATCH_SIZE": recommendations["p"][
-            "recommended_validation_batch_size"
-        ],
-        "Q_VALIDATION_BATCH_SIZE": recommendations["q"][
-            "recommended_validation_batch_size"
-        ],
+        "P_VALIDATION_BATCH_SIZE": recommendations["p"]["recommended_validation_batch_size"],
+        "Q_VALIDATION_BATCH_SIZE": recommendations["q"]["recommended_validation_batch_size"],
     }
     return "".join(f"export {name}={int(value)}\n" for name, value in values.items())
