@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "source": "/data/mini-train-sys/artifacts/distributed_benchmark/synbios_backend_fixed/20260725T113500Z/backend_summary.json",
+  "validation": "/data/mini-train-sys/artifacts/distributed_benchmark/synbios_backend_fixed/20260725T113500Z/backend_validation.json",
+  "condition": {
+    "identity": [
+      "fsdp",
+      4,
+      24,
+      512,
+      "bf16",
+      293494272
+    ],
+    "comparison": "Torch vs Triton vs CUDA backend; CUDA-vs-Triton isolates native attention, while CUDA-vs-Torch measures the complete backend stack"
+  },
+  "aggregates": [
+    {
+      "ops_backend": "torch",
+      "repeats": 3,
+      "throughput_tokens_per_sec_mean": 147878.60974389588,
+      "throughput_tokens_per_sec_stdev": 6890.604040910537,
+      "step_time_ms_mean_mean": 334.05017967777945,
+      "step_time_ms_mean_stdev": 16.217343106857243,
+      "peak_memory_allocated_mb_mean": 16626.237955729168,
+      "peak_memory_allocated_mb_stdev": 5.787531751156984,
+      "peak_memory_reserved_mb_mean": 20640.0,
+      "peak_memory_reserved_mb_stdev": 28.35489375751565
+    },
+    {
+      "ops_backend": "triton",
+      "repeats": 3,
+      "throughput_tokens_per_sec_mean": 212246.7660471723,
+      "throughput_tokens_per_sec_stdev": 1842.6249255274508,
+      "step_time_ms_mean_mean": 231.72194834443567,
+      "step_time_ms_mean_stdev": 2.02418533789551,
+      "peak_memory_allocated_mb_mean": 5360.779134114583,
+      "peak_memory_allocated_mb_stdev": 0.8780471785374806,
+      "peak_memory_reserved_mb_mean": 6677.333333333333,
+      "peak_memory_reserved_mb_stdev": 4.618802153517006
+    },
+    {
+      "ops_backend": "cuda",
+      "repeats": 3,
+      "throughput_tokens_per_sec_mean": 215367.6849049708,
+      "throughput_tokens_per_sec_stdev": 2190.19132760214,
+      "step_time_ms_mean_mean": 228.44257318891627,
+      "step_time_ms_mean_stdev": 2.3675980275127575,
+      "peak_memory_allocated_mb_mean": 5357.743001302083,
+      "peak_memory_allocated_mb_stdev": 0.017196467978792564,
+      "peak_memory_reserved_mb_mean": 6683.333333333333,
+      "peak_memory_reserved_mb_stdev": 5.773502691896258
+    }
+  ],
+  "comparison": {
+    "throughput_speedup_triton_vs_torch": 1.435276991139913,
+    "step_time_reduction_percent_triton_vs_torch": 30.632592813465415,
+    "allocated_memory_reduction_percent_triton_vs_torch": 67.75711289355549,
+    "reserved_memory_reduction_percent_triton_vs_torch": 67.64857881136952,
+    "throughput_speedup_cuda_vs_torch": 1.4563815908058382,
+    "step_time_reduction_percent_cuda_vs_torch": 31.614294173028416,
+    "allocated_memory_reduction_percent_cuda_vs_torch": 67.77537398677805,
+    "reserved_memory_reduction_percent_cuda_vs_torch": 67.61950904392765,
+    "throughput_speedup_cuda_vs_triton": 1.0147041998138377,
+    "step_time_reduction_percent_cuda_vs_triton": 1.4152199128952951,
+    "allocated_memory_reduction_percent_cuda_vs_triton": 0.05663603622799627,
+    "reserved_memory_reduction_percent_cuda_vs_triton": -0.08985623003194888,
+    "step_time_reduction_percent": 31.614294173028416,
+    "allocated_memory_reduction_percent": 67.77537398677805,
+    "reserved_memory_reduction_percent": 67.61950904392765
+  },
+  "quality_gate_passed": true,
+  "figure": "artifacts/distributed_benchmark/synbios_backend_fixed/20260725T113500Z/presentation/backend_comparison.png"
+}

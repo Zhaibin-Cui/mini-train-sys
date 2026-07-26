@@ -14,6 +14,7 @@ import yaml
 from experiments.synbios_moe.formal_report import load_formal_run, validate_matched_runs
 from experiments.synbios_moe.probe_data import validate_probe_cache
 from minitrain.runtime.config import load_yaml_dict
+from scripts.build_results_catalog import classify_log as export_log_category
 
 
 EXPECTED_PROBE_RUNTIME = {
@@ -57,7 +58,9 @@ def _atomic_csv(path: Path, rows: Sequence[dict[str, object]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(
+            handle, fieldnames=list(rows[0]), lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(rows)
     temporary.replace(path)
@@ -253,7 +256,9 @@ def _log_catalog(log_root: Path) -> list[dict[str, object]]:
                 ).isoformat(),
                 "sha256": _sha256(path),
                 "mounted_path": str(path.resolve()),
-                "git_safe_path": f"results/logs/{path.name}",
+                "git_safe_path": (
+                    f"results/logs/{export_log_category(path.name)}/{path.name}"
+                ),
             }
         )
     return rows

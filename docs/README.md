@@ -38,7 +38,8 @@ docs/
 4. [配置参考](../configs/README.md) — 配置继承与每组参数的实际语义。
 5. [Single/DDP/FSDP 手册](training/distributed_training.md) — 并行、epoch、DCP 恢复。
 6. [监控与恢复](training/monitoring_and_recovery.md) — ETA、显存、梯度和 checkpoint。
-7. [SynBioS 全流程](experiments/synbios_moe_training_flow.md) — 完整实验实例。
+7. [产物与报告路径](guides/artifact_layout.md) — `/data`、`results/`、`reports/` 与历史。
+8. [SynBioS 全流程](experiments/synbios_moe_training_flow.md) — 完整实验实例。
 
 读完前五篇后，再看任意 Python 文件都应能知道它属于哪一层、由谁调用。
 
@@ -63,6 +64,7 @@ docs/
 | [data_pipeline.md](data/data_pipeline.md) | `inputs`、Document、chunk、token shard、DataLoader 如何连接？ |
 | [distributed_training.md](training/distributed_training.md) | DDP/FSDP 如何分工，怎样保存和恢复？ |
 | [monitoring_and_recovery.md](training/monitoring_and_recovery.md) | loss、吞吐、单卡/多卡显存怎样看，怎样完整恢复？ |
+| [artifact_layout.md](guides/artifact_layout.md) | 大文件、TensorBoard、日志、机器结果和结论怎样分层？ |
 | [synbios_moe_probe_pipeline.md](experiments/synbios_moe_probe_pipeline.md) | P/Q probe 怎样分阶段、多卡调度、监控和汇总？ |
 | [mixed_precision_plan.md](training/mixed_precision_plan.md) | FP32/BF16/FP16 各自保存和计算什么？ |
 | [moe.md](model/moe.md) | Top-k router、expert 和 fused MoE 的数据流是什么？ |
@@ -100,6 +102,9 @@ docs/
   router scatter kernel 可视化说明。
 
 RTX 3050 文档是历史硬件个案，不能替代 24 GB RTX 4090 的服务器 benchmark。
+服务器正式结论见
+[kernel engineering](../reports/engineering/kernels.md) 与
+[distributed/end-to-end](../reports/engineering/distributed_training.md)。
 
 ## 历史设计记录
 

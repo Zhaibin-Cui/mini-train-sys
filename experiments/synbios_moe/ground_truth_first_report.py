@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-KINDS = ("p", "q")
+KINDS = ("p",)
 ATTRIBUTES = ("birth_city", "university", "major", "company", "company_city")
 POSITION_LABELS = ("birth date", "birth city", "university", "major", "company", "company city")
 PROTOCOL = "ground_truth_first_whole_rank_matched_v1"
@@ -54,7 +54,7 @@ def _load_tasks(run_dir: Path) -> dict[tuple[str, str], dict[str, object]]:
                 raise ValueError(f"unexpected protocol in {path}")
             if payload.get("kind") != kind or payload.get("attribute") != attribute:
                 raise ValueError(f"task identity mismatch in {path}")
-            expected_rank = 2 if kind == "p" else 16
+            expected_rank = 2
             architecture = payload.get("architecture_match", {})
             if (
                 payload.get("ground_truth_first_token") is not True
@@ -95,14 +95,14 @@ def _baseline_metrics(
         (str(row["kind"]), str(row["attribute"]), int(row["position"])): float(row["accuracy"])
         for row in payload["rows"]
         if row.get("target") == "whole"
-        and row.get("kind") in KINDS
+        and row.get("kind") == "p"
         and row.get("attribute") in ATTRIBUTES
     }
     expected = {
         (kind, attribute, position)
         for kind in KINDS
         for attribute in ATTRIBUTES
-        for position in range(6 if kind == "p" else 1)
+        for position in range(6)
     }
     missing = sorted(expected - metrics.keys())
     if missing:
@@ -118,7 +118,7 @@ def _rows(
     for (kind, attribute), payload in tasks.items():
         first = payload["ground_truth_first_accuracy_by_position"]
         whole = payload["whole_accuracy_validation_by_source_position"]
-        if len(first) != len(whole) or len(first) != (6 if kind == "p" else 1):
+        if len(first) != len(whole) or len(first) != 6:
             raise ValueError(f"invalid position metrics for {kind}/{attribute}")
         for position, (first_accuracy, whole_accuracy) in enumerate(zip(first, whole)):
             baseline_accuracy = baseline.get((kind, attribute, position))
@@ -127,9 +127,7 @@ def _rows(
                     "kind": kind,
                     "attribute": attribute,
                     "source_position": position,
-                    "source_position_label": (
-                        POSITION_LABELS[position] if kind == "p" else "name query"
-                    ),
+                    "source_position_label": POSITION_LABELS[position],
                     "first_accuracy": float(first_accuracy),
                     "original_whole_accuracy": baseline_accuracy,
                     "whole_accuracy": float(whole_accuracy),
@@ -147,7 +145,24 @@ def _rows(
     return rows
 
 
-def _plot(rows: Sequence[dict[str, object]], output_dir: Path) -> list[str]:
+def _condition(reference: dict[str, object]) -> str:
+    data_root = Path(str(reference["data"]))
+    manifest_path = data_root / "manifest.json"
+    if manifest_path.is_file():
+        variant = json.loads(manifest_path.read_text(encoding="utf-8")).get("variant")
+        if variant in {"single", "multi5+permute"}:
+            return str(variant)
+    data_text = str(data_root)
+    if "multi5_permute" in data_text or "multi5+permute" in data_text:
+        return "multi5+permute"
+    if "single" in data_text:
+        return "single"
+    raise ValueError(f"cannot identify dataset condition from {data_root}")
+
+
+def _plot(
+    rows: Sequence[dict[str, object]], output_dir: Path, condition: str
+) -> list[str]:
     import matplotlib
 
     matplotlib.use("Agg")
@@ -161,9 +176,12 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path) -> list[str]:
     p_rows = [row for row in rows if row["kind"] == "p"]
     metrics = [
         ("first_accuracy", "Ground-truth t1 supplied"),
-        *(([("original_whole_accuracy", "Original whole probe")]) if has_baseline else []),
-        ("whole_accuracy", "Rank-matched whole probe after true t1"),
-        *(([("delta_vs_original_whole", "True t1 − original")]) if has_baseline else []),
+        *(
+            [("original_whole_accuracy", "Formal no-t1 baseline")]
+            if has_baseline
+            else []
+        ),
+        ("whole_accuracy", "Fresh whole probe + true t1"),
     ]
     figure, axes = plt.subplots(
         1,
@@ -188,12 +206,11 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path) -> list[str]:
                 for attribute in ATTRIBUTES
             ]
         )
-        is_delta = metric == "delta_vs_original_whole"
         image = axis.imshow(
             matrix * 100,
-            vmin=-50 if is_delta else 0,
-            vmax=50 if is_delta else 100,
-            cmap="RdBu" if is_delta else "Blues",
+            vmin=0,
+            vmax=100,
+            cmap="Blues",
             aspect="auto",
         )
         axis.set_xticks(range(6))
@@ -213,63 +230,26 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path) -> list[str]:
                     fontsize=8,
                     color=(
                         "white"
-                        if (not is_delta and value >= 55) or (is_delta and abs(value) >= 28)
+                        if value >= 55
                         else "#1a202c"
                     ),
                 )
         figure.colorbar(
             image,
             ax=axis,
-            label="Delta (percentage points)" if is_delta else "Held-out accuracy (%)",
+            label="Held-out accuracy (%)",
             fraction=0.046,
             pad=0.02,
         )
-    figure.suptitle("Ground-truth-t1 rank-matched P probe · multi5+permute", fontsize=15)
+    figure.suptitle(f"Fresh whole P probe + true t1 · {condition}", fontsize=15)
     p_path = figures / "ground_truth_first_p_overview"
     figure.savefig(p_path.with_suffix(".png"), dpi=200, bbox_inches="tight")
     figure.savefig(p_path.with_suffix(".pdf"), bbox_inches="tight")
     plt.close(figure)
 
-    q_rows = [row for row in rows if row["kind"] == "q"]
-    x = np.arange(len(ATTRIBUTES))
-    figure, axis = plt.subplots(figsize=(10.8, 4.8), constrained_layout=True)
-    width = 0.25 if has_baseline else 0.36
-    axis.bar(
-        x - width if has_baseline else x - width / 2,
-        [float(row["first_accuracy"]) * 100 for row in q_rows],
-        width,
-        label="Frozen t1 classifier",
-        color="#718096",
-    )
-    if has_baseline:
-        axis.bar(
-            x,
-            [float(row["original_whole_accuracy"]) * 100 for row in q_rows],
-            width,
-            label="Original whole probe",
-            color="#38a169",
-        )
-    axis.bar(
-        x + width if has_baseline else x + width / 2,
-        [float(row["whole_accuracy"]) * 100 for row in q_rows],
-        width,
-        label="Rank-matched whole probe after true t1",
-        color="#2b6cb0",
-    )
-    axis.set_xticks(x)
-    axis.set_xticklabels([value.replace("_", " ") for value in ATTRIBUTES], rotation=20)
-    axis.set_ylabel("Held-out accuracy (%)")
-    axis.set_ylim(0, 100)
-    axis.grid(axis="y", alpha=0.22)
-    axis.legend(frameon=False)
-    axis.set_title("Ground-truth-t1 rank-matched Q probe · multi5+permute")
-    q_path = figures / "ground_truth_first_q_overview"
-    figure.savefig(q_path.with_suffix(".png"), dpi=200, bbox_inches="tight")
-    figure.savefig(q_path.with_suffix(".pdf"), bbox_inches="tight")
-    plt.close(figure)
     return [
         str(path.relative_to(output_dir))
-        for stem in (p_path, q_path)
+        for stem in (p_path,)
         for path in (stem.with_suffix(".png"), stem.with_suffix(".pdf"))
     ]
 
@@ -293,42 +273,28 @@ def _write_report(
     rows: Sequence[dict[str, object]],
     reference: dict[str, object],
     baseline_path: Path | None,
+    condition: str,
 ) -> None:
     p_rows = [row for row in rows if row["kind"] == "p"]
     p0_rows = [row for row in p_rows if row["source_position"] == 0]
-    q_rows = [row for row in rows if row["kind"] == "q"]
     p_batch = next(row["batch_size"] for row in rows if row["kind"] == "p")
-    q_batch = next(row["batch_size"] for row in rows if row["kind"] == "q")
     steps = sorted({int(row["steps"]) for row in rows})
-    q_lines = []
-    for attribute in ATTRIBUTES:
-        row = next(
-            value
-            for value in q_rows
-            if value["attribute"] == attribute
-        )
-        q_lines.append(
-            f"| `{attribute}` | {_percent(row['original_whole_accuracy'])} | "
-            f"{_percent(row['whole_accuracy'])} | "
-            f"{_points(row['delta_vs_original_whole'])} |"
-        )
     step_text = ", ".join(str(value) for value in steps)
-    text = f"""# Ground-truth-`t1` rank-matched fresh whole probes
+    text = f"""# Fresh whole probes with ground-truth `t1`
 
 ## Question or hypothesis
 
 After the correct first attribute token is supplied, can a fresh rank-matched whole-value probe
-read the remaining value more accurately from the frozen `multi5_permute` MoE than the original
+read the remaining value more accurately from the frozen `{condition}` MoE than the original
 formal whole probe without that token?
 
 ## Exact compared conditions
 
 The baseline is the original formal whole probe. The intervention trains a fresh
-`AttributeProbe` with the same low-rank input delta and rank: P rank 2 reads the inserted true
-`t1` after each biography prefix; Q rank 16 reads the final EOS in
-`[EOS, name, true t1, EOS]`. Both use the same frozen backbone, whole-value class mappings,
-person split, seed, and cache. This run uses {step_text} optimizer steps per head, P batch {p_batch},
-and Q batch {q_batch}.
+P `AttributeProbe` with the same rank-2 low-rank input delta and reads the inserted true `t1`
+after each biography prefix. It uses the same frozen backbone, whole-value class mappings,
+person split, seed, and cache. This run uses {step_text} optimizer steps per head and P batch
+{p_batch}.
 
 ## Run/checkpoint and dataset identity
 
@@ -341,24 +307,16 @@ and Q batch {q_batch}.
 
 ## Primary metrics
 
-| Endpoint | Original whole probe | Fresh whole probe + true `t1` | Delta |
+| Endpoint | Formal no-`t1` baseline | Fresh whole probe + true `t1` | Delta |
 |---|---:|---:|---:|
 | P, all six source positions × five attributes | {_percent(_mean(p_rows, 'original_whole_accuracy'))} | {_percent(_mean(p_rows, 'whole_accuracy'))} | {_points(_mean(p_rows, 'delta_vs_original_whole'))} |
 | P0, five attributes | {_percent(_mean(p0_rows, 'original_whole_accuracy'))} | {_percent(_mean(p0_rows, 'whole_accuracy'))} | {_points(_mean(p0_rows, 'delta_vs_original_whole'))} |
-| Q, five attributes | {_percent(_mean(q_rows, 'original_whole_accuracy'))} | {_percent(_mean(q_rows, 'whole_accuracy'))} | {_points(_mean(q_rows, 'delta_vs_original_whole'))} |
-
-Q attribute detail:
-
-| Attribute | Original Q whole | Q whole + true `t1` | Delta |
-|---|---:|---:|---:|
-{chr(10).join(q_lines)}
 
 ## Supporting artifacts
 
 - Machine-readable aggregate: `summary.json`
 - Position-level table: `summary.csv`
-- P original-vs-intervention heatmap: `figures/ground_truth_first_p_overview.png`
-- Q original-vs-intervention chart: `figures/ground_truth_first_q_overview.png`
+- P formal-baseline-vs-intervention heatmap: `figures/ground_truth_first_p_overview.png`
 - Individual task JSON/PT, loss curves, recovery checkpoints, and operation logs are retained in
   this run directory; lifecycle and failed/stopped predecessors are in repository-root
   `HISTORY.md`.
@@ -380,7 +338,7 @@ information. The intervention also changes sequence length and readout coordinat
 
 ## Next decision/action
 
-Use these complete held-out curves and tables to decide whether the qualitative original-vs-true
+Use these complete held-out curves and tables to decide whether the qualitative baseline-vs-true
 `t1` contrast is stable. If only P remains optimization-limited, extend P alone with the same
 protocol and report the extension separately; do not silently replace this pilot-budget result.
 """
@@ -388,7 +346,7 @@ protocol and report the extension separately; do not silently replace this pilot
 
 
 def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]:
-    """Validate all ten pilot tasks and write standard tables and figures."""
+    """Validate all five P pilot tasks and write standard tables and figures."""
 
     output = Path(run_dir)
     tasks = _load_tasks(output)
@@ -396,10 +354,11 @@ def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]
     rows = _rows(tasks, baseline)
     _atomic_csv(output / "summary.csv", rows)
     reference = next(iter(tasks.values()))
+    condition = _condition(reference)
     summary = {
         "schema_version": 2,
         "protocol": PROTOCOL,
-        "condition": "multi5_permute",
+        "condition": condition,
         "identity": {
             field: reference.get(field)
             for field in (
@@ -421,7 +380,7 @@ def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]
             else None
         ),
         "rows": rows,
-        "figures": _plot(rows, output),
+        "figures": _plot(rows, output, condition),
     }
     _atomic_json(output / "summary.json", summary)
     _write_report(
@@ -429,5 +388,6 @@ def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]
         rows=rows,
         reference=reference,
         baseline_path=baseline_path,
+        condition=condition,
     )
     return summary

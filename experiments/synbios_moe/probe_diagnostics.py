@@ -201,28 +201,17 @@ def first_token_text(class_name: str, codec: GPT2Codec) -> tuple[int, str]:
 
 def build_ground_truth_first_input(
     *,
-    kind: str,
     item: ProbeBatchItem,
     source_position: int,
     token_id: int,
-    eos_id: int,
 ) -> ProbeBatchItem:
-    """Insert the ground-truth t1 and select the requested matched readout."""
+    """Append the ground-truth t1 to one P biography prefix and read that token."""
 
-    if kind == "p":
-        if not 0 <= source_position < len(item.positions):
-            raise IndexError("P source position is outside the cached item")
-        prefix = item.input_ids[: item.positions[source_position] + 1]
-        input_ids = [*prefix, int(token_id)]
-        return ProbeBatchItem(input_ids, [len(input_ids) - 1], item.label)
-    if kind == "q":
-        if source_position != 0 or len(item.positions) != 1:
-            raise ValueError("Q has exactly one source position")
-        if not item.input_ids or item.input_ids[-1] != eos_id:
-            raise ValueError("Q input must end in its readout EOS")
-        input_ids = [*item.input_ids[:-1], int(token_id), eos_id]
-        return ProbeBatchItem(input_ids, [len(input_ids) - 1], item.label)
-    raise ValueError(f"invalid probe kind: {kind}")
+    if not 0 <= source_position < len(item.positions):
+        raise IndexError("P source position is outside the cached item")
+    prefix = item.input_ids[: item.positions[source_position] + 1]
+    input_ids = [*prefix, int(token_id)]
+    return ProbeBatchItem(input_ids, [len(input_ids) - 1], item.label)
 
 
 class GroundTruthFirstWholeDataset(Dataset):
@@ -231,23 +220,17 @@ class GroundTruthFirstWholeDataset(Dataset):
     def __init__(
         self,
         *,
-        kind: str,
         first_data: CachedProbeDataset,
         whole_data: CachedProbeDataset,
         token_ids_by_class: Sequence[int],
-        eos_id: int,
     ) -> None:
-        if kind not in {"p", "q"}:
-            raise ValueError("kind must be p or q")
         if len(first_data) != len(whole_data):
             raise ValueError("first/whole datasets are not aligned")
-        expected_positions = 6 if kind == "p" else 1
-        self.kind = kind
+        self.kind = "p"
         self.first_data = first_data
         self.whole_data = whole_data
         self.token_ids_by_class = tuple(int(value) for value in token_ids_by_class)
-        self.eos_id = int(eos_id)
-        self.positions_per_source = expected_positions
+        self.positions_per_source = 6
         self.class_names = list(whole_data.class_names)
 
     def __len__(self) -> int:
@@ -265,9 +248,7 @@ class GroundTruthFirstWholeDataset(Dataset):
         def input_length(index: int) -> int:
             source_index, source_position = divmod(index, self.positions_per_source)
             sample = int(self.first_data.sample_indices[source_index])
-            if self.kind == "p":
-                return int(self.first_data.positions[sample][source_position]) + 2
-            return int(self.first_data.offsets[sample + 1] - self.first_data.offsets[sample]) + 1
+            return int(self.first_data.positions[sample][source_position]) + 2
 
         selected = heapq.nlargest(min(limit, len(self)), range(len(self)), key=input_length)
         return [self[index] for index in selected]
@@ -285,11 +266,9 @@ class GroundTruthFirstWholeDataset(Dataset):
         if not 0 <= ground_truth_class < len(self.token_ids_by_class):
             raise ValueError("ground-truth first-token class is out of range")
         rebuilt = build_ground_truth_first_input(
-            kind=self.kind,
             item=first_item,
             source_position=source_position,
             token_id=self.token_ids_by_class[ground_truth_class],
-            eos_id=self.eos_id,
         )
         return ProbeBatchItem(rebuilt.input_ids, rebuilt.positions, whole_item.label)
 
@@ -371,7 +350,6 @@ def train_ground_truth_first_whole_probe(
     backbone: MiniTransformer,
     cache_root: str | Path,
     probe_dir: str | Path,
-    kind: str,
     attribute: str,
     device: torch.device,
     batch_size: int,
@@ -393,7 +371,6 @@ def train_ground_truth_first_whole_probe(
         backbone=backbone,
         cache_root=cache_root,
         probe_dir=probe_dir,
-        kind=kind,
         attribute=attribute,
         backbone_checkpoint=backbone_checkpoint,
     )
@@ -418,11 +395,11 @@ def train_ground_truth_first_whole_probe(
         backbone,
         len(whole_train.class_names),
         rank=rank,
-        kind=kind,
+        kind="p",
     )
     recovery_metadata = {
         "protocol": "ground_truth_first_whole_rank_matched_v1",
-        "kind": kind,
+        "kind": "p",
         "attribute": attribute,
         "rank": rank,
         "steps": steps,
@@ -476,7 +453,7 @@ def train_ground_truth_first_whole_probe(
             "first_token_class_names": list(first_train.class_names),
             "first_token_text": {str(token_id): text for token_id, text in token_entries},
             "ground_truth_first_token": True,
-            "ground_truth_first_accuracy_by_position": [1.0] * (6 if kind == "p" else 1),
+            "ground_truth_first_accuracy_by_position": [1.0] * 6,
             "whole_accuracy_validation_by_source_position": validation[
                 "accuracy_by_position"
             ],
@@ -491,9 +468,6 @@ def train_ground_truth_first_whole_probe(
             "input_protocol": (
                 "P: biography prefix through original pre-attribute readout, append cached "
                 "ground-truth leading-space t1, read t1 final-layer hidden"
-                if kind == "p"
-                else "Q: [EOS, name, ground-truth leading-space t1, EOS], read final EOS "
-                "final-layer hidden"
             ),
             "backbone_parameters_updated": False,
             "architecture_match": {
@@ -501,7 +475,7 @@ def train_ground_truth_first_whole_probe(
                 "rank": rank,
                 "reference_rank": rank,
                 "low_rank_embedding_delta": True,
-                "normalizer": "LayerNorm" if kind == "p" else "BatchNorm1d",
+                "normalizer": "LayerNorm",
                 "classifier_classes": len(whole_train.class_names),
             },
             "alignment_checks": {
@@ -538,7 +512,6 @@ def prepare_ground_truth_first_whole_data(
     backbone: MiniTransformer,
     cache_root: str | Path,
     probe_dir: str | Path,
-    kind: str,
     attribute: str,
     backbone_checkpoint: str | Path | None = None,
 ) -> GroundTruthFirstWholeData:
@@ -550,16 +523,16 @@ def prepare_ground_truth_first_whole_data(
     codec = GPT2Codec()
     cache_manifest_sha256 = _sha256(cache_root / "manifest.json")
     first_train = CachedProbeDataset(
-        cache_root, kind=kind, attribute=attribute, target="first", split="train"
+        cache_root, kind="p", attribute=attribute, target="first", split="train"
     )
     first_validation = CachedProbeDataset(
-        cache_root, kind=kind, attribute=attribute, target="first", split="validation"
+        cache_root, kind="p", attribute=attribute, target="first", split="validation"
     )
     whole_train = CachedProbeDataset(
-        cache_root, kind=kind, attribute=attribute, target="whole", split="train"
+        cache_root, kind="p", attribute=attribute, target="whole", split="train"
     )
     whole_validation = CachedProbeDataset(
-        cache_root, kind=kind, attribute=attribute, target="whole", split="validation"
+        cache_root, kind="p", attribute=attribute, target="whole", split="validation"
     )
     token_entries = [first_token_text(name, codec) for name in first_train.class_names]
     if first_train.class_names != first_validation.class_names:
@@ -576,9 +549,9 @@ def prepare_ground_truth_first_whole_data(
             raise ValueError(f"{split} first/whole person identities differ")
         if not np.array_equal(first_data.offsets, whole_data.offsets):
             raise ValueError(f"{split} first/whole token offsets differ")
-        if kind == "p" and not np.array_equal(first_data.positions, whole_data.positions):
+        if not np.array_equal(first_data.positions, whole_data.positions):
             raise ValueError(f"{split} first/whole P readout positions differ")
-    reference_whole_checkpoint = probe_dir / f"{kind}_{attribute}_whole.pt"
+    reference_whole_checkpoint = probe_dir / f"p_{attribute}_whole.pt"
     with torch.serialization.safe_globals([TorchVersion]):
         reference_payload = torch.load(
             reference_whole_checkpoint,
@@ -588,7 +561,7 @@ def prepare_ground_truth_first_whole_data(
     metadata = reference_payload.get("result")
     if not isinstance(metadata, dict):
         raise ValueError(f"{reference_whole_checkpoint} is missing result metadata")
-    expected = {"kind": kind, "attribute": attribute, "target": "whole"}
+    expected = {"kind": "p", "attribute": attribute, "target": "whole"}
     if {key: metadata.get(key) for key in expected} != expected:
         raise ValueError("reference whole probe task identity mismatch")
     if list(metadata.get("class_names", ())) != whole_train.class_names:
@@ -602,11 +575,8 @@ def prepare_ground_truth_first_whole_data(
     ):
         raise ValueError("reference whole probe backbone checkpoint mismatch")
     rank = int(metadata["rank"])
-    expected_rank = 2 if kind == "p" else 16
-    if rank != expected_rank:
-        raise ValueError(
-            f"reference {kind.upper()} whole probe rank is {rank}, expected {expected_rank}"
-        )
+    if rank != 2:
+        raise ValueError(f"reference P whole probe rank is {rank}, expected 2")
     state = reference_payload.get("probe")
     if not isinstance(state, dict):
         raise ValueError("reference whole probe is missing its state dict")
@@ -627,18 +597,14 @@ def prepare_ground_truth_first_whole_data(
         )
     token_ids = [token_id for token_id, _ in token_entries]
     train_data = GroundTruthFirstWholeDataset(
-        kind=kind,
         first_data=first_train,
         whole_data=whole_train,
         token_ids_by_class=token_ids,
-        eos_id=codec.eos,
     )
     validation_data = GroundTruthFirstWholeDataset(
-        kind=kind,
         first_data=first_validation,
         whole_data=whole_validation,
         token_ids_by_class=token_ids,
-        eos_id=codec.eos,
     )
     return GroundTruthFirstWholeData(
         first_train=first_train,

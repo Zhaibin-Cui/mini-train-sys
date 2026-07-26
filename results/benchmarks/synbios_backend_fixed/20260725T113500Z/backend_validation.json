@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "device": "cuda:0",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "dtype": "torch.bfloat16",
+  "shape": [
+    2,
+    12,
+    512,
+    64
+  ],
+  "causal": true,
+  "no_dropout_torch_reference": {
+    "forward": {
+      "max_abs": 0.001953125,
+      "max_rel": 0.06343283504247665
+    },
+    "dq": {
+      "max_abs": 0.001953125,
+      "max_rel": 3.6500000953674316
+    },
+    "dk": {
+      "max_abs": 0.001953125,
+      "max_rel": 0.443113774061203
+    },
+    "dv": {
+      "max_abs": 0.001953125,
+      "max_rel": 21.19354820251465
+    }
+  },
+  "dropout_probability": 0.1,
+  "dropout_forward_backward_finite": true,
+  "backend_dispatch": {
+    "attention": {
+      "native_cuda": 2,
+      "fallback": 0
+    },
+    "native_cuda_operators": [
+      "attention"
+    ],
+    "fallback_chain": "CUDA -> Triton -> PyTorch"
+  },
+  "quality_gate_passed": true
+}

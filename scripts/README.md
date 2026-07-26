@@ -25,7 +25,8 @@ Q-whole 的 oracle 首 token 干预和 bad-case MoE route 分支分析分别使�
 
 两个 formal 条件完成后，`report-formal-study` 会严格校验 pipeline、checkpoint、dataset、
 cache、profile 和任务身份，再从 44 个独立 validation JSON 重建主表与正式图；canonical
-命令见 [`../reports/synbios_moe/probes/README.md`](../reports/synbios_moe/probes/README.md#复现正式图表)。
+身份、结果和机器产物见
+[`../reports/synbios_moe/probes/formal_comparison.md`](../reports/synbios_moe/probes/formal_comparison.md#5-支持产物)。
 
 两个 inference-only val 完成后，`report-probe-diagnostics` 会校验 formal/diagnostic
 checkpoint、dataset、cache、probe、split 和 raw hashes，并生成全部 P/Q-whole 原结果、
@@ -45,3 +46,7 @@ SynBioS 的预训练、checkpoint 恢复、分阶段 Probe、GPU 分配和完整
 
 服务器首次安装、PyTorch CUDA wheel、NCCL/BF16 验收和正式实验前检查见
 [`../docs/guides/server_setup.md`](../docs/guides/server_setup.md)。
+
+所有 Git-safe 结果通过 `bash/export_test_results.sh` 导出；日志分类、executed notebook、
+TensorBoard 索引和 server-only retention 规则见
+[`../docs/guides/artifact_layout.md`](../docs/guides/artifact_layout.md)。

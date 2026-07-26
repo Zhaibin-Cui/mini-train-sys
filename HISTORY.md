@@ -2723,7 +2723,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 
 ## 2026-07-25 19:36 — Expanded capacity-first 293M SynBioS backend benchmark
 
-- Status: running
+- Status: stopped
 - Local start: 2026-07-25 19:36 Asia/Shanghai
 - UTC start: 2026-07-25 11:36 UTC
 - Purpose: complete the formal benchmark after expanding the two-repeat capacity candidates to
@@ -2743,6 +2743,55 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   `artifacts/distributed_benchmark/synbios_backend_fixed/20260725T113500Z/`
 - Fixed-space result root:
   `artifacts/distributed_benchmark/synbios_backend_capacity/20260725T113500Z/`
+- End/status audit: the API/quota interruption removed the tmux session before a status file was
+  written. The last durable summary contains 43 successful cases and 18 retained failures:
+  Torch 12 successes plus 16 expected OOM boundary cases, Triton 26 successes plus 2 boundary
+  failures, and CUDA 5 successes. Execution stopped while starting CUDA batch 4 repeat 1.
+- Retention decision: all raw JSON, per-case logs, inventory, and the incrementally written
+  capacity summary remain valid. No model, kernel, configuration, environment, or measurement
+  behavior changed after these cases; the following resume therefore reuses them and only accepts
+  the orchestration-only fingerprint change explicitly.
+
+## 2026-07-26 10:38 — Resume interrupted expanded backend capacity benchmark
+
+- Status: completed
+- Local start: 2026-07-26 10:38 Asia/Shanghai
+- UTC start: 2026-07-26 02:38 UTC
+- Purpose: resume the exact 19:36 formal run from its durable per-case artifacts, complete the
+  remaining CUDA capacity cases, render the fixed-space result, select the common batch, run all
+  nine fixed-workload repeats, export results, and finish the reports.
+- Exact command:
+  `SYNBIOS_BACKEND_BENCHMARK_RUN_ID=20260725T113500Z SYNBIOS_BENCHMARK_REUSE_INTERRUPTED=1 bash scripts/bash/synbios_backend_benchmark.sh`
+- Recovery controls: `--reuse-failures` preserves the 18 already-audited boundary failures;
+  `--reuse-stale-results` reuses the 43 raw successes after verifying that only orchestration,
+  tests, and documentation changed. The training/kernel implementation, YAMLs, hardware, and
+  measurement parameters are unchanged.
+- Gate after recovery change: Ruff and shell syntax passed; benchmark-workflow suite 8/8 passed.
+- Git commit/state correction: resume inventory recorded `train@69fb61d`, dirty with the
+  documented recovery changes. The earlier `448aa09` value described the pre-interruption raw
+  cases; model/kernel/YAML content used by the benchmark was verified unchanged.
+- Hardware: 4 × RTX 4090 verified idle before resume.
+- tmux session: `minitrain-synbios-backend-resume-20260726`
+- Console log: `artifacts/logs/synbios_backend_benchmark_resume_20260726T023800Z.log`
+- Exit-status file: `artifacts/logs/synbios_backend_benchmark_resume_20260726T023800Z.status`
+- Reused fixed/capacity roots: the two `20260725T113500Z` result roots recorded above.
+- Local end: 2026-07-26 10:50 Asia/Shanghai
+- UTC end: 2026-07-26 02:50 UTC
+- Exit code: 0
+- Fixed-workload result: at common local/global batch 24/96 and three repeats, Torch/Triton/CUDA
+  achieved 147,879 / 212,247 / 215,368 tok/s. CUDA was 1.456× Torch and 1.015× Triton; Triton
+  was 1.435× Torch. CUDA reduced mean step time by 31.61% versus Torch.
+- Activation-memory result: using `peak allocated(batch 24) - peak allocated(batch 1)` to cancel
+  shared weights, gradients, optimizer state, and most FSDP static state, growth was 14,981 MB
+  Torch, 3,949 MB Triton, and 3,948 MB CUDA. Triton/CUDA reduced incremental activation
+  allocation by 73.64%/73.65% versus Torch.
+- Fixed-space result: under the same 92% peak-reserved VRAM limit, Torch selected local batch 24
+  at 160,149 tok/s; Triton/CUDA selected batch 96 at 349,965 / 352,544 tok/s, or
+  2.185× / 2.201× Torch.
+- Retained/exported outputs:
+  `results/benchmarks/synbios_backend_fixed/20260725T113500Z/`,
+  `results/benchmarks/synbios_backend_capacity/20260725T113500Z/`, and
+  `reports/server_benchmark_resume.md`. The post-presentation export completed with exit code 0.
 - Training-decision report:
   `reports/synbios_moe/probes/ground_truth_first_training_decision.md`.
 - Stop reason: the fresh-probe path performed one complete generic validation pass and then a
@@ -2796,7 +2845,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 
 ## 2026-07-25 18:11 — Ground-truth-t1 full matrix single-pass-validation retry
 
-- Status: running
+- Status: completed
 - Local start: 2026-07-25 18:11 Asia/Shanghai
 - UTC start: 2026-07-25 10:11 UTC
 - Purpose/configuration/inputs: identical to the 18:01 pilot-budget full-matrix launch, with one
@@ -2812,3 +2861,436 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Exit-status file: `artifacts/logs/ground_truth_first_pilot4000_r2_20260725T101100Z.status`
 - Result root:
   `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`.
+- Local end: 2026-07-25 19:13 Asia/Shanghai
+- UTC end: 2026-07-25 11:13 UTC
+- Exit code: 0
+- Result summary: all 10 LoRA/rank-matched fresh heads completed at 4,000 steps. Aggregate
+  original-vs-ground-truth-`t1` whole accuracy was 45.28% vs 96.38% for P across all
+  attribute/source-position cells, 32.59% vs 95.62% for P0, and 33.15% vs 48.56% for Q.
+  Q birth-city/university remain visibly budget-limited at 14.10%/9.07%; major/company/
+  company-city reached 74.61%/57.61%/87.42%.
+- Retained/exported outputs: `summary.json`, `summary.csv`, structured `README.md`, four PNG/PDF
+  figures, 10 task JSON/PT files, recovery states, and operation logs under the result root;
+  Git-safe evidence is under the matching `results/formal_runs/` mirror.
+
+## 2026-07-26 10:59 — Post-benchmark report/accounting regression
+
+- Status: completed
+- Local start: 2026-07-26 10:59 Asia/Shanghai
+- UTC start: 2026-07-26 02:59 UTC
+- Purpose: validate the capacity-resume controls, batch-1 activation-memory accounting,
+  benchmark workflow, corrected probe reporting, and all existing repository behavior before
+  final handoff.
+- Git commit/state: `train@69fb61d`, dirty with documented final benchmark/report work.
+- Hardware: server GPUs idle; tests do not launch formal GPU training cases.
+- tmux session: `minitrain-final-regression-20260726`
+- Command: `ruff check . && PYTHONPATH=. pytest -q`
+- Console log: `artifacts/logs/final_regression_20260726T025900Z.log`
+- Exit-status file: `artifacts/logs/final_regression_20260726T025900Z.status`
+- Local end: 2026-07-26 11:00 Asia/Shanghai
+- UTC end: 2026-07-26 03:00 UTC
+- Exit code: 0
+- Result: Ruff passed; full repository regression passed 117/117 with five expected
+  single-process distributed-checkpoint warnings and no failures.
+- Final persistence verification: `bash scripts/bash/export_test_results.sh` completed with exit
+  code 0; all 1,987 entries in `results/MANIFEST.sha256` passed `sha256sum -c`; no file under
+  `results/` exceeds 95 MB. Export log/status:
+  `artifacts/logs/export_handoff_20260726T030000Z.{log,status}`.
+- Post-review hardening: stale-result/failure reuse is now disabled for fresh helper launches and
+  requires explicit `SYNBIOS_BENCHMARK_REUSE_INTERRUPTED=1`. Shell syntax, Ruff, and the focused
+  benchmark-workflow suite 8/8 passed after this safety change.
+
+## 2026-07-26 11:16 — Withdrawn no-LoRA probe audit and accepted-figure relabel
+
+- Status: completed (2026-07-26 11:18 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-26 11:16 Asia/Shanghai
+- UTC start: 2026-07-26 03:16 UTC
+- Purpose: verify that the withdrawn predicted-t1 fresh-whole run, which omitted the low-rank
+  input delta, has no active report, result, image, manifest entry, or mounted artifact; then
+  regenerate the accepted fresh-whole figures with an unambiguous `Formal no-t1 baseline` label.
+- Git commit/state: `train@69fb61d`, dirty with the documented corrected-probe and completed
+  server-benchmark work (61 porcelain paths before this audit).
+- Hardware: CPU-only report regeneration; no GPU allocation.
+- tmux session: `minitrain-probe-report-cleanup-20260726`
+- Command: `python scripts/synbios_moe.py summarize-ground-truth-first-whole --run
+  artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/
+  ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z`, followed by report copying,
+  repository search, Ruff, focused tests, and result export.
+- Console log: `artifacts/logs/probe_report_cleanup_20260726T031600Z.log`
+- Accepted result root:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/
+  ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`.
+- Boundary: the separate inference-only oracle diagnostic is preserved. Prior failed/stopped
+  lifecycle records in this file remain immutable provenance and are not active conclusions.
+- Result: repository and mounted-artifact searches found zero active path, report, manifest entry,
+  image, or result named for the withdrawn `predicted_first` experiment. The accepted P/Q figures
+  were regenerated twice, with the final display names `Formal no-t1 baseline` and
+  `Fresh whole probe + true t1`; rank 2/rank 16 remain explicit configuration metadata rather
+  than experiment-title text.
+- Validation: Ruff passed; focused report/diagnostic tests passed 11/11; result export completed;
+  every entry in `results/MANIFEST.sha256` verified successfully; `git diff --check` passed.
+- Final rerun session/log/status:
+  `minitrain-probe-report-cleanup-r2-20260726`,
+  `artifacts/logs/probe_report_cleanup_r2_20260726T031800Z.log`, and matching `.status`.
+
+## 2026-07-26 11:18 — Final post-cleanup repository regression
+
+- Status: completed (2026-07-26 11:19 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-26 11:18 Asia/Shanghai
+- UTC start: 2026-07-26 03:18 UTC
+- Purpose: run the complete regression after the final benchmark activation-accounting
+  compatibility change and accepted probe-report relabel.
+- Git commit/state: `train@69fb61d`, dirty with documented benchmark/report/result work.
+- Hardware: CPU test suite; no formal GPU workload.
+- tmux session: `minitrain-final-regression-r2-20260726`
+- Command: `ruff check . && PYTHONPATH=. pytest -q`
+- Console log/status:
+  `artifacts/logs/final_regression_r2_20260726T031800Z.{log,status}`.
+- Result: Ruff passed; the full repository suite passed 117/117 with five expected
+  single-process distributed-checkpoint warnings and no failures.
+- Persistence: `minitrain-final-export-r2-20260726` ran the required result export and verified
+  every manifest hash successfully. Log/status:
+  `artifacts/logs/final_export_r2_20260726T031900Z.{log,status}`.
+
+## 2026-07-26 11:32 — Withdraw fresh true-t1 Q-whole extension
+
+- Status: completed (2026-07-26 11:33 Asia/Shanghai; exit code 0)
+- Local start: 2026-07-26 11:32 Asia/Shanghai
+- UTC start: 2026-07-26 03:32 UTC
+- Purpose: at the user's explicit request, remove only the newly trained
+  `[EOS, name, true_t1, EOS]` fresh Q-whole extension, including its five heads, recovery states,
+  task outputs, operation logs, figure, report metrics, launch/smoke/capacity branches, and
+  Git-safe mirrors. Convert the accepted intervention to a five-head P-only experiment.
+- Preservation boundary: retain every original formal Q-first/Q-whole checkpoint, validation,
+  summary, figure, and pipeline record. Also retain the separate inference-only oracle and
+  bad-case route diagnostics that use the original formal Q heads.
+- Git commit/state: `train@69fb61d`, dirty with documented benchmark/probe work.
+- Hardware: cleanup and CPU report regeneration only; no GPU workload.
+- Validation before deletion: Ruff, shell syntax, and 18 focused probe/workflow tests passed.
+- Result root being narrowed:
+  `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/
+  ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`.
+- Cleanup/report tmux session: `minitrain-withdraw-fresh-q-20260726`.
+- Console log/status:
+  `artifacts/logs/withdraw_fresh_q_20260726T033200Z.{log,status}`.
+- Removed: five fresh Q task JSON/PT/recovery files in the mounted and Git-safe accepted result
+  roots; all matching Q operation-log directories; the fresh-Q PNG/PDF; mixed development
+  smoke/semantic-audit directories; the two superseded mixed P/Q capacity directories; and
+  their active exported logs. These deletions were explicitly requested and are not recoverable
+  from the active checkout.
+- Code/report result: the intervention CLI, scheduler, capacity helper, smoke, semantic audit,
+  summary generator, tests, and reports are now P-only. The regenerated machine summary contains
+  five P tasks, 30 P position rows, and only the P PNG/PDF.
+- Preservation verification: the original formal run still has six Q-first heads and five Q-whole
+  heads; sampled formal Q files exist; oracle and bad-case route summaries exist. No fresh-Q file
+  or active report/code reference remains outside this immutable history.
+- Final validation: Ruff and shell syntax passed; full repository regression passed 116/116 with
+  five expected single-process distributed-checkpoint warnings; result export and every manifest
+  checksum passed; `git diff --check` passed.
+- Regression tmux/log/status:
+  `minitrain-withdraw-fresh-q-regression-20260726`,
+  `artifacts/logs/withdraw_fresh_q_regression_20260726T033500Z.{log,status}`.
+
+## 2026-07-26 11:38 — Single ground-truth-t1 fresh P-whole matrix
+
+- Status: running
+- Local start: 2026-07-26 11:38 Asia/Shanghai
+- UTC start: 2026-07-26 03:38 UTC
+- Purpose: run the user-requested `single` counterpart of the accepted multi5+permute P-only
+  intervention. Train five fresh P-whole heads after appending cached ground-truth `t1`, then
+  perform complete person-held-out validation and render original formal no-t1 versus true-t1
+  whole comparisons. No fresh Q task exists in this run.
+- Exact configuration: P rank 2 inherited and checked against each original formal P-whole head;
+  4,000 optimizer steps/head; train batch 128; held-out batch 3,072; seed 1337; five whole
+  attributes; six source positions; dynamic scheduling across four GPUs.
+- Dataset/cache: `artifacts/synbios_moe/single`, dataset manifest SHA256
+  `144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25`, probe-cache
+  manifest SHA256 `9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b`.
+- Backbone:
+  `artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/
+  epoch_000540_step_000017280`.
+- Git commit/state: `train@69fb61d`, dirty with documented benchmark/probe work.
+- Prelaunch evidence: four RTX 4090 GPUs idle; all five original formal single P-whole heads
+  present; Ruff, shell syntax, and 19 focused tests passed; CLI exposes no fresh-Q kind.
+- Gate and formal tmux session: `minitrain-single-true-t1-p4000-20260726`.
+- Exact command: `ruff check . && PYTHONPATH=. pytest -q && OUTPUT=artifacts/synbios_moe/results/
+  single_fsdp_4gpu/probe_pipeline/formal/diagnostics/
+  ground_truth_first_whole_p_pilot4000_20260726T033800Z STEPS=4000 P_BATCH_SIZE=128
+  P_EVAL_BATCH_SIZE=3072 bash scripts/bash/synbios_ground_truth_first_whole.sh single
+  single_fsdp_4gpu artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/
+  epoch_000540_step_000017280`.
+- Console log/status:
+  `artifacts/logs/single_ground_truth_first_p4000_20260726T033800Z.{log,status}`.
+- Result root:
+  `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/
+  ground_truth_first_whole_p_pilot4000_20260726T033800Z/`.
+- Local end: 2026-07-26 12:12 Asia/Shanghai
+- UTC end: 2026-07-26 04:12 UTC
+- Status: completed
+- Exit code: 0
+- Completion: all five P-whole heads completed 4,000 steps and one full 300,708-example
+  person-held-out validation pass; the prelaunch Ruff and full pytest gate passed 117 tests.
+- Result summary: all-position macro improved from the original formal no-`t1` 44.23% to 56.47%
+  (+12.24 pp); P0 improved from 3.16% to 15.22% (+12.06 pp). Fresh held-out macros were 83.66%
+  birth city, 67.67% university, 55.47% major, 38.82% company, and 36.75% company city.
+- Retained outputs: run-root `summary.{json,csv}`, `README.md`, five P JSON/PT heads, recovery
+  checkpoints, operation logs, and
+  `figures/ground_truth_first_p_overview.{png,pdf}`. The figure contains input-`t1` consistency,
+  original formal no-`t1`, and fresh true-`t1` panels; no delta panel and no fresh Q artifact.
+- Narrative report:
+  `reports/synbios_moe/probes/ground_truth_first_single_result.md`.
+
+## 2026-07-26 12:15 — Single true-t1 P result export and final regression
+
+- Status: completed
+- Local start: 2026-07-26 12:15 Asia/Shanghai
+- UTC start: 2026-07-26 04:15 UTC
+- Purpose: export the completed single true-`t1` P-only validation cycle into the Git-safe
+  `results/` mirror, verify all manifest hashes, run Ruff and the full pytest suite against the
+  final report/code state, then export the resulting logs and manifest once more.
+- Exact command: `bash scripts/bash/export_test_results.sh && ruff check . &&
+  PYTHONPATH=. pytest -q && bash scripts/bash/export_test_results.sh && git diff --check`.
+- Git commit/state: `train@69fb61d`, dirty with the documented benchmark/probe/report work.
+- Hardware: persistent four-RTX-4090 host; this finalization is CPU/file-I/O work and does not
+  reserve GPUs.
+- Tmux session: `minitrain-single-true-t1-finalize-20260726`.
+- Console log/status:
+  `artifacts/logs/single_ground_truth_first_finalize_20260726T041500Z.{log,status}`.
+- Expected exported result:
+  `results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/
+  ground_truth_first_whole_p_pilot4000_20260726T033800Z/`.
+- Local end: 2026-07-26 12:16 Asia/Shanghai
+- UTC end: 2026-07-26 04:16 UTC
+- Exit code: 0
+- Completion: both exports succeeded; Ruff passed; full pytest passed 117/117 with the five
+  expected single-process distributed-checkpoint warnings; `git diff --check` passed; every
+  entry in `results/MANIFEST.sha256` verified.
+- Export audit: the Git-safe run contains `summary.{json,csv}`, `README.md`, five P task JSON
+  files, and the three-panel PNG/PDF figure. It contains no fresh-Q artifact; raw P weights,
+  recovery checkpoints, and operation logs remain under the `/data` artifact root.
+
+## 2026-07-26 12:22 — Git-safe result catalog and layout migration
+
+- Status: failed
+- Local start: 2026-07-26 12:22 Asia/Shanghai
+- UTC start: 2026-07-26 04:22 UTC
+- Purpose: organize all pushable server evidence without moving published experiment result
+  paths. Migrate flat console logs into benchmark/experiment/validation/maintenance directories,
+  export executed notebooks, index every TensorBoard event, and record server-only large payload
+  retention/size/manifest evidence.
+- Exact command: `bash scripts/bash/export_test_results.sh`.
+- Git commit/state: `train@69fb61d`, dirty with documented benchmark, probe, report, and catalog
+  changes.
+- Prelaunch gate: Ruff and two focused catalog tests passed; export shell syntax passed.
+- Hardware: persistent four-RTX-4090 host; export/catalog work is CPU and mounted-disk I/O only.
+- Tmux session: `minitrain-results-catalog-20260726`.
+- Console log/status:
+  `artifacts/logs/results_catalog_export_20260726T043200Z.{log,status}`.
+- Expected outputs: `results/catalog/{artifacts,retention}.json`,
+  `results/catalog/summary.md`, `results/tensorboard/index.csv`,
+  `results/notebooks/`, and categorized `results/logs/`.
+- Local end: 2026-07-26 12:23 Asia/Shanghai
+- UTC end: 2026-07-26 04:23 UTC
+- Exit code: 1
+- Failure: the migration successfully categorized the existing Git-safe flat logs, then stopped
+  on the first already-identical server log because a false `[[ copy == move ]]` expression was
+  the final command in a `set -e` branch. No evidence was lost; the source remained on `/data`
+  and the identical categorized target remained in Git-safe results.
+
+## 2026-07-26 12:24 — Git-safe result catalog and layout migration retry
+
+- Status: failed
+- Local start: 2026-07-26 12:24 Asia/Shanghai
+- UTC start: 2026-07-26 04:24 UTC
+- Purpose/configuration: retry the immediately preceding export after replacing the
+  `set -e`-sensitive short-circuit with an explicit conditional; scope and expected outputs are
+  unchanged.
+- Exact command: `bash scripts/bash/export_test_results.sh`.
+- Git commit/state: `train@69fb61d`, dirty with documented benchmark, probe, report, and catalog
+  changes.
+- Tmux session: `minitrain-results-catalog-r2-20260726`.
+- Console log/status:
+  `artifacts/logs/results_catalog_export_r2_20260726T042400Z.{log,status}`.
+- Local end: 2026-07-26 12:25 Asia/Shanghai
+- UTC end: 2026-07-26 04:25 UTC
+- Exit code: 1
+- Failure: an artifact log had legitimately grown after its prior Git-safe export, so strict
+  whole-file equality rejected the older target. The categorized target and authoritative
+  server source both remain available; no file was deleted in this failing branch.
+
+## 2026-07-26 12:26 — Git-safe result catalog and layout migration retry 2
+
+- Status: completed
+- Local start: 2026-07-26 12:26 Asia/Shanghai
+- UTC start: 2026-07-26 04:26 UTC
+- Purpose/configuration: retry with prefix-aware migration and mounted-source-authoritative copy
+  semantics. Same-name files may grow between exports; content divergence within the common
+  prefix still fails closed.
+- Exact command: `bash scripts/bash/export_test_results.sh`.
+- Git commit/state: `train@69fb61d`, dirty with documented benchmark, probe, report, and catalog
+  changes.
+- Tmux session: `minitrain-results-catalog-r3-20260726`.
+- Console log/status:
+  `artifacts/logs/results_catalog_export_r3_20260726T042600Z.{log,status}`.
+- Local end: 2026-07-26 12:27 Asia/Shanghai
+- UTC end: 2026-07-26 04:27 UTC
+- Exit code: 0
+- Completion: all console log/status files are physically categorized under four
+  purpose-specific directories; four executed benchmark notebook/log files were exported;
+  265 TensorBoard event files (73.62 MiB) were indexed; catalog and server-only retention JSON
+  were generated; `results/MANIFEST.sha256` was refreshed.
+- Outputs: `results/catalog/{artifacts,retention}.json`,
+  `results/catalog/summary.md`, `results/tensorboard/index.csv`, `results/notebooks/`, and
+  `results/logs/{benchmarks,experiments,validation,maintenance}/`.
+
+## 2026-07-26 12:39 — Repository/report consolidation and completeness validation
+
+- Status: failed
+- Local start: 2026-07-26 12:39 Asia/Shanghai
+- UTC start: 2026-07-26 04:39 UTC
+- Purpose: validate the reorganized artifact/report contract end to end. Refresh the raw
+  SynBioS lineage/path/log audit with categorized Git-safe log paths, export and compare every
+  pushable source file byte-for-byte, run Ruff and the full regression suite, export once more,
+  then verify all snapshot hashes and GitHub-size boundaries.
+- Documentation scope: new portfolio README; canonical kernel, FSDP/end-to-end, and SynBioS
+  storage reports; compatibility stubs for duplicate reports; layer-only route figure; centralized
+  TensorBoard/notebook/log/catalog indexes.
+- Exact command: `python scripts/synbios_moe.py audit-synbios-repository --repo-root .
+  --output artifacts/synbios_moe/results/repository_audit_20260724 &&
+  bash scripts/bash/export_test_results.sh && ruff check . && PYTHONPATH=. pytest -q &&
+  bash scripts/bash/export_test_results.sh && sha256sum --quiet -c results/MANIFEST.sha256 &&
+  test -z "$(find results -type f -size +90M -print)" && git diff --check`.
+- Git commit/state: `train@69fb61d`, dirty with the documented benchmark, probe, catalog, and
+  report work.
+- Hardware: persistent four-RTX-4090 host; CPU/storage validation only.
+- Tmux session: `minitrain-repo-consolidation-final-20260726`.
+- Console log/status:
+  `artifacts/logs/repo_consolidation_final_20260726T043900Z.{log,status}`.
+- Expected outputs: refreshed `repository_audit_20260724`, result catalog/export audit/retention,
+  TensorBoard index, manifest, canonical reports, and full regression evidence.
+- Local end: 2026-07-26 12:40 Asia/Shanghai
+- UTC end: 2026-07-26 04:40 UTC
+- Exit code: 1
+- Completed before failure: the full raw SynBioS dataset/token/cache/checkpoint/config/diagnostic
+  repository audit passed and refreshed its 141-log catalog.
+- Failure: `audit_results_export.py` imported its sibling through the package name, which works
+  under pytest but not when the file is executed directly from `scripts/`. Export stopped before
+  copying or deleting any new file.
+
+## 2026-07-26 12:41 — Repository/report consolidation validation retry
+
+- Status: completed
+- Local start: 2026-07-26 12:41 Asia/Shanghai
+- UTC start: 2026-07-26 04:41 UTC
+- Purpose/configuration: repeat the preceding validation after making the audit import compatible
+  with both package import and direct script execution. All commands, gates, and expected outputs
+  are otherwise identical.
+- Tmux session: `minitrain-repo-consolidation-final-r2-20260726`.
+- Console log/status:
+  `artifacts/logs/repo_consolidation_final_r2_20260726T044100Z.{log,status}`.
+- Local end: 2026-07-26 12:41 Asia/Shanghai
+- UTC end: 2026-07-26 04:41 UTC
+- Exit code: 0
+- Repository audit: passed all raw dataset hashes, token-shard hashes, cache schema/coverage and
+  parent lineage, matched formal identities, committed checkpoint model hashes, cloze/diagnostic
+  identities, training path/epoch/batch/world-size contracts, and probe runtime checks.
+- Export completeness: 1,852 expected files / 190,676,086 bytes verified byte-for-byte with zero
+  missing and zero mismatched. Explicit exclusions were 33 DCP shards (29.43 GB), four model
+  exports (3.99 GB), 200 probe/recovery weights (825.82 MB), 31 raw/derived dataset payloads
+  (904.58 MB), and three large diagnostic records (191.01 MB).
+- Regression: Ruff passed; full pytest passed 124/124. Two DCP saver and three DCP loader
+  single-process warnings were expected; the documentation regex warning was subsequently removed
+  without changing runtime code.
+- Snapshot gates: second export passed; every `results/MANIFEST.sha256` entry verified;
+  no result file exceeds 90 MB; `git diff --check` passed.
+
+## 2026-07-26 12:42 — Catalog CSV normalization and final refresh
+
+- Status: completed
+- Local start: 2026-07-26 12:42 Asia/Shanghai
+- UTC start: 2026-07-26 04:42 UTC
+- Purpose: normalize generated repository-audit and TensorBoard catalog CSV files to LF, refresh
+  the repository audit and Git-safe export, then rerun focused catalog/documentation tests and
+  snapshot gates.
+- Exact command: `python scripts/synbios_moe.py audit-synbios-repository --repo-root .
+  --output artifacts/synbios_moe/results/repository_audit_20260724 &&
+  bash scripts/bash/export_test_results.sh && ruff check . &&
+  PYTHONPATH=. pytest -q tests/test_results_catalog.py tests/test_repository_audit.py
+  tests/test_documentation_integrity.py && sha256sum --quiet -c results/MANIFEST.sha256 &&
+  git diff --check`.
+- Git commit/state: `train@69fb61d`, dirty with documented consolidation work.
+- Tmux session: `minitrain-catalog-lf-final-20260726`.
+- Console log/status: `artifacts/logs/catalog_lf_final_20260726T044600Z.{log,status}`.
+- Local end: 2026-07-26 12:43 Asia/Shanghai
+- UTC end: 2026-07-26 04:43 UTC
+- Exit code: 0
+- Result: repository audit and export completeness passed; Ruff passed; focused catalog,
+  repository-audit, and documentation tests passed 10/10; every manifest entry verified; and
+  `git diff --check` passed with LF-normalized generated CSV files.
+
+## 2026-07-26 12:45 — Ground-truth-`t1` comparison figure simplification
+
+- Status: completed
+- Local start: 2026-07-26 12:45 Asia/Shanghai
+- UTC start: 2026-07-26 04:45 UTC
+- Purpose: regenerate the accepted `single` and `multi5_permute` P-whole summaries after removing
+  the redundant per-cell `true t1 − formal baseline` difference heatmap. Retain the input
+  consistency check, formal no-`t1` baseline, and fresh true-`t1` result.
+- Exact command: run `python scripts/synbios_moe.py summarize-ground-truth-first-whole --run
+  <run>` for the accepted single and multi5 result roots; then run
+  `bash scripts/bash/export_test_results.sh`, focused report/documentation tests, Ruff, manifest
+  verification, and `git diff --check`.
+- Git commit/state: `train@69fb61d`, dirty with documented consolidation work.
+- Hardware: persistent four-RTX-4090 host; CPU-only summary/plot/export validation.
+- Tmux session: `minitrain-t1-plot-final-20260726`.
+- Console log/status: `artifacts/logs/t1_plot_final_20260726T044500Z.{log,status}`.
+- Result roots:
+  `artifacts/synbios_moe/results/{single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z,multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z}`.
+- Local end: 2026-07-26 12:46 Asia/Shanghai
+- UTC end: 2026-07-26 04:46 UTC
+- Exit code: 0
+- Result: both accepted comparisons were regenerated as three-panel figures (input consistency,
+  formal no-`t1` baseline, and fresh true-`t1` P-whole accuracy); the redundant per-cell
+  difference heatmap is no longer displayed. Git-safe export passed, Ruff passed, focused
+  report/documentation tests passed 6/6, all manifest entries verified, and
+  `git diff --check` passed.
+
+## 2026-07-26 13:05 — Final `train` branch server snapshot gate
+
+- Status: completed
+- Local start: 2026-07-26 13:05 Asia/Shanghai
+- UTC start: 2026-07-26 05:05 UTC
+- Purpose: perform the final pre-push audit for the reorganized repository, expanded portfolio
+  README, operator/distributed reports, SynBioS Probe results, TensorBoard events, categorized
+  logs, notebooks, and server-retention inventory; then publish every Git-safe file to
+  `origin/train`.
+- Exact validation command: `python scripts/synbios_moe.py audit-synbios-repository --repo-root .
+  --output artifacts/synbios_moe/results/repository_audit_20260724 &&
+  bash scripts/bash/export_test_results.sh && ruff check . && PYTHONPATH=. pytest -q &&
+  bash scripts/bash/export_test_results.sh && sha256sum --quiet -c results/MANIFEST.sha256 &&
+  test -z "$(find results -type f -size +90M -print)" && git diff --check`.
+- Git commit/state: `train@69fb61d`, one commit ahead of `origin/train`, dirty with the accumulated
+  benchmark, Probe, result-organization, report, and README work requested for this snapshot.
+- Hardware: persistent four-RTX-4090 host; CPU/storage audit and regression only.
+- Tmux session: `minitrain-final-train-push-gate-20260726`.
+- Console log/status:
+  `artifacts/logs/final_train_push_gate_20260726T050500Z.{log,status}`.
+- Expected outputs: refreshed raw SynBioS repository audit, byte-identical Git-safe export audit,
+  retention inventory for every excluded large payload, complete TensorBoard/result indexes,
+  passing regression suite, and a size/secret-clean staged snapshot ready for `origin/train`.
+- Local end: 2026-07-26 13:07 Asia/Shanghai
+- UTC end: 2026-07-26 05:07 UTC
+- Exit code: 0
+- Repository audit: passed raw dataset and token-shard sizes/hashes, probe-cache schema/coverage
+  and parent lineage, matched formal identities, committed checkpoint/model hashes, cloze and
+  diagnostic identities, resolved training paths/epochs/batch/world-size, and completed Probe
+  runtime contracts.
+- Export completeness: **1,859/1,859 files** and 190,651,614 bytes verified byte-for-byte;
+  zero missing and zero mismatched.
+- Explicit server-only retention: 33 DCP tensor shards (29,431,662,384 bytes), four model exports
+  (3,988,582,666 bytes), 200 Probe/recovery weights (825,818,204 bytes), 31 raw/derived dataset
+  payloads (904,575,003 bytes), and three large per-example diagnostics (191,010,417 bytes).
+- Regression: Ruff passed; pytest passed 124/124 with five expected single-process DCP warnings.
+- Snapshot gates: every `results/MANIFEST.sha256` entry verified, no result file exceeds 90 MiB,
+  and `git diff --check` passed.
+- Push status: pending staged secret/size review, commit, and remote verification below.

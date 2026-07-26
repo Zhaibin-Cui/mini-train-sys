@@ -56,6 +56,12 @@ Backend 比较必须同时回答两个不同问题：
 固定工作量结果不能冒充固定空间结果。固定空间选择以 reserved memory 为物理预算，
 不能用 allocated memory 替代。
 
+内存优化还必须扣除静态训练状态：在共同 batch `N` 上，使用
+`peak allocated(N) - peak allocated(batch 1)` 作为激活内存增长主指标，并报告相对
+Torch 的 reduction 和每新增 local sample 的斜率。该差分抵消相同 backend 内的权重、
+梯度、优化器及大部分 FSDP 静态状态；reserved 差分只解释 allocator，原始 reserved
+峰值仍负责容量安全。吞吐是端到端产出率，直接比较 tokens/s，不做 batch-1 扣减。
+
 正式端到端 backend benchmark 固定使用当前 293,494,272 参数 SynBioS MoE；125M
 通用模型只保留为基础设施历史证据，不进入简历主对比。
 

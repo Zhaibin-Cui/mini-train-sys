@@ -12,6 +12,11 @@ CONFIG="${CASE_CONFIG:-configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml}"
 MODEL="${MODEL_CONFIG:-configs/synbios_moe/model.yaml}"
 mkdir -p "$FIXED_OUTPUT" "$CAPACITY_OUTPUT"
 
+RECOVERY_ARGS=()
+if [[ "${SYNBIOS_BENCHMARK_REUSE_INTERRUPTED:-0}" == "1" ]]; then
+  RECOVERY_ARGS+=(--reuse-failures --reuse-stale-results)
+fi
+
 mapfile -t gpu_memory < <(
   nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits
 )
@@ -36,12 +41,13 @@ python scripts/run_dist_bench.py run \
   --ops-backends torch triton cuda \
   --batch-sizes 1 2 4 8 16 24 32 48 64 80 96 112 120 128 \
   --warmup-steps 5 --measure-steps 20 --repeats 2 \
+  "${RECOVERY_ARGS[@]}" \
   --case-config "$CONFIG" --model-config "$MODEL" \
   --output "$CAPACITY_OUTPUT"
 
 python scripts/run_dist_bench.py present-capacity \
   --input "$CAPACITY_OUTPUT/capacity_summary.json" \
-  --memory-limit-percent 92 --min-repeats 2 \
+  --memory-limit-percent 92 --min-repeats 2 --require-batch-one \
   --output "$CAPACITY_OUTPUT/presentation"
 
 COMMON_BATCH="$(

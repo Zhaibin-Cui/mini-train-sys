@@ -57,6 +57,12 @@ VRAM 上限；allocated memory 仍保留用于诊断，但不是物理容量选�
 - 固定 reserved-VRAM 上限：每个 backend 选择各自最高吞吐安全 batch，比较同样空间
   下的训练吞吐。
 
+内存结果还要区分原始峰值与激活增量。原始 peak reserved 决定容量边界；在共同 batch
+`N` 上，用 `peak allocated(N) - peak allocated(1)` 抵消网络权重、梯度、优化器及
+FSDP 静态状态，作为激活内存节省 headline，并同时报告每新增 local sample 的增量。
+reserved 的同类差分只用于解释 allocator。tokens/s 是完整训练产出率，不做 batch-1
+扣减。
+
 `scripts/run_dist_bench.py present-capacity` 会按第二种口径生成逐 batch 聚合、选中
 frontier、相对 Torch speedup 和边界检查。
 

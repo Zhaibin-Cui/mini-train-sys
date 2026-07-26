@@ -22,16 +22,14 @@ fi
   echo "missing committed checkpoint: $CHECKPOINT" >&2
   exit 2
 }
-[[ -f "$PROBE_DIR/q_university_whole.pt" ]] || {
+[[ -f "$PROBE_DIR/p_university_whole.pt" ]] || {
   echo "missing formal whole probes: $PROBE_DIR" >&2
   exit 2
 }
 
-# Candidate lists are independent because P biographies and Q name queries have different lengths.
+# Candidate lists cover P biography-prefix training and validation.
 P_BATCHES="${P_BATCHES:-50,64,128,256,384,512,768,1024}"
-Q_BATCHES="${Q_BATCHES:-200,384,768,1024,1536,2048,4096}"
 P_VALIDATION_BATCHES="${P_VALIDATION_BATCHES:-256,512,768,1024,1536,2048,3072,4096,6144,7168}"
-Q_VALIDATION_BATCHES="${Q_VALIDATION_BATCHES:-3072,6144,8192,12288,16384,24576,32768,40960,49152}"
 MEMORY_LIMIT_PERCENT="${PROBE_MEMORY_LIMIT_PERCENT:-92}"
 WARMUP_STEPS="${PROBE_BENCHMARK_WARMUP_STEPS:-3}"
 MEASURE_STEPS="${PROBE_BENCHMARK_MEASURE_STEPS:-10}"
@@ -59,20 +57,19 @@ for gpu in 0 1 2 3; do
   }
 done
 
-# Run two independent GPU replicas for each kind and mode.
+# Run two independent GPU replicas for each P mode.
 run_mode() {
-  local mode="$1" p_candidates="$2" q_candidates="$3" status=0
-  local specification kind gpu replica candidates result pid
+  local mode="$1" candidates="$2" status=0
+  local specification kind gpu replica result pid
   local pids=()
   for specification in \
-    "p:0:a:$p_candidates" "q:1:a:$q_candidates" \
-    "p:2:b:$p_candidates" "q:3:b:$q_candidates"; do
+    "p:0:a:$candidates" "p:2:b:$candidates"; do
     IFS=: read -r kind gpu replica candidates <<<"$specification"
     result="$OUTPUT/${kind}_${replica}_${mode}.json"
     python scripts/synbios_moe.py benchmark-ground-truth-first-whole-batches \
       --data "$DATA" --probe-cache "$CACHE" --probe-dir "$PROBE_DIR" \
       --model-config "$MODEL" --checkpoint "$CHECKPOINT" \
-      --kind "$kind" --attribute university --mode "$mode" \
+      --attribute university --mode "$mode" \
       --batch-sizes "$candidates" \
       --warmup-steps "$WARMUP_STEPS" --measure-steps "$MEASURE_STEPS" \
       --memory-limit-percent "$MEMORY_LIMIT_PERCENT" \
@@ -84,15 +81,13 @@ run_mode() {
   (( status == 0 ))
 }
 
-run_mode training "$P_BATCHES" "$Q_BATCHES"
-run_mode validation "$P_VALIDATION_BATCHES" "$Q_VALIDATION_BATCHES"
+run_mode training "$P_BATCHES"
+run_mode validation "$P_VALIDATION_BATCHES"
 
 # Publish settings only when every recommendation is reproduced and bracketed.
 python scripts/synbios_moe.py summarize-probe-benchmarks \
   --run "$OUTPUT/p_a_training.json" --run "$OUTPUT/p_b_training.json" \
-  --run "$OUTPUT/q_a_training.json" --run "$OUTPUT/q_b_training.json" \
   --run "$OUTPUT/p_a_validation.json" --run "$OUTPUT/p_b_validation.json" \
-  --run "$OUTPUT/q_a_validation.json" --run "$OUTPUT/q_b_validation.json" \
   --output "$OUTPUT/summary.json" --env-output "$OUTPUT/recommended.env" \
   --require-complete-search
 

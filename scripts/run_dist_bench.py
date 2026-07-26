@@ -272,6 +272,21 @@ def run_case(command: list[str], *, timeout_seconds: int) -> tuple[str, str, int
 
 def suite(args: argparse.Namespace) -> None:
     output_dir = Path(args.output)
+    summary_path = output_dir / f"{args.suite}_summary.json"
+    prior_failures: dict[tuple[str, int, int, str | None, int], dict[str, object]] = {}
+    if args.reuse_failures and summary_path.is_file():
+        prior_report = json.loads(summary_path.read_text("utf-8"))
+        if prior_report.get("suite") != args.suite:
+            raise ValueError(f"{summary_path} does not match suite {args.suite}")
+        for failure in prior_report.get("failures", []):
+            key = (
+                str(failure["strategy"]),
+                int(failure["world_size"]),
+                int(failure["batch_size"]),
+                failure.get("ops_backend"),
+                int(failure["repeat"]),
+            )
+            prior_failures[key] = failure
     inventory_data = inventory(output_dir)
     model_config = Path(args.model_config)
     if not model_config.is_absolute():
@@ -366,9 +381,30 @@ def suite(args: argparse.Namespace) -> None:
                                 existing = json.loads(result_path.read_text("utf-8"))
                             except (OSError, json.JSONDecodeError):
                                 existing = {}
-                            if existing.get("case_identity") == case_identity:
-                                print(f"REUSE {result_path}", flush=True)
+                            identity_matches = existing.get("case_identity") == case_identity
+                            if identity_matches or args.reuse_stale_results:
+                                label = "REUSE" if identity_matches else "REUSE VERIFIED STALE"
+                                print(f"{label} {result_path}", flush=True)
                                 rows.append(existing)
+                                write_report()
+                                continue
+                        failure_key = (
+                            strategy,
+                            world,
+                            batch,
+                            ops_backend,
+                            repeat,
+                        )
+                        if (
+                            args.reuse_failures
+                            and not args.rerun_existing
+                            and failure_key in prior_failures
+                        ):
+                            failure = prior_failures[failure_key]
+                            log_path = Path(str(failure.get("log", "")))
+                            if log_path.is_file():
+                                print(f"REUSE FAILURE {log_path}", flush=True)
+                                failures.append(failure)
                                 write_report()
                                 continue
                         if result_path.is_file():
@@ -685,6 +721,42 @@ def present_backend_capacity(args: argparse.Namespace) -> None:
         )
         aggregates.append(aggregate)
 
+    batch_one_by_backend = {
+        backend: next(
+            (
+                row
+                for row in aggregates
+                if row["ops_backend"] == backend and row["local_batch_size"] == 1
+            ),
+            None,
+        )
+        for backend in ("torch", "triton", "cuda")
+    }
+    activation_memory_available = not any(
+        value is None for value in batch_one_by_backend.values()
+    )
+    if not activation_memory_available and getattr(args, "require_batch_one", False):
+        raise ValueError("activation-memory accounting requires batch-1 for every backend")
+    if activation_memory_available:
+        for row in aggregates:
+            baseline = batch_one_by_backend[str(row["ops_backend"])]
+            assert baseline is not None
+            added_samples = int(row["local_batch_size"]) - 1
+            allocated_growth = float(row["peak_memory_allocated_mb_mean"]) - float(
+                baseline["peak_memory_allocated_mb_mean"]
+            )
+            reserved_growth = float(row["peak_memory_reserved_mb_mean"]) - float(
+                baseline["peak_memory_reserved_mb_mean"]
+            )
+            row["activation_allocated_growth_mb_from_batch1"] = allocated_growth
+            row["activation_reserved_growth_mb_from_batch1"] = reserved_growth
+            row["activation_allocated_mb_per_added_local_sample"] = (
+                allocated_growth / added_samples if added_samples > 0 else 0.0
+            )
+            row["activation_reserved_mb_per_added_local_sample"] = (
+                reserved_growth / added_samples if added_samples > 0 else 0.0
+            )
+
     selected = {}
     for backend in ("torch", "triton", "cuda"):
         candidates = [
@@ -727,6 +799,46 @@ def present_backend_capacity(args: argparse.Namespace) -> None:
             "Torch, Triton, and CUDA have no common repeated batch under the VRAM limit"
         )
     common_fixed_batch = max(common_eligible_batches)
+    common_fixed_rows = [
+        dict(
+            next(
+                row
+                for row in aggregates
+                if row["ops_backend"] == backend
+                and row["local_batch_size"] == common_fixed_batch
+            )
+        )
+        for backend in ("torch", "triton", "cuda")
+    ]
+    if activation_memory_available:
+        torch_common = common_fixed_rows[0]
+        torch_allocated_growth = float(
+            torch_common["activation_allocated_growth_mb_from_batch1"]
+        )
+        torch_reserved_growth = float(
+            torch_common["activation_reserved_growth_mb_from_batch1"]
+        )
+        for row in common_fixed_rows:
+            row["activation_allocated_reduction_percent_vs_torch"] = (
+                100
+                * (
+                    torch_allocated_growth
+                    - float(row["activation_allocated_growth_mb_from_batch1"])
+                )
+                / torch_allocated_growth
+                if torch_allocated_growth > 0
+                else 0.0
+            )
+            row["activation_reserved_reduction_percent_vs_torch"] = (
+                100
+                * (
+                    torch_reserved_growth
+                    - float(row["activation_reserved_growth_mb_from_batch1"])
+                )
+                / torch_reserved_growth
+                if torch_reserved_growth > 0
+                else 0.0
+            )
 
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
@@ -776,6 +888,16 @@ def present_backend_capacity(args: argparse.Namespace) -> None:
         "tested_batches": tested_batches,
         "common_eligible_batches": common_eligible_batches,
         "common_fixed_batch": common_fixed_batch,
+        "activation_memory_method": {
+            "available": activation_memory_available,
+            "primary_metric": "peak allocated growth from local batch 1",
+            "formula": "peak_allocated(batch N) - peak_allocated(batch 1)",
+            "purpose": (
+                "cancel shared model, gradient, optimizer, and FSDP static memory; "
+                "reserved-memory growth is retained only as allocator context"
+            ),
+        },
+        "common_fixed_activation_memory": common_fixed_rows,
         "selected": selected_rows,
         "boundary_recommendations": [
             row["ops_backend"]
@@ -892,6 +1014,7 @@ def parser() -> argparse.ArgumentParser:
     capacity_presentation.add_argument("--output", required=True)
     capacity_presentation.add_argument("--memory-limit-percent", type=float, default=92.0)
     capacity_presentation.add_argument("--min-repeats", type=int, default=2)
+    capacity_presentation.add_argument("--require-batch-one", action="store_true")
     validation = commands.add_parser("validate-backend")
     validation.add_argument("--device", default="cuda:0")
     validation.add_argument("--batch-size", type=int, default=2)
@@ -916,6 +1039,16 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--ops-backends", nargs="+", choices=("torch", "triton", "cuda"))
     run.add_argument("--output", default="artifacts/distributed_benchmark")
     run.add_argument("--case-timeout-seconds", type=int, default=1800)
+    run.add_argument(
+        "--reuse-failures",
+        action="store_true",
+        help="retain matching failed cases from an interrupted summary instead of rerunning them",
+    )
+    run.add_argument(
+        "--reuse-stale-results",
+        action="store_true",
+        help="reuse raw cases after a verified orchestration-only source-fingerprint change",
+    )
     run.add_argument("--rerun-existing", action="store_true")
     hidden = commands.add_parser("_worker")
     for name, kwargs in (

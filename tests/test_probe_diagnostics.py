@@ -52,28 +52,13 @@ def test_ground_truth_first_p_reads_the_inserted_token_itself():
         label=7,
     )
     rebuilt = build_ground_truth_first_input(
-        kind="p",
         item=item,
         source_position=2,
         token_id=42,
-        eos_id=99,
     )
     assert rebuilt.input_ids == [99, 10, 11, 42]
     assert rebuilt.positions == [3]
     assert rebuilt.label == 7
-
-
-def test_ground_truth_first_q_reads_the_eos_after_inserted_token():
-    item = ProbeBatchItem(input_ids=[99, 10, 11, 99], positions=[3], label=7)
-    rebuilt = build_ground_truth_first_input(
-        kind="q",
-        item=item,
-        source_position=0,
-        token_id=42,
-        eos_id=99,
-    )
-    assert rebuilt.input_ids == [99, 10, 11, 42, 99]
-    assert rebuilt.positions == [4]
 
 
 def test_ground_truth_dataset_uses_cached_label_as_inserted_token_class():
@@ -92,11 +77,9 @@ def test_ground_truth_dataset_uses_cached_label_as_inserted_token_class():
         )
     )
     dataset = GroundTruthFirstWholeDataset(
-        kind="p",
         first_data=first,
         whole_data=whole,
         token_ids_by_class=(41, 42),
-        eos_id=99,
     )
     rebuilt = dataset[2]
     assert rebuilt.input_ids == [99, 10, 11, 42]
@@ -128,22 +111,21 @@ def test_ground_truth_first_whole_probe_uses_rank_matched_input_delta():
 
 
 def test_ground_truth_validation_returns_overall_and_position_counts_in_one_pass():
-    first = _ItemDataset(
-        ProbeBatchItem(input_ids=[99, 10, 99], positions=[2], label=1)
+    item = ProbeBatchItem(
+        input_ids=[99, 10, 11, 12, 13, 14, 15],
+        positions=[0, 1, 2, 3, 4, 5],
+        label=1,
     )
-    whole = _ItemDataset(
-        ProbeBatchItem(input_ids=[99, 10, 99], positions=[2], label=1)
-    )
+    first = _ItemDataset(item)
+    whole = _ItemDataset(item)
     dataset = GroundTruthFirstWholeDataset(
-        kind="q",
         first_data=first,
         whole_data=whole,
         token_ids_by_class=(41, 42),
-        eos_id=99,
     )
     backbone = _TinyBackbone()
     backbone.cfg.vocab_size = 128
-    probe = AttributeProbe(backbone, 2, rank=2, kind="q")
+    probe = AttributeProbe(backbone, 2, rank=2, kind="p")
     with torch.no_grad():
         probe.classifier.weight.zero_()
         probe.classifier.bias.copy_(torch.tensor([0.0, 1.0]))
@@ -154,9 +136,9 @@ def test_ground_truth_validation_returns_overall_and_position_counts_in_one_pass
         batch_size=1,
     )
     assert result["accuracy"] == 1.0
-    assert result["accuracy_by_position"] == [1.0]
-    assert result["correct_by_position"] == [1]
-    assert result["total_by_position"] == [1]
+    assert result["accuracy_by_position"] == [1.0] * 6
+    assert result["correct_by_position"] == [1] * 6
+    assert result["total_by_position"] == [1] * 6
 
 
 def test_oracle_summary_separates_recovery_and_harm():

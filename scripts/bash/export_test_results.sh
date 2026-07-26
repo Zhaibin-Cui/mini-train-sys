@@ -11,8 +11,13 @@ mkdir -p \
   "$DEST/datasets" \
   "$DEST/environment" \
   "$DEST/formal_runs" \
-  "$DEST/logs" \
+  "$DEST/logs/benchmarks" \
+  "$DEST/logs/experiments" \
+  "$DEST/logs/maintenance" \
+  "$DEST/logs/validation" \
+  "$DEST/notebooks" \
   "$DEST/smoke" \
+  "$DEST/tensorboard" \
   "$DEST/validation"
 
 copy_tree() {
@@ -28,7 +33,79 @@ copy_tree() {
 
 copy_tree "$ROOT/artifacts/distributed_benchmark" "$DEST/benchmarks"
 copy_tree "$ROOT/artifacts/operator_benchmark" "$DEST/benchmarks/operator_benchmark"
-copy_tree "$ROOT/artifacts/logs" "$DEST/logs"
+log_category() {
+  local lowered
+  lowered="$(basename "$1" | tr '[:upper:]' '[:lower:]')"
+  case "$lowered" in
+    *kernel*|*backend_benchmark*|*distributed_server_benchmark*|*capacity*|*b112_stability*|*weak_scal*|*cuda_build*)
+      echo "benchmarks"
+      ;;
+    *probe*|*cloze*|*synbios*|*ground_truth*|*tensorboard*)
+      echo "experiments"
+      ;;
+    *test*|*regression*|*preflight*|*prepush*|*fidelity*|*validation*|*quality*)
+      echo "validation"
+      ;;
+    *)
+      echo "maintenance"
+      ;;
+  esac
+}
+
+place_log() {
+  local source="$1"
+  local mode="$2"
+  local category target
+  category="$(log_category "$source")"
+  target="$DEST/logs/$category/$(basename "$source")"
+  mkdir -p "$(dirname "$target")"
+  if [[ "$source" == "$target" ]]; then
+    return
+  fi
+  if [[ -e "$target" ]]; then
+    if [[ "$mode" == "copy" ]]; then
+      # The mounted server log is authoritative and may have grown since the
+      # previous export.
+      cp -p "$source" "$target"
+      return
+    fi
+    local source_size target_size common_size
+    source_size="$(stat -c '%s' "$source")"
+    target_size="$(stat -c '%s' "$target")"
+    common_size="$source_size"
+    if (( target_size < common_size )); then
+      common_size="$target_size"
+    fi
+    if (( common_size > 0 )); then
+      cmp -n "$common_size" "$source" "$target"
+    fi
+    if (( source_size > target_size )); then
+      mv "$source" "$target"
+    else
+      rm "$source"
+    fi
+  elif [[ "$mode" == "move" ]]; then
+    mv "$source" "$target"
+  else
+    cp -p "$source" "$target"
+  fi
+}
+
+# Migrate earlier flat exports without losing evidence, then place all current
+# server logs into purpose-specific directories.
+while IFS= read -r -d '' existing; do
+  [[ "$(basename "$existing")" == "README.md" ]] && continue
+  place_log "$existing" move
+done < <(find "$DEST/logs" -maxdepth 1 -type f -print0)
+if [[ -d "$ROOT/artifacts/logs" ]]; then
+  while IFS= read -r -d '' source; do
+    place_log "$source" copy
+  done < <(find "$ROOT/artifacts/logs" -type f -print0)
+fi
+
+# Executed notebooks are compact, reproducible server evidence. Source
+# notebooks remain under tests/; only executed copies and their logs land here.
+copy_tree "$ROOT/artifacts/notebooks" "$DEST/notebooks"
 # Preserve validation reports, event logs, runtime/RNG metadata, and COMMITTED
 # markers in Git. Multi-gigabyte DCP shards and model exports remain on the
 # mounted artifact volume and are intentionally not duplicated into Git.
@@ -128,6 +205,20 @@ if [[ -d "$ROOT/checkpoints/rtx4090_single_1gpu" ]]; then
     "$ROOT/checkpoints/rtx4090_single_1gpu/" \
     "$DEST/smoke/checkpoints/rtx4090_single_1gpu/"
 fi
+
+# Prove that every file covered by the export policy has an identical
+# destination before building the human/machine catalog.
+python "$ROOT/scripts/audit_results_export.py" \
+  --repo-root "$ROOT" \
+  --artifacts "$ROOT/artifacts" \
+  --results "$DEST" \
+  --output "$DEST/catalog/export_audit.json"
+
+# Generate a human/machine catalog, a central TensorBoard event index, and a
+# retention inventory for large payloads that intentionally remain on /data.
+python "$ROOT/scripts/build_results_catalog.py" \
+  --results "$DEST" \
+  --artifacts "$ROOT/artifacts"
 
 # Hash every exported file so a Git snapshot can be checked independently of
 # the mounted artifact volume. Exclude the manifest itself to avoid recursion.

@@ -39,3 +39,5 @@ def test_exporter_persists_dataset_lineage_sidecars():
     assert 'source_root/lineage.json"' in exporter
     assert 'source_root/token_shards/lineage.json"' in exporter
     assert 'source_root/probe_cache/lineage.json"' in exporter
+    assert '"$DEST/logs/$category/' in exporter
+    assert 'scripts/build_results_catalog.py"' in exporter

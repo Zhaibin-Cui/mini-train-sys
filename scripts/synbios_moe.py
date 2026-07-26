@@ -605,20 +605,19 @@ def command_validate_probe_oracle_first_token(args: argparse.Namespace) -> None:
 
 
 def command_train_ground_truth_first_whole(args: argparse.Namespace) -> None:
-    """Train a rank-matched whole probe after inserting ground-truth t1."""
+    """Train a P whole probe after inserting ground-truth t1."""
 
-    _require_multi5_permute(args.data)
+    _require_ground_truth_first_variant(args.data)
     validate_probe_cache(args.probe_cache, args.data, include_missing_classes=False)
     device = torch.device(args.device)
-    batch_size = args.batch_size or (128 if args.kind == "p" else 768)
+    batch_size = args.batch_size or 128
     evaluation_batch_size = args.evaluation_batch_size or 3072
-    with command_monitor(args, f"{args.kind}_ground_truth_first_whole") as (logger, log_dir):
+    with command_monitor(args, "p_ground_truth_first_whole") as (logger, log_dir):
         model = load_model(args.model_config, args.checkpoint, device, logger=logger)
         probe, result = train_ground_truth_first_whole_probe(
             backbone=model,
             cache_root=args.probe_cache,
             probe_dir=args.probe_dir,
-            kind=args.kind,
             attribute=args.attribute,
             device=device,
             batch_size=batch_size,
@@ -652,7 +651,7 @@ def command_train_ground_truth_first_whole(args: argparse.Namespace) -> None:
 
 
 def command_summarize_ground_truth_first_whole(args: argparse.Namespace) -> None:
-    """Validate and render a complete ten-task true-t1 rank-matched run."""
+    """Validate and render the complete five-task true-t1 P run."""
 
     result = summarize_ground_truth_first_whole(args.run)
     print(json.dumps(result, indent=2))
@@ -661,11 +660,11 @@ def command_summarize_ground_truth_first_whole(args: argparse.Namespace) -> None
 def command_benchmark_ground_truth_first_whole(args: argparse.Namespace) -> None:
     """Capacity-test true-t1 inputs with the original whole-probe architecture."""
 
-    _require_multi5_permute(args.data)
+    _require_ground_truth_first_variant(args.data)
     validate_probe_cache(args.probe_cache, args.data, include_missing_classes=False)
     device = torch.device(args.device)
     sizes = parse_batch_sizes(args.batch_sizes)
-    with command_monitor(args, f"{args.kind}_ground_truth_first_batch_benchmark") as (
+    with command_monitor(args, "p_ground_truth_first_batch_benchmark") as (
         logger,
         log_dir,
     ):
@@ -674,7 +673,6 @@ def command_benchmark_ground_truth_first_whole(args: argparse.Namespace) -> None
             backbone=model,
             cache_root=args.probe_cache,
             probe_dir=args.probe_dir,
-            kind=args.kind,
             attribute=args.attribute,
             backbone_checkpoint=args.checkpoint,
         )
@@ -682,7 +680,7 @@ def command_benchmark_ground_truth_first_whole(args: argparse.Namespace) -> None
         result = benchmark_probe_batches(
             model,
             dataset,
-            kind=args.kind,
+            kind="p",
             num_classes=len(prepared.whole_train.class_names),
             rank=prepared.rank,
             batch_sizes=sizes,
@@ -695,7 +693,7 @@ def command_benchmark_ground_truth_first_whole(args: argparse.Namespace) -> None
                 model,
                 len(prepared.whole_train.class_names),
                 rank=prepared.rank,
-                kind=args.kind,
+                kind="p",
             ),
         )
         result.update(
@@ -714,12 +712,12 @@ def command_benchmark_ground_truth_first_whole(args: argparse.Namespace) -> None
         print(json.dumps(result, indent=2))
 
 
-def _require_multi5_permute(data: str | Path) -> None:
+def _require_ground_truth_first_variant(data: str | Path) -> None:
     manifest_path = Path(data) / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("variant") != "multi5+permute":
+    if manifest.get("variant") not in {"single", "multi5+permute"}:
         raise ValueError(
-            "ground-truth-first-token experiments are restricted to multi5+permute"
+            "ground-truth-first-token P experiments require single or multi5+permute"
         )
 
 
@@ -1214,7 +1212,6 @@ def build_parser() -> argparse.ArgumentParser:
     ground_truth_first_whole.add_argument("--probe-dir", required=True)
     ground_truth_first_whole.add_argument("--model-config", required=True)
     ground_truth_first_whole.add_argument("--checkpoint", required=True)
-    ground_truth_first_whole.add_argument("--kind", choices=("p", "q"), required=True)
     ground_truth_first_whole.add_argument("--attribute", choices=WHOLE_ATTRIBUTES, required=True)
     ground_truth_first_whole.add_argument("--steps", type=int, default=3_000)
     ground_truth_first_whole.add_argument("--batch-size", type=int)
@@ -1254,7 +1251,6 @@ def build_parser() -> argparse.ArgumentParser:
     ground_truth_benchmark.add_argument("--probe-dir", required=True)
     ground_truth_benchmark.add_argument("--model-config", required=True)
     ground_truth_benchmark.add_argument("--checkpoint", required=True)
-    ground_truth_benchmark.add_argument("--kind", choices=("p", "q"), required=True)
     ground_truth_benchmark.add_argument(
         "--attribute", choices=WHOLE_ATTRIBUTES, default="university"
     )

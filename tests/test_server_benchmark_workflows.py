@@ -90,13 +90,19 @@ def test_capacity_presentation_uses_reserved_vram_and_backend_specific_best_batc
     source = tmp_path / "capacity_summary.json"
     rows = []
     for backend, cases in {
-        "torch": ((64, 210_000, 18_000), (80, 225_000, 22_500)),
+        "torch": (
+            (1, 20_000, 11_000),
+            (64, 210_000, 18_000),
+            (80, 225_000, 22_500),
+        ),
         "triton": (
+            (1, 25_000, 10_500),
             (64, 235_000, 17_000),
             (80, 260_000, 18_500),
             (96, 285_000, 21_500),
         ),
         "cuda": (
+            (1, 27_000, 10_500),
             (64, 245_000, 16_500),
             (96, 295_000, 20_000),
             (112, 310_000, 22_600),
@@ -121,7 +127,7 @@ def test_capacity_presentation_uses_reserved_vram_and_backend_specific_best_batc
                 "suite": "capacity",
                 "settings": {
                     "repeats": 2,
-                    "batch_sizes": [64, 80, 96, 112, 128],
+                    "batch_sizes": [1, 64, 80, 96, 112, 128],
                 },
                 "results": rows,
                 "failures": [],
@@ -136,6 +142,7 @@ def test_capacity_presentation_uses_reserved_vram_and_backend_specific_best_batc
             output=str(output),
             memory_limit_percent=92.0,
             min_repeats=2,
+            require_batch_one=True,
         )
     )
 
@@ -147,8 +154,16 @@ def test_capacity_presentation_uses_reserved_vram_and_backend_specific_best_batc
     assert selected["triton"]["local_batch_size"] == 96
     assert selected["cuda"]["local_batch_size"] == 96
     assert selected["cuda"]["throughput_speedup_vs_torch"] > 1
-    assert result["common_eligible_batches"] == [64]
+    assert result["common_eligible_batches"] == [1, 64]
     assert result["common_fixed_batch"] == 64
+    activation = {
+        row["ops_backend"]: row for row in result["common_fixed_activation_memory"]
+    }
+    assert activation["torch"]["activation_allocated_growth_mb_from_batch1"] > 0
+    assert (
+        activation["cuda"]["activation_allocated_reduction_percent_vs_torch"]
+        > 0
+    )
     assert result["quality_gate_passed"]
     assert (output / "capacity_selected.csv").is_file()
     assert (output / "capacity_backend_comparison.png").is_file()
@@ -225,7 +240,10 @@ def test_ground_truth_first_probe_uses_selected_pilot_budget_and_dynamic_schedul
     )
     assert 'STEPS="${STEPS:-4000}"' in source
     assert 'P_BATCH_SIZE="${P_BATCH_SIZE:-128}"' in source
-    assert 'Q_BATCH_SIZE="${Q_BATCH_SIZE:-768}"' in source
+    assert "Q_BATCH_SIZE" not in source
+    assert "for kind in p q" not in source
+    assert '"$VARIANT" == "single"' in source
+    assert '"$VARIANT" == "multi5_permute"' in source
     assert "train-ground-truth-first-whole" in source
     assert "--max-validation-examples" not in source
     assert "prediction-batch-size" not in source
@@ -247,7 +265,10 @@ def test_synbios_backend_benchmark_keeps_two_comparison_views():
     assert "--warmup-steps 10 --measure-steps 30 --repeats 3" in source
     assert "--suite capacity" in source
     assert "--batch-sizes 1 2 4 8 16 24 32 48 64 80 96 112 120 128" in source
+    assert "SYNBIOS_BENCHMARK_REUSE_INTERRUPTED" in source
+    assert 'RECOVERY_ARGS+=(--reuse-failures --reuse-stale-results)' in source
     assert "--warmup-steps 5 --measure-steps 20 --repeats 2" in source
     assert "--ops-backends torch triton cuda" in source
     assert "--memory-limit-percent 92 --min-repeats 2" in source
+    assert "--require-batch-one" in source
     assert "export_test_results.sh" in source

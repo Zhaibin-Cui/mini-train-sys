@@ -16,7 +16,7 @@
 ## 总规则
 
 1. 整个 benchmark 只分两个阶段：**kernel microbenchmark** 和
-   **formal end-to-end benchmark**。ground-truth-t1 rank-matched probe 属于另一条科学实验线，不要混入
+   **formal end-to-end benchmark**。ground-truth-t1 fresh P probe 属于另一条科学实验线，不要混入
    本 benchmark。
 2. 每阶段启动前只做一次必要预检，然后给出准确命令、预计耗时和北京时间。得到明确同意
    后启动；阶段完成后停下来汇报，不要自动进入下一阶段。
@@ -281,6 +281,19 @@ peak_memory_reserved_mb / gpu_memory_total_mb <= 0.92
 这个表是“同样显存空间下训练吞吐提升”的唯一 headline 来源。固定 batch 的 2A 结果不能
 替代这个结论。
 
+内存 headline 必须同时保留“能否装入”的原始 peak allocated/reserved 和扣除静态模型
+状态后的激活增量。对 common batch `N` 使用：
+
+```text
+activation_allocated_growth(N) = peak_allocated(N) - peak_allocated(batch 1)
+activation_reserved_growth(N) = peak_reserved(N) - peak_reserved(batch 1)
+```
+
+其中 allocated 增量是激活内存节省的主要口径，能够抵消相同 backend 内共享的模型权重、
+梯度、优化器和大部分 FSDP 静态状态；reserved 增量只说明 allocator 行为。另报告
+`activation_allocated_growth / (N - 1)`，用于比较每新增 local sample 的内存斜率。
+吞吐不做 batch-1 扣减，固定 batch 和固定显存预算下都直接比较实测 tokens/s。
+
 已有 1 卡与 4 卡 FSDP weak-scaling 结果只作为补充引用，不默认重跑：
 
 - 1 GPU：约 93,302 tok/s；
@@ -289,13 +302,14 @@ peak_memory_reserved_mb / gpu_memory_total_mb <= 0.92
 
 ## 最终交付
 
-把两阶段结论合并成一个规范报告：
+把两阶段结论分别写入两个规范报告，避免算子设计和端到端/FSDP 表格重复：
 
 ```text
-reports/server_benchmark_resume.md
+reports/engineering/kernels.md
+reports/engineering/distributed_training.md
 ```
 
-报告按以下顺序组织：
+两份报告合计按以下顺序组织：
 
 1. 硬件、软件版本和 Git commit；
 2. 我优化的八个 kernel，以及各自代表 shape、正确性、P50/P95、speedup 和 memory

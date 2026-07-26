@@ -1,7 +1,7 @@
 {
   "catalogs": {
     "dataset_lineage": "dataset_lineage.json",
-    "log_count": 81,
+    "log_count": 149,
     "logs": "log_catalog.csv",
     "path_contract": "path_contract.json"
   },

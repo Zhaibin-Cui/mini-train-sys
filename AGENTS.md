@@ -57,6 +57,10 @@ this repository.
 - Before pushing a temporary server snapshot, check for files over GitHub's size limit, scan the
   staged diff for credentials, run the relevant tests, and record the pushed commit in `HISTORY.md`.
   Temporary snapshot commits are valuable provenance and must not be silently rewritten or removed.
+- Treat `docs/guides/artifact_layout.md` as the canonical path contract. Keep TensorBoard events
+  beside their owning run and rebuild `results/tensorboard/index.csv`,
+  `results/catalog/artifacts.json`, and `results/catalog/retention.json` through
+  `scripts/bash/export_test_results.sh`; do not create new flat result or log dumps.
 
 ## Conclusions and report organization
 
