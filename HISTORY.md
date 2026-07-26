@@ -3293,4 +3293,10 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Regression: Ruff passed; pytest passed 124/124 with five expected single-process DCP warnings.
 - Snapshot gates: every `results/MANIFEST.sha256` entry verified, no result file exceeds 90 MiB,
   and `git diff --check` passed.
-- Push status: pending staged secret/size review, commit, and remote verification below.
+- Staged review: 534 existing blobs / 21,894,035 bytes; no staged file over 90 MiB; no model,
+  checkpoint, dataset-array, environment, credential, private-key, or high-confidence access-token
+  path/pattern; source bytes matched the Git index for every file. Historical raw result logs are
+  intentionally byte-preserved through `/results/** -text -eol`.
+- Content snapshot commit: `4f0988c4ad05005966741b40e7e5f69a6d4ae631`
+  (`feat: publish benchmark and SynBioS results`).
+- Push target/status: `origin/train`; pending remote verification.
