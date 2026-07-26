@@ -3299,4 +3299,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   intentionally byte-preserved through `/results/** -text -eol`.
 - Content snapshot commit: `4f0988c4ad05005966741b40e7e5f69a6d4ae631`
   (`feat: publish benchmark and SynBioS results`).
-- Push target/status: `origin/train`; pending remote verification.
+- Push target/status: `origin/train` accepted `448aa09..a49506b`; direct `ls-remote`, local
+  `HEAD`, and `origin/train` all resolved to
+  `a49506b811d58eb8d6a3ba99594504d17178dcfa`. The content snapshot commit above is present in
+  that verified remote history.
