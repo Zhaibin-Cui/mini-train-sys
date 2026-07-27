@@ -31,7 +31,7 @@ S = QK^T,
 \]
 
 \[
-P = \operatorname{softmax}(S\cdot \alpha + B),
+P = \mathrm{softmax}(S\cdot \alpha + B),
 \]
 
 \[
@@ -242,7 +242,7 @@ kv_head = bidh / params.h_h_k_ratio;
 LSE 是每个 Query 行的：
 
 \[
-\operatorname{LSE}_i = \log\sum_j \exp(z_{ij}),
+\mathrm{LSE}_i = \log\sum_j \exp(z_{ij}),
 \]
 
 其中 \(z\) 是应用 scale、bias 和 mask 后的 logits。forward 保存 LSE，backward 用它重建概率。

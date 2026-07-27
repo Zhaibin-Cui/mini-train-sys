@@ -38,7 +38,7 @@ Z=\alpha S+B,
 \]
 
 \[
-P=\operatorname{softmax}(Z),
+P=\mathrm{softmax}(Z),
 \]
 
 \[

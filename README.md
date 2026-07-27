@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/readme-banner.svg" alt="MiniTrainSys" width="88%" />
+<img src="assets/readme-banner.svg" alt="MiniTrainSys" width="78%" />
 
 <p>
   <img src="https://img.shields.io/badge/Models-Dense%20%26%20MoE-2563eb?style=flat-square" alt="Dense and MoE models" />
@@ -138,7 +138,7 @@ before they are benchmarked.
 For each hidden row $x \in \mathbb{R}^{H}$, the forward pass is
 
 $$
-r = \frac{1}{\sqrt{\operatorname{mean}(x^2) + \varepsilon}},
+r = \frac{1}{\sqrt{\mathrm{mean}(x^2) + \varepsilon}},
 \qquad y = x \odot r \odot \gamma.
 $$
 
@@ -172,14 +172,14 @@ tile. The gain is mostly fewer launches and less temporary traffic.
 With gate projection $g$ and up projection $u$, forward is
 
 $$
-y = \operatorname{SiLU}(g) \odot u,
-\qquad \operatorname{SiLU}(g) = g\,\sigma(g).
+y = \mathrm{SiLU}(g) \odot u,
+\qquad \mathrm{SiLU}(g) = g\,\sigma(g).
 $$
 
 Each program covers a tile of the activation. It loads `g` and `u`, evaluates the gate and product
 in registers, then stores only `y`. Backward uses $dy$ to form
-$du = dy \odot \operatorname{SiLU}(g)$ and
-$dg = dy \odot u \odot \operatorname{SiLU}'(g)$ in the same tiled layout. **20.0% lower peak allocation.**
+$du = dy \odot \mathrm{SiLU}(g)$ and
+$dg = dy \odot u \odot \mathrm{SiLU}'(g)$ in the same tiled layout. **20.0% lower peak allocation.**
 
 </details>
 
@@ -191,7 +191,7 @@ For a target class $c$ and logits $z$, forward evaluates
 $$
 L = -z_c + \log\!\sum_v \exp(z_v),
 \qquad
-\frac{\partial L}{\partial z_v} = \frac{\operatorname{softmax}(z)_v - \mathbf{1}[v=c]}{N_{\mathrm{valid}}}.
+\frac{\partial L}{\partial z_v} = \frac{\mathrm{softmax}(z)_v - \mathbf{1}[v=c]}{N_{\mathrm{valid}}}.
 $$
 
 The vocabulary is read in blocks. Online log-sum-exp retains only a running maximum and running
@@ -228,7 +228,7 @@ explicit-logits baseline does not fit (**94.0% lower peak allocation**).
 <details>
 <summary><strong>FlashAttention</strong> — Triton (Speed: <strong>1.22×</strong>; Peak allocation: <strong>−44.1%</strong>) · CUDA (Speed: <strong>1.15×</strong>; Peak allocation: <strong>−22.1%</strong>)</summary>
 
-Forward computes $O = \operatorname{softmax}(QK^\top / \sqrt{d})V$ without storing the
+Forward computes $O = \mathrm{softmax}(QK^\top / \sqrt{d})V$ without storing the
 $S \times S$ score matrix. A program owns
 one `(batch, head, query-tile)` and streams successive K/V tiles. It carries online softmax
 statistics `(m, l)` for the query tile and updates `O` as each K/V tile arrives; heads are
@@ -260,7 +260,7 @@ tiles and accumulates $dQ$.
 Thus `dQ` is written by its owning query tile, while `dK` and `dV` are written by their owning K/V
 tile—no atomic accumulation and no $S \times S$ score/probability tensor. Tile sizes are selected per
 shape. The baseline is PyTorch Flash-SDPA (`aten::_scaled_dot_product_flash_attention`), not naive
-$QK^\top \rightarrow \operatorname{softmax} \rightarrow V$: Triton reduces allocation by **44.1%**; the native CUDA path reduces it by
+$QK^\top \rightarrow \mathrm{softmax} \rightarrow V$: Triton reduces allocation by **44.1%**; the native CUDA path reduces it by
 **22.1%**. See [raw dispatch evidence](results/benchmarks/operator_benchmark/resume_summary/torch_attention_backend.json).
 
 </details>
@@ -268,11 +268,11 @@ $QK^\top \rightarrow \operatorname{softmax} \rightarrow V$: Triton reduces alloc
 <details>
 <summary><strong>Router postprocess</strong> — Speed: <strong>2.43×</strong> · Peak allocation: <strong>−65.2%</strong></summary>
 
-For router logits $r_t$, the forward pass computes $p_t = \operatorname{softmax}(r_t)$, selects
-$\operatorname{topk}(p_t)$, and optionally renormalizes the selected weights:
+For router logits $r_t$, the forward pass computes $p_t = \mathrm{softmax}(r_t)$, selects
+$\mathrm{topk}(p_t)$, and optionally renormalizes the selected weights:
 
 $$
-w_{tj} = \frac{p_{t,e_j}}{\sum_{j' \in \operatorname{topk}(p_t)} p_{t,e_{j'}}}.
+w_{tj} = \frac{p_{t,e_j}}{\sum_{j' \in \mathrm{topk}(p_t)} p_{t,e_{j'}}}.
 $$
 
 The same pass accumulates mean expert probability, z-loss, and entropy statistics. A program covers
@@ -289,7 +289,7 @@ expert indices are non-differentiable. **65.2% lower peak allocation.**
 For selected expert $e_j$ and routing weight $w_{tj}$, forward is
 
 $$
-h_{tj} = \operatorname{SiLU}(x_t W_{\mathrm{gate},e_j}^\top)
+h_{tj} = \mathrm{SiLU}(x_t W_{\mathrm{gate},e_j}^\top)
          \odot (x_t W_{\mathrm{up},e_j}^\top),
 \qquad
 y_t = \sum_j w_{tj}\,h_{tj}W_{\mathrm{down},e_j}^\top.
@@ -423,7 +423,7 @@ the exact pretrained embeddings. At its chosen read position, it applies a norma
 head:
 
 $$
-\operatorname{logits} = W_{\mathrm{cls}}\,\operatorname{Norm}(h_L[\mathrm{position}]) + b_{\mathrm{cls}}.
+\mathrm{logits} = W_{\mathrm{cls}}\,\mathrm{Norm}(h_L[\mathrm{position}]) + b_{\mathrm{cls}}.
 $$
 
 This is not LoRA on Transformer weights: only `A`, `B`, the normalizer, and classifier train; all
@@ -553,19 +553,21 @@ using seed 1337 and at most 2,000 sampled pairs per eligible group. All 12 layer
 difference-in-differences are positive; the largest is **0.676**, with the strongest branching in
 the early layers.
 
-At each MoE layer, a token route is the set of its top-2 selected experts. For a pair of examples,
-route overlap is their expert-set Jaccard similarity:
+At each MoE layer, a token route is the set of its top-2 selected experts. For an attribute/layer
+group $g$ with sampled pair set $\mathcal{P}_g$, route overlap is the mean expert-set Jaccard
+similarity:
 
 $$
-J_g(t) = \operatorname*{mean}_{(a,b)}
+J_g(t) = \frac{1}{\lvert \mathcal{P}_g \rvert}
+\sum_{(a,b) \in \mathcal{P}_g}
 \frac{\lvert E_a(t) \cap E_b(t) \rvert}{\lvert E_a(t) \cup E_b(t) \rvert},
 \qquad
-\operatorname{branching}_g = J_g(t_1) - J_g(t_2).
+\mathrm{branching}_g = J_g(t_1) - J_g(t_2).
 $$
 
 $$
-\operatorname{DiD} = \operatorname{branching}_{\mathrm{different}\ t_2}
-- \operatorname{branching}_{\mathrm{same}\ t_2}
+\mathrm{DiD} = \mathrm{branching}_{\mathrm{different}\ t_2}
+- \mathrm{branching}_{\mathrm{same}\ t_2}
 = [J_{\mathrm{different}}(t_1) - J_{\mathrm{different}}(t_2)]
   - [J_{\mathrm{same}}(t_1) - J_{\mathrm{same}}(t_2)].
 $$
