@@ -65,7 +65,7 @@ repository.
 | 293M MoE, matched memory budget | CUDA: local batch **24 → 96** and **2.201×** PyTorch token throughput |
 | FSDP weak scaling, 1 → 4 GPUs | **3.69×** throughput; **92.24%** parallel efficiency |
 | `multi5_permute` Q-first macro, name-only context | **98.79%**, compared with **12.83%** for `single` |
-| `multi5_permute` P-whole, correct `t1` appended | **45.28% → 96.38%** after training a fresh probe |
+| `multi5_permute` P-whole, P-first classifier output appended | **45.28% → 96.38%** after training a fresh probe |
 
 All server results were produced on the same 4× RTX 4090 24 GB machine with PyTorch 2.5.1+cu118, CUDA 11.8, and Triton 3.1.
 
@@ -697,28 +697,29 @@ score = normalize(measurement)
 
 Allen-Zhu's dense-model result made some complete attributes directly readable from a name-only
 state. Here, augmentation makes the first token directly readable, but not the whole value.
-Geometrically, the distinction is **not** a tensor-product hidden space: dense and MoE both carry
-states in the same hidden dimension. The difference is computational. The dense readout can use one
-shared, high-dimensional name-to-value direction; this MoE instead uses a routed sequence of local
-retrieval maps. The name state opens `t1`, and the token reached at `t1` conditions the route used to
-recover `t2` and the remaining value.
+The contrast is in how the value is retrieved. The dense reference can read a complete attribute
+through one shared name-to-value direction. In this MoE, the name state opens `t1`; the token at
+that entry then conditions the route used to recover `t2` and the remaining value.
 
 The route DiD provides the corresponding evidence: after matched examples share `t1`, their top-2
 routes separate more for different `t2` values than for the same-`t2` control. In that sense, the
 MoE behaves like a gated chain of retrieval operators rather than a flat whole-value readout at the
 name state.
 
-That structure can support flexible, conditional reuse and distribute knowledge across sparse
-capacity. **Any capability that must be independently addressable should appear decomposed,
-substituted, and recombined during pretraining.** Architecture and routing choices must preserve
-those entry points instead of assuming that repeated end-to-end templates will automatically yield
-reusable parts.
+**The resulting retrieval layout is sequential:** augmentation gives a name a direct handle on an
+attribute's first token, while recovering the rest of that value is a second, token-conditioned
+stage. Once `t1` is available, the route taken by the MoE changes with the next token.
 
-**Taken together, rewrites and field permutation create direct name-to-attribute first-token entry
-points, but complete values are not consistently readable as one flat direction at the name
-position.** The route DiD is compatible with a token-conditioned continuation after that entry point;
-it does **not** show that an individual expert stores a fact or that probe validation measures
-generalization to people unseen during pretraining.
+One way to view the difference is through the readout space. In the dense reference, a linear head
+can recover a complete value directly from the name-only state. In this MoE, that state exposes the
+first token, while the later tokens become readable only after the corresponding conditional route
+has been taken. The distinction is therefore in the retrieval structure, not in a larger hidden
+dimension or a literal tensor-product representation.
+
+For pretraining data, the practical consequence is simple: **a capability that must later be addressed or
+recombined independently should appear in decomposed and substituted forms during training, not
+only inside one repeated end-to-end template.** Such variation gives the model distinct entry points
+from which routing can retrieve the required component.
 
 <a id="quick-start"></a>
 
@@ -777,7 +778,6 @@ results/                                       Git-safe evidence
 └── MANIFEST.sha256                           snapshot integrity
 
 reports/                                       long-form engineering and research reports
-the retained run records                                     append-only command and run lifecycle
 ```
 
 Raw biographies, token caches, model weights, optimizer/DCP shards, and large per-example route
@@ -793,7 +793,7 @@ sha256sum --quiet -c results/MANIFEST.sha256
 
 Cross-experiment headline metrics live in
 [`results/BENCHMARK_SUMMARY.md`](results/BENCHMARK_SUMMARY.md). Exact commands and lifecycle records,
-including failed and stopped runs, are appended to the retained run records.
+including failed and stopped runs, are retained under [`results/logs/`](results/logs/).
 
 <a id="project-structure"></a>
 
