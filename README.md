@@ -384,7 +384,7 @@ $$
 E' = E + AB, \qquad e'_t = e_t + A_tB.
 $$
 
-Here $t$ is a token ID and $A_t$ is its rank-*r* row. $B$ starts at zero, so the probe begins with
+Here `t` is a token ID and `A[t]` is its row in the rank-r factor. `B` starts at zero, so the probe begins with
 the exact pretrained embeddings. At its chosen read position, it applies a normalizer and linear
 head:
 
@@ -475,10 +475,10 @@ advances, while the other three whole attributes stay nearly flat. This analysis
 or probe; it fits the completed held-out P-whole measurements.
 
 The relationship is built into the profile generator. There are 263 company candidates and 200
-company-city candidates. Every company has one fixed city; 171 cities have one candidate company,
-28 have two, and New York has 36. Thus a company identifies its city exactly, while a city narrows
-the company to an average of 1.315 candidates (and is much less specific for New York). Each person
-samples a company uniformly, then receives that company's city.
+company-city candidates. Every company has one fixed city; 171 cities have one candidate company
+and 28 have two. Thus a company identifies its city exactly, while a city narrows the company to an
+average of 1.315 candidates. Each person samples a company uniformly, then receives that company's
+city.
 
 The six biography sentences are independently permuted. At P position $j$, the probability that at
 least one of the two related fields has already appeared is:
