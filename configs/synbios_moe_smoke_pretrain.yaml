@@ -1,0 +1,49 @@
+run:
+  name: synbios_moe_smoke
+  seed: 1337
+backend:
+  ops: torch
+parallel:
+  strategy: single
+optimizer:
+  name: adamw
+  lr: 0.001
+  weight_decay: 0.1
+  eps: 1.0e-6
+lr_scheduler:
+  schedule: cosine
+  warmup_steps: 1
+  decay_steps: 4
+  min_lr_ratio: 0.1
+train:
+  batch_size: 2
+  max_steps: 4
+  epochs: null
+  log_interval: 1
+  use_fused_loss: false
+  precision: auto
+  grad_clip_norm: 5.0
+checkpoint:
+  every_epochs: null
+  directory: artifacts/synbios_moe/checkpoints
+  save_final: true
+  export_model: true
+data:
+  source: token_shards
+  path: artifacts/synbios_moe/smoke/token_shards/manifest.json
+  num_tokens: 100000
+  shuffle: true
+  packing: randomized_documents
+  shuffle_window: 1024
+  max_open_shards: 8
+  num_workers: 2
+  prefetch_factor: 2
+  pin_memory: true
+  persistent_workers: true
+  drop_last: true
+logging:
+  console: true
+  tensorboard: false
+  jsonl: true
+  log_dir: artifacts/synbios_moe/runs
+  flush_secs: 1

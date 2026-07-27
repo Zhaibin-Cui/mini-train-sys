@@ -1,6 +1,5 @@
 """Reusable one-line Nsight Compute profiling for notebook benchmarks."""
 
-from __future__ import annotations
 
 import argparse
 import contextlib
@@ -226,7 +225,8 @@ def _run_worker(payload: Path, *, mode: str, capture_mode: str) -> None:
         spec, size, autotune_configs = _cloudpickle().load(file)
     _pin_autotune_configs(spec, autotune_configs)
     case = _prepare_case(spec, size=size, mode=mode)
-    call = lambda: spec.forward(spec.provider, case.tensors)
+    def call():
+        return spec.forward(spec.provider, case.tensors)
 
     # Compile and autotune outside the captured range.
     if mode == "fwd":

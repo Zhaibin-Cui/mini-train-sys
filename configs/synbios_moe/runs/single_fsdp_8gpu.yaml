@@ -1,0 +1,3 @@
+extends: single_fsdp.yaml
+run: {name: synbios_moe_single_fsdp_8gpu}
+parallel: {expected_world_size: 8}

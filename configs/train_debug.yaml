@@ -3,7 +3,8 @@ run:
   seed: 1337
 backend:
   ops: torch
-  parallel: single
+parallel:
+  strategy: single
 optimizer:
   name: adamw
   lr: 0.0003
@@ -23,17 +24,26 @@ train:
   epochs: null
   log_interval: 1
   use_fused_loss: false
-  precision: fp32
-  grad_clip_norm: 1.0
-  checkpoint_every_epochs: null
-  checkpoint_dir: checkpoints
-  save_final_checkpoint: false
+  precision: auto
+  grad_clip_norm: 5.0
+checkpoint:
+  every_epochs: null
+  directory: checkpoints
+  save_final: false
   resume_from: null
 data:
   source: random
   path: null
   num_tokens: 4096
   shuffle: true
+  shuffle_window: 1024
+  max_open_shards: 8
+  # Deliberately synchronous: process startup dominates this tiny CPU/debug run.
+  num_workers: 0
+  prefetch_factor: 2
+  pin_memory: true
+  persistent_workers: false
+  drop_last: true
 logging:
   console: true
   tensorboard: false

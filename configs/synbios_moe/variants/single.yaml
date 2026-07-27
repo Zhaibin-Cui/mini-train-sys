@@ -1,0 +1,12 @@
+run:
+  seed: 1337
+train:
+  # About 4.0B tokens, matching the paper's 80k x 96 x 512 budget.
+  epochs: 540
+data:
+  source: token_shards
+  path: artifacts/synbios_moe/single/token_shards/manifest.json
+  shuffle: true
+  packing: randomized_documents
+  shuffle_window: 1024
+  max_open_shards: 8

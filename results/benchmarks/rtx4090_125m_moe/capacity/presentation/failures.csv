@@ -1,0 +1,355 @@
+batch_size,error_tail,log,oom,repeat,returncode,strategy,timed_out,world_size
+64,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 101221) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:36:58
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 101221)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_single_1gpu_b64_r0.log,True,0,1,single,False,1
+128,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 101896) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:37:33
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 101896)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_single_1gpu_b128_r0.log,True,0,1,single,False,1
+64,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 105826) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:39:54
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 105826)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_ddp_1gpu_b64_r0.log,True,0,1,ddp,False,1
+128,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 106483) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:40:31
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 106483)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_ddp_1gpu_b128_r0.log,True,0,1,ddp,False,1
+64,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 3 (pid: 114496) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:43:12
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 114496)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_ddp_4gpu_b64_r0.log,True,0,1,ddp,False,4
+128,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 1 (pid: 115783) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:43:49
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 115783)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_ddp_4gpu_b128_r0.log,True,0,1,ddp,False,4
+64,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 120111) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:46:10
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 120111)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_fsdp_1gpu_b64_r0.log,True,0,1,fsdp,False,1
+128,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 120735) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:46:46
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 120735)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_fsdp_1gpu_b128_r0.log,True,0,1,fsdp,False,1
+64,"lastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 1 (pid: 128592) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File ""/usr/lib/python3.10/runpy.py"", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:49:32
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 128592)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_fsdp_4gpu_b64_r0.log,True,0,1,fsdp,False,4
+128,"main
+    return _run_code(code, main_globals, None,
+  File ""/usr/lib/python3.10/runpy.py"", line 86, in _run_code
+    exec(code, run_globals)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 923, in <module>
+    main()
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py"", line 355, in wrapper
+    return f(*args, **kwargs)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 919, in main
+    run(args)
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py"", line 910, in run
+    elastic_launch(
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File ""/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py"", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/run_dist_bench.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-07-21_03:50:12
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 129921)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_03:50:12
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 129920)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+",/data/mini-train-sys/artifacts/distributed_benchmark/rtx4090_125m_moe/capacity/logs/capacity_fsdp_4gpu_b128_r0.log,True,0,1,fsdp,False,4

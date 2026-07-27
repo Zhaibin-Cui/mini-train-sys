@@ -1,0 +1,142 @@
+{
+  "cloze": {
+    "multi5_permute": {
+      "biographies": 500000,
+      "fields": 3000000,
+      "micro_field_accuracy": 0.9999153333333334,
+      "path": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json",
+      "sha256": "9fae4cf252246da6745d75c12ad616a104a0d48b7719e38a2ee2cdcb22975190"
+    },
+    "single": {
+      "biographies": 100000,
+      "fields": 600000,
+      "micro_field_accuracy": 1.0,
+      "path": "/data/mini-train-sys/artifacts/synbios_moe/results/single_cloze_eval/full_100k/summary.json",
+      "sha256": "69a5fb2d875a4183d7a7e012ff73ce9a42d37f696467b978328930c736d9c9a4"
+    }
+  },
+  "comparison_status": "matched",
+  "multi5_permute": {
+    "formal_root": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal",
+    "pipeline_identity": {
+      "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+      "checkpoint_model_sha256": "e89075289bb3a774825e7fd03cedc2c7c37957583bf3656e8ab32c52ef02f0dd",
+      "data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+      "data_manifest_sha256": "31b99dd8d415007c34e00e3b32440014be4b34c27b7c3c1a80f7e1319019566e",
+      "jobs": [
+        "p_birth_date_first",
+        "q_birth_date_first",
+        "p_birth_city_first",
+        "q_birth_city_first",
+        "p_birth_city_whole",
+        "q_birth_city_whole",
+        "p_university_first",
+        "q_university_first",
+        "p_university_whole",
+        "q_university_whole",
+        "p_major_first",
+        "q_major_first",
+        "p_major_whole",
+        "q_major_whole",
+        "p_company_first",
+        "q_company_first",
+        "p_company_whole",
+        "q_company_whole",
+        "p_company_city_first",
+        "q_company_city_first",
+        "p_company_city_whole",
+        "q_company_city_whole"
+      ],
+      "model_config": "/home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml",
+      "model_config_sha256": "b2a02c5200d6c039d10cb3a802fd105430c3c103b02516e7a96016a98eb4ed01",
+      "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+      "probe_cache_manifest_sha256": "acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f",
+      "protocol_version": 4,
+      "runtime": {
+        "checkpoint_interval_steps": 1000,
+        "evaluate_train": true,
+        "heartbeat_seconds": 10.0,
+        "log_interval_steps": 100,
+        "training_batch_sizes": {
+          "p": 128,
+          "q": 768
+        },
+        "validation_batch_sizes": {
+          "p": 512,
+          "q": 6144
+        }
+      },
+      "seed": 1337,
+      "stage": "formal",
+      "steps": {
+        "p_first": 4000,
+        "p_whole": 12000,
+        "q_first": 4000,
+        "q_whole": 12000
+      }
+    },
+    "profiles_sha256": "7d239f046cb5e16ac3d8d7636b6901a2430f2ccb8dc1179063e4eaed92256da1"
+  },
+  "protocol": "synbios_moe_formal_comparison_v1",
+  "single": {
+    "formal_root": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal",
+    "pipeline_identity": {
+      "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+      "checkpoint_model_sha256": "2d154fa14cbd233e71936f1db8f54d2c652c1347f529d2db2e6be8df49039e84",
+      "data": "/data/mini-train-sys/artifacts/synbios_moe/single",
+      "data_manifest_sha256": "144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25",
+      "jobs": [
+        "p_birth_date_first",
+        "q_birth_date_first",
+        "p_birth_city_first",
+        "q_birth_city_first",
+        "p_birth_city_whole",
+        "q_birth_city_whole",
+        "p_university_first",
+        "q_university_first",
+        "p_university_whole",
+        "q_university_whole",
+        "p_major_first",
+        "q_major_first",
+        "p_major_whole",
+        "q_major_whole",
+        "p_company_first",
+        "q_company_first",
+        "p_company_whole",
+        "q_company_whole",
+        "p_company_city_first",
+        "q_company_city_first",
+        "p_company_city_whole",
+        "q_company_city_whole"
+      ],
+      "model_config": "/home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml",
+      "model_config_sha256": "b2a02c5200d6c039d10cb3a802fd105430c3c103b02516e7a96016a98eb4ed01",
+      "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/single/probe_cache",
+      "probe_cache_manifest_sha256": "9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b",
+      "protocol_version": 4,
+      "runtime": {
+        "checkpoint_interval_steps": 1000,
+        "evaluate_train": true,
+        "heartbeat_seconds": 10.0,
+        "log_interval_steps": 100,
+        "training_batch_sizes": {
+          "p": 128,
+          "q": 768
+        },
+        "validation_batch_sizes": {
+          "p": 512,
+          "q": 6144
+        }
+      },
+      "seed": 1337,
+      "stage": "formal",
+      "steps": {
+        "p_first": 4000,
+        "p_whole": 12000,
+        "q_first": 4000,
+        "q_whole": 12000
+      }
+    },
+    "profiles_sha256": "7d239f046cb5e16ac3d8d7636b6901a2430f2ccb8dc1179063e4eaed92256da1"
+  }
+}

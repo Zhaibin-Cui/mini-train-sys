@@ -1,0 +1,7 @@
+{"schema_version": 1, "case_identity": "5785ce43806ac93738a7551adcb1e264bb2ab6eb3216c689a08f4634778fb655", "timestamp_utc": "2026-07-20T19:52:56.122727+00:00", "strategy": "fsdp", "world_size": 4, "local_batch_size": 16, "global_batch_size": 64, "seq_len": 512, "global_tokens_per_step": 32768, "warmup_steps": 3, "measure_steps": 5, "repeat": 0, "parameter_count": 293494272, "precision": "bf16", "workers_per_rank": 4, "workers_per_node": 16, "prefetch_factor": 2, "step_time_ms_mean": 191.13258039978973, "step_time_ms_p50": 191.17284899948572, "step_time_ms_p95": 191.39489179979137, "throughput_tokens_per_sec": 171441.502670679, "data_wait_ms_mean": 0.28710919978038874, "data_wait_ms_p95": 0.36520899993774947, "data_stall_percent": 0.15021468301209864, "peak_memory_allocated_mb": 3949.4970703125, "peak_memory_reserved_mb": 5016.0, "system_peak_memory_allocated_mb": 15777.33154296875, "system_peak_memory_reserved_mb": 19922.0, "gpu_memory_total_mb": 24217.3125, "system_gpu_memory_total_mb": 96869.25, "memory_utilization_percent": 16.30856879892226, "system_memory_utilization_percent": 16.28724444854146, "last_loss": 10.967948913574219, "torch_version": "2.5.1+cu118", "cuda_version": "11.8", "gpu_name": "NVIDIA GeForce RTX 4090"}
+
+--- STDERR ---
+WARNING:__main__:
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************

@@ -1,0 +1,64 @@
+{
+  "artifact_root": "/data/mini-train-sys/artifacts",
+  "groups": [
+    {
+      "authoritative_manifest": {
+        "path": "/data/mini-train-sys/artifacts/synbios_moe/single/manifest.json",
+        "sha256": "144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25",
+        "size_bytes": 970
+      },
+      "files": 20,
+      "logical_path": "/data/mini-train-sys/artifacts/synbios_moe/single",
+      "name": "dataset_single",
+      "policy": "Raw biographies, profiles, token shards, and derived probe cache stay on /data.",
+      "retention": "server_only",
+      "size_bytes": 174777080
+    },
+    {
+      "authoritative_manifest": {
+        "path": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/manifest.json",
+        "sha256": "31b99dd8d415007c34e00e3b32440014be4b34c27b7c3c1a80f7e1319019566e",
+        "size_bytes": 980
+      },
+      "files": 23,
+      "logical_path": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+      "name": "dataset_multi5_permute",
+      "policy": "Raw biographies, profiles, token shards, and derived probe cache stay on /data.",
+      "retention": "server_only",
+      "size_bytes": 729886648
+    },
+    {
+      "files": 35,
+      "logical_path": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu",
+      "name": "formal_checkpoints_single",
+      "policy": "DCP/Adam shards and model.pt stay on /data; COMMITTED/runtime/RNG metadata is exported.",
+      "retention": "server_only",
+      "size_bytes": 12362282092
+    },
+    {
+      "files": 35,
+      "logical_path": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu",
+      "name": "formal_checkpoints_multi5_permute",
+      "policy": "DCP/Adam shards and model.pt stay on /data; COMMITTED/runtime/RNG metadata is exported.",
+      "retention": "server_only",
+      "size_bytes": 12362282116
+    },
+    {
+      "files": 23,
+      "logical_path": "/data/mini-train-sys/artifacts/validation/synbios_moe/checkpoints",
+      "name": "validation_checkpoints",
+      "policy": "Validation DCP tensor shards stay on /data; small recovery metadata is exported.",
+      "retention": "server_only",
+      "size_bytes": 8684317845
+    },
+    {
+      "files": 203,
+      "logical_path": "/data/mini-train-sys/artifacts/synbios_moe/results",
+      "name": "probe_weights_and_records",
+      "policy": "Probe .pt heads and large per-example diagnostic records stay on /data; aggregates are exported.",
+      "retention": "server_only",
+      "size_bytes": 1016828621
+    }
+  ],
+  "schema_version": 1
+}

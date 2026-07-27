@@ -1,0 +1,1116 @@
+{
+  "cache": {
+    "cache": "/data/mini-train-sys/artifacts/synbios_moe/single/probe_cache",
+    "coverage_complete": true,
+    "missing_validation_class_counts": {},
+    "p_examples": 100000,
+    "profiles": 100000,
+    "q_examples": 100000,
+    "source_data": "/data/mini-train-sys/artifacts/synbios_moe/single",
+    "valid": true
+  },
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+  "data": "/data/mini-train-sys/artifacts/synbios_moe/single",
+  "devices": [
+    "cuda:0",
+    "cuda:1",
+    "cuda:2",
+    "cuda:3"
+  ],
+  "gate": {
+    "attribute_accuracy": {
+      "birth_city": 1.0,
+      "birth_date": 1.0,
+      "company": 1.0,
+      "company_city": 1.0,
+      "major": 1.0,
+      "university": 1.0
+    },
+    "attribute_mean_character_similarity": {
+      "birth_city": 1.0,
+      "birth_date": 1.0,
+      "company": 1.0,
+      "company_city": 1.0,
+      "major": 1.0,
+      "university": 1.0
+    },
+    "biographies": 10000,
+    "biographies_per_second": 59.48324462595037,
+    "biography_all_fields_accuracy": 1.0,
+    "biography_correct_field_count_histogram": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 10000
+    },
+    "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+    "correct_fields": {
+      "birth_city": 10000,
+      "birth_date": 10000,
+      "company": 10000,
+      "company_city": 10000,
+      "major": 10000,
+      "university": 10000
+    },
+    "elapsed_seconds": 168.1145684449998,
+    "fields": 60000,
+    "fuzzy_accuracy_by_threshold": {
+      "0.5": {
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "university": 1.0
+      },
+      "0.8": {
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "university": 1.0
+      },
+      "0.9": {
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "university": 1.0
+      }
+    },
+    "identity": {
+      "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+      "checkpoint_model_sha256": "2d154fa14cbd233e71936f1db8f54d2c652c1347f529d2db2e6be8df49039e84",
+      "data": "/data/mini-train-sys/artifacts/synbios_moe/single",
+      "data_manifest_sha256": "144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25",
+      "model_config": "/home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml",
+      "model_config_sha256": "b2a02c5200d6c039d10cb3a802fd105430c3c103b02516e7a96016a98eb4ed01",
+      "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/single/probe_cache",
+      "probe_cache_manifest_sha256": "9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b",
+      "protocol_version": 4,
+      "runtime": {
+        "checkpoint_interval_steps": 1000,
+        "evaluate_train": true,
+        "heartbeat_seconds": 10.0,
+        "log_interval_steps": 100,
+        "training_batch_sizes": {
+          "p": 128,
+          "q": 768
+        },
+        "validation_batch_sizes": {
+          "p": 512,
+          "q": 6144
+        }
+      },
+      "seed": 1337
+    },
+    "mean_character_similarity": 1.0,
+    "mean_correct_fields_per_biography": 6.0,
+    "micro_field_accuracy": 1.0,
+    "micro_fuzzy_accuracy_by_threshold": {
+      "0.5": 1.0,
+      "0.8": 1.0,
+      "0.9": 1.0
+    },
+    "model_tokens_processed": 13071766,
+    "monitoring": {
+      "all_fields_accuracy_running": 1.0,
+      "batch": 79,
+      "batches_total": 79,
+      "elapsed_seconds": 168.112,
+      "eta_seconds": 0.0,
+      "event": "cloze_evaluate",
+      "field_accuracy_running": 1.0,
+      "gpu_memory_allocated_mb": 1128.74,
+      "gpu_memory_allocated_mb_max": 1128.74,
+      "gpu_memory_allocated_mb_total": 1128.74,
+      "gpu_memory_capacity_mb_max": 24217.31,
+      "gpu_memory_capacity_mb_total": 24217.31,
+      "gpu_memory_current_percent_max": 4.66,
+      "gpu_memory_peak_percent_max": 6.09,
+      "gpu_memory_reserved_mb": 2364.0,
+      "gpu_memory_reserved_mb_max": 2364.0,
+      "gpu_memory_reserved_mb_total": 2364.0,
+      "gpu_memory_reserved_percent_max": 9.76,
+      "gpu_peak_memory_allocated_mb": 1475.55,
+      "gpu_peak_memory_allocated_mb_max": 1475.55,
+      "items_per_sec": 59.484,
+      "items_processed": 10000,
+      "monitored_world_size": 1,
+      "progress_percent": 100.0,
+      "step": 79,
+      "tokens_per_sec": 77756.305,
+      "tokens_processed": 13071766
+    },
+    "protocol": "progressive_original_biography_cloze_greedy",
+    "protocol_note": "the six source fact spans are removed and generated in their original text order; earlier predictions replace earlier holes before later fields are generated",
+    "samples": [
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Tacoma9, NC",
+          "birth_date": "October 24, 2046",
+          "company": "Brooks9 Group",
+          "company_city": "Albany3, GA",
+          "major": "Political Science2",
+          "university": "Chicago8 University"
+        },
+        "filled_text": "In life, Jonah15 Blair13 Carter36 entered the world on October 24, 2046. It is recorded that He was born in Tacoma9, NC. The profile states He received mentorship at Chicago8 University. Notably, He specialized in Political Science2. Notably, He was employed by Brooks9 Group. Public records show He was professionally based in Albany3, GA.",
+        "original_text": "In life, Jonah15 Blair13 Carter36 entered the world on October 24, 2046. It is recorded that He was born in Tacoma9, NC. The profile states He received mentorship at Chicago8 University. Notably, He specialized in Political Science2. Notably, He was employed by Brooks9 Group. Public records show He was professionally based in Albany3, GA.",
+        "person_id": 0,
+        "predicted": {
+          "birth_city": "Tacoma9, NC",
+          "birth_date": "October 24, 2046",
+          "company": "Brooks9 Group",
+          "company_city": "Albany3, GA",
+          "major": "Political Science2",
+          "university": "Chicago8 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Oakland4, MA",
+          "birth_date": "December 7, 2000",
+          "company": "Hart7 Group",
+          "company_city": "Tacoma3, NC",
+          "major": "Finance2",
+          "university": "Miami2 University"
+        },
+        "filled_text": "The profile states Maya16 Morgan9 Dennis47's birthday is December 7, 2000. Biographical notes say They calls Oakland4, MA a birthplace. According to records, They studied at Miami2 University. Notably, They studied Finance2. The profile states They had a professional role at Hart7 Group. Historically, They was professionally based in Tacoma3, NC.",
+        "original_text": "The profile states Maya16 Morgan9 Dennis47's birthday is December 7, 2000. Biographical notes say They calls Oakland4, MA a birthplace. According to records, They studied at Miami2 University. Notably, They studied Finance2. The profile states They had a professional role at Hart7 Group. Historically, They was professionally based in Tacoma3, NC.",
+        "person_id": 1,
+        "predicted": {
+          "birth_city": "Oakland4, MA",
+          "birth_date": "December 7, 2000",
+          "company": "Hart7 Group",
+          "company_city": "Tacoma3, NC",
+          "major": "Finance2",
+          "university": "Miami2 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Austin5, MA",
+          "birth_date": "December 22, 2029",
+          "company": "Ward1 Group",
+          "company_city": "New York, NY",
+          "major": "Finance4",
+          "university": "Madison10 University"
+        },
+        "filled_text": "In life, Maya16 Morgan10 Stokes46 celebrates a birthday on December 22, 2029. It is recorded that She grew up in Austin5, MA. In particular, She graduated from Madison10 University. The profile states She studied Finance4. Public records show She joined Ward1 Group. The profile states She gained work experience in New York, NY.",
+        "original_text": "In life, Maya16 Morgan10 Stokes46 celebrates a birthday on December 22, 2029. It is recorded that She grew up in Austin5, MA. In particular, She graduated from Madison10 University. The profile states She studied Finance4. Public records show She joined Ward1 Group. The profile states She gained work experience in New York, NY.",
+        "person_id": 2,
+        "predicted": {
+          "birth_city": "Austin5, MA",
+          "birth_date": "December 22, 2029",
+          "company": "Ward1 Group",
+          "company_city": "New York, NY",
+          "major": "Finance4",
+          "university": "Madison10 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Austin2, MA",
+          "birth_date": "February 15, 2052",
+          "company": "Forger9 Group",
+          "company_city": "Phoenix8, IL",
+          "major": "History4",
+          "university": "Princeton8 University"
+        },
+        "filled_text": "Public records show Mina7 Hayden16 Lane was born on February 15, 2052. In life, He owes early roots to Austin2, MA. The profile states He studied at Princeton8 University. Biographical notes say He studied History4. In life, He worked for Forger9 Group. It is recorded that He gained work experience in Phoenix8, IL.",
+        "original_text": "Public records show Mina7 Hayden16 Lane was born on February 15, 2052. In life, He owes early roots to Austin2, MA. The profile states He studied at Princeton8 University. Biographical notes say He studied History4. In life, He worked for Forger9 Group. It is recorded that He gained work experience in Phoenix8, IL.",
+        "person_id": 3,
+        "predicted": {
+          "birth_city": "Austin2, MA",
+          "birth_date": "February 15, 2052",
+          "company": "Forger9 Group",
+          "company_city": "Phoenix8, IL",
+          "major": "History4",
+          "university": "Princeton8 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Dallas6, WA",
+          "birth_date": "September 3, 1951",
+          "company": "Gray6 Group",
+          "company_city": "Denver3, WA",
+          "major": "Statistics4",
+          "university": "Miami14 University"
+        },
+        "filled_text": "The profile states Zoe17 Casey15 Reed23 celebrates a birthday on September 3, 1951. They spent early years in Dallas6, WA. In particular, They attended Miami14 University. Notably, They majored in Statistics4. Notably, They joined Gray6 Group. Public records show They worked in Denver3, WA.",
+        "original_text": "The profile states Zoe17 Casey15 Reed23 celebrates a birthday on September 3, 1951. They spent early years in Dallas6, WA. In particular, They attended Miami14 University. Notably, They majored in Statistics4. Notably, They joined Gray6 Group. Public records show They worked in Denver3, WA.",
+        "person_id": 4,
+        "predicted": {
+          "birth_city": "Dallas6, WA",
+          "birth_date": "September 3, 1951",
+          "company": "Gray6 Group",
+          "company_city": "Denver3, WA",
+          "major": "Statistics4",
+          "university": "Miami14 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Chicago2, CA",
+          "birth_date": "January 21, 2072",
+          "company": "Brooks1 Group",
+          "company_city": "New York, NY",
+          "major": "Engineering1",
+          "university": "Oakland2 University"
+        },
+        "filled_text": "Biographical notes say Carlos1 Riley1 Hart20 celebrates a birthday on January 21, 2072. In particular, He was born in Chicago2, CA. In life, He graduated from Oakland2 University. Notably, He studied Engineering1. Notably, He contributed expertise to Brooks1 Group. Public records show He gained work experience in New York, NY.",
+        "original_text": "Biographical notes say Carlos1 Riley1 Hart20 celebrates a birthday on January 21, 2072. In particular, He was born in Chicago2, CA. In life, He graduated from Oakland2 University. Notably, He studied Engineering1. Notably, He contributed expertise to Brooks1 Group. Public records show He gained work experience in New York, NY.",
+        "person_id": 5,
+        "predicted": {
+          "birth_city": "Chicago2, CA",
+          "birth_date": "January 21, 2072",
+          "company": "Brooks1 Group",
+          "company_city": "New York, NY",
+          "major": "Engineering1",
+          "university": "Oakland2 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Madison7, PA",
+          "birth_date": "October 11, 1903",
+          "company": "Forger8 Group",
+          "company_city": "Tacoma4, NC",
+          "major": "Chemistry3",
+          "university": "Fresno5 University"
+        },
+        "filled_text": "It is recorded that Alden5 Avery11 Brooks38 celebrates a birthday on October 11, 1903. In life, She calls Madison7, PA a birthplace. Biographical notes say She graduated from Fresno5 University. Historically, She majored in Chemistry3. Historically, She worked for Forger8 Group. Biographical notes say She gained work experience in Tacoma4, NC.",
+        "original_text": "It is recorded that Alden5 Avery11 Brooks38 celebrates a birthday on October 11, 1903. In life, She calls Madison7, PA a birthplace. Biographical notes say She graduated from Fresno5 University. Historically, She majored in Chemistry3. Historically, She worked for Forger8 Group. Biographical notes say She gained work experience in Tacoma4, NC.",
+        "person_id": 6,
+        "predicted": {
+          "birth_city": "Madison7, PA",
+          "birth_date": "October 11, 1903",
+          "company": "Forger8 Group",
+          "company_city": "Tacoma4, NC",
+          "major": "Chemistry3",
+          "university": "Fresno5 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Dallas6, WA",
+          "birth_date": "October 6, 1954",
+          "company": "Hart7 Group",
+          "company_city": "Tacoma3, NC",
+          "major": "Communications1",
+          "university": "Chicago13 University"
+        },
+        "filled_text": "Notably, Alondra1 Parker19 Reed28 celebrates a birthday on October 6, 1954. According to records, They grew up in Dallas6, WA. Biographical notes say They received mentorship at Chicago13 University. Historically, They majored in Communications1. It is recorded that They had a professional role at Hart7 Group. In particular, They worked in Tacoma3, NC.",
+        "original_text": "Notably, Alondra1 Parker19 Reed28 celebrates a birthday on October 6, 1954. According to records, They grew up in Dallas6, WA. Biographical notes say They received mentorship at Chicago13 University. Historically, They majored in Communications1. It is recorded that They had a professional role at Hart7 Group. In particular, They worked in Tacoma3, NC.",
+        "person_id": 7,
+        "predicted": {
+          "birth_city": "Dallas6, WA",
+          "birth_date": "October 6, 1954",
+          "company": "Hart7 Group",
+          "company_city": "Tacoma3, NC",
+          "major": "Communications1",
+          "university": "Chicago13 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Madison, PA",
+          "birth_date": "December 19, 2080",
+          "company": "Ward12 Group",
+          "company_city": "Cambridge6, NY",
+          "major": "Music3",
+          "university": "Portland13 University"
+        },
+        "filled_text": "In particular, Jonah19 Hayden16 Bennett2's birthday is December 19, 2080. It is recorded that She calls Madison, PA a birthplace. Historically, She received mentorship at Portland13 University. Biographical notes say She studied Music3. She worked for Ward12 Group. It is recorded that She pursued a career in Cambridge6, NY.",
+        "original_text": "In particular, Jonah19 Hayden16 Bennett2's birthday is December 19, 2080. It is recorded that She calls Madison, PA a birthplace. Historically, She received mentorship at Portland13 University. Biographical notes say She studied Music3. She worked for Ward12 Group. It is recorded that She pursued a career in Cambridge6, NY.",
+        "person_id": 8,
+        "predicted": {
+          "birth_city": "Madison, PA",
+          "birth_date": "December 19, 2080",
+          "company": "Ward12 Group",
+          "company_city": "Cambridge6, NY",
+          "major": "Music3",
+          "university": "Portland13 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Phoenix8, IL",
+          "birth_date": "September 26, 2088",
+          "company": "Forger9 Group",
+          "company_city": "Phoenix8, IL",
+          "major": "Biology1",
+          "university": "Boston6 University"
+        },
+        "filled_text": "The profile states Ada13 Taylor19 Hayes33 celebrates a birthday on September 26, 2088. They owes early roots to Phoenix8, IL. It is recorded that They graduated from Boston6 University. In life, They developed a foundation in Biology1. The profile states They had a professional role at Forger9 Group. It is recorded that They was employed in Phoenix8, IL.",
+        "original_text": "The profile states Ada13 Taylor19 Hayes33 celebrates a birthday on September 26, 2088. They owes early roots to Phoenix8, IL. It is recorded that They graduated from Boston6 University. In life, They developed a foundation in Biology1. The profile states They had a professional role at Forger9 Group. It is recorded that They was employed in Phoenix8, IL.",
+        "person_id": 9,
+        "predicted": {
+          "birth_city": "Phoenix8, IL",
+          "birth_date": "September 26, 2088",
+          "company": "Forger9 Group",
+          "company_city": "Phoenix8, IL",
+          "major": "Biology1",
+          "university": "Boston6 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Durham2, GA",
+          "birth_date": "June 27, 1943",
+          "company": "Foster1 Group",
+          "company_city": "New York, NY",
+          "major": "Political Science3",
+          "university": "Phoenix11 University"
+        },
+        "filled_text": "The profile states Milo1 Bennett18 Ward6 celebrates a birthday on June 27, 1943. He was born in Durham2, GA. Historically, He graduated from Phoenix11 University. Historically, He studied Political Science3. He was employed by Foster1 Group. He gained work experience in New York, NY.",
+        "original_text": "The profile states Milo1 Bennett18 Ward6 celebrates a birthday on June 27, 1943. He was born in Durham2, GA. Historically, He graduated from Phoenix11 University. Historically, He studied Political Science3. He was employed by Foster1 Group. He gained work experience in New York, NY.",
+        "person_id": 10,
+        "predicted": {
+          "birth_city": "Durham2, GA",
+          "birth_date": "June 27, 1943",
+          "company": "Foster1 Group",
+          "company_city": "New York, NY",
+          "major": "Political Science3",
+          "university": "Phoenix11 University"
+        }
+      },
+      {
+        "character_similarity": {
+          "birth_city": 1.0,
+          "birth_date": 1.0,
+          "company": 1.0,
+          "company_city": 1.0,
+          "major": 1.0,
+          "university": 1.0
+        },
+        "correct": {
+          "birth_city": true,
+          "birth_date": true,
+          "company": true,
+          "company_city": true,
+          "major": true,
+          "university": true
+        },
+        "exact_fields": 6,
+        "expected": {
+          "birth_city": "Chicago, CA",
+          "birth_date": "June 20, 2009",
+          "company": "Stone3 Group",
+          "company_city": "Miami6, IL",
+          "major": "Engineering1",
+          "university": "Princeton11 University"
+        },
+        "filled_text": "Public records show Lena6 Reese1 Brooks28 has an annual celebration on June 20, 2009. Public records show They grew up in Chicago, CA. It is recorded that They completed university at Princeton11 University. Historically, They majored in Engineering1. According to records, They was employed by Stone3 Group. Notably, They was professionally based in Miami6, IL.",
+        "original_text": "Public records show Lena6 Reese1 Brooks28 has an annual celebration on June 20, 2009. Public records show They grew up in Chicago, CA. It is recorded that They completed university at Princeton11 University. Historically, They majored in Engineering1. According to records, They was employed by Stone3 Group. Notably, They was professionally based in Miami6, IL.",
+        "person_id": 11,
+        "predicted": {
+          "birth_city": "Chicago, CA",
+          "birth_date": "June 20, 2009",
+          "company": "Stone3 Group",
+          "company_city": "Miami6, IL",
+          "major": "Engineering1",
+          "university": "Princeton11 University"
+        }
+      }
+    ],
+    "start_index": 0,
+    "total_fields": {
+      "birth_city": 10000,
+      "birth_date": 10000,
+      "company": 10000,
+      "company_city": 10000,
+      "major": 10000,
+      "university": 10000
+    },
+    "unterminated_fields": 0
+  },
+  "identity": {
+    "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+    "checkpoint_model_sha256": "2d154fa14cbd233e71936f1db8f54d2c652c1347f529d2db2e6be8df49039e84",
+    "data": "/data/mini-train-sys/artifacts/synbios_moe/single",
+    "data_manifest_sha256": "144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25",
+    "jobs": [
+      "p_birth_date_first",
+      "q_birth_date_first",
+      "p_birth_city_first",
+      "q_birth_city_first",
+      "p_birth_city_whole",
+      "q_birth_city_whole",
+      "p_university_first",
+      "q_university_first",
+      "p_university_whole",
+      "q_university_whole",
+      "p_major_first",
+      "q_major_first",
+      "p_major_whole",
+      "q_major_whole",
+      "p_company_first",
+      "q_company_first",
+      "p_company_whole",
+      "q_company_whole",
+      "p_company_city_first",
+      "q_company_city_first",
+      "p_company_city_whole",
+      "q_company_city_whole"
+    ],
+    "model_config": "/home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml",
+    "model_config_sha256": "b2a02c5200d6c039d10cb3a802fd105430c3c103b02516e7a96016a98eb4ed01",
+    "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/single/probe_cache",
+    "probe_cache_manifest_sha256": "9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b",
+    "protocol_version": 4,
+    "runtime": {
+      "checkpoint_interval_steps": 1000,
+      "evaluate_train": true,
+      "heartbeat_seconds": 10.0,
+      "log_interval_steps": 100,
+      "training_batch_sizes": {
+        "p": 128,
+        "q": 768
+      },
+      "validation_batch_sizes": {
+        "p": 512,
+        "q": 6144
+      }
+    },
+    "seed": 1337,
+    "stage": "pilot",
+    "steps": 3000
+  },
+  "jobs": [
+    "p_birth_date_first",
+    "q_birth_date_first",
+    "p_birth_city_first",
+    "q_birth_city_first",
+    "p_birth_city_whole",
+    "q_birth_city_whole",
+    "p_university_first",
+    "q_university_first",
+    "p_university_whole",
+    "q_university_whole",
+    "p_major_first",
+    "q_major_first",
+    "p_major_whole",
+    "q_major_whole",
+    "p_company_first",
+    "q_company_first",
+    "p_company_whole",
+    "q_company_whole",
+    "p_company_city_first",
+    "q_company_city_first",
+    "p_company_city_whole",
+    "q_company_city_whole"
+  ],
+  "monitoring_log_dir": "artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/operation_logs/synbios_probe_pipeline_probe_pipeline/20260723-143458",
+  "runtime": {
+    "checkpoint_interval_steps": 1000,
+    "evaluate_train": true,
+    "heartbeat_seconds": 10.0,
+    "log_interval_steps": 100,
+    "training_batch_sizes": {
+      "p": 128,
+      "q": 768
+    },
+    "validation_batch_sizes": {
+      "p": 512,
+      "q": 6144
+    }
+  },
+  "stage": "pilot",
+  "status": "completed",
+  "steps": 3000,
+  "summary_rows": 77,
+  "training": [
+    {
+      "device": "cuda:2",
+      "job": "p_birth_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_birth_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_birth_city_first.pt",
+      "returncode": 0,
+      "seconds": 747.8642944210001,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "p_birth_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_birth_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_birth_city_whole.pt",
+      "returncode": 0,
+      "seconds": 752.3557330130002,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_birth_date_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_birth_date_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_birth_date_first.pt",
+      "returncode": 0,
+      "seconds": 747.87991736,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "p_company_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_company_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_company_city_first.pt",
+      "returncode": 0,
+      "seconds": 724.7077814170007,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_company_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_company_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_company_city_whole.pt",
+      "returncode": 0,
+      "seconds": 716.1846295509995,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "p_company_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_company_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_company_first.pt",
+      "returncode": 0,
+      "seconds": 704.1754077659998,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_company_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_company_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_company_whole.pt",
+      "returncode": 0,
+      "seconds": 703.6818938699998,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "p_major_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_major_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_major_first.pt",
+      "returncode": 0,
+      "seconds": 724.2094371860003,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_major_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_major_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_major_whole.pt",
+      "returncode": 0,
+      "seconds": 713.6930796050001,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "p_university_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_university_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_university_first.pt",
+      "returncode": 0,
+      "seconds": 739.2487335169999,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "p_university_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_p_university_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/p_university_whole.pt",
+      "returncode": 0,
+      "seconds": 738.7215085690004,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "q_birth_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_birth_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_birth_city_first.pt",
+      "returncode": 0,
+      "seconds": 693.2019071210002,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "q_birth_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_birth_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_birth_city_whole.pt",
+      "returncode": 0,
+      "seconds": 699.2717670849997,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "q_birth_date_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_birth_date_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_birth_date_first.pt",
+      "returncode": 0,
+      "seconds": 676.2643356390004,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "q_company_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_company_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_company_city_first.pt",
+      "returncode": 0,
+      "seconds": 679.591893365,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "q_company_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_company_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_company_city_whole.pt",
+      "returncode": 0,
+      "seconds": 675.1427586529999,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_company_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_company_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_company_first.pt",
+      "returncode": 0,
+      "seconds": 670.622667656,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "q_company_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_company_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_company_whole.pt",
+      "returncode": 0,
+      "seconds": 691.6347417179995,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_major_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_major_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_major_first.pt",
+      "returncode": 0,
+      "seconds": 672.1368059239994,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "q_major_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_major_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_major_whole.pt",
+      "returncode": 0,
+      "seconds": 693.1942786729996,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "q_university_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_university_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_university_first.pt",
+      "returncode": 0,
+      "seconds": 673.7977714889998,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "q_university_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/train_q_university_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/training/q_university_whole.pt",
+      "returncode": 0,
+      "seconds": 676.1373741839998,
+      "status": "completed"
+    }
+  ],
+  "validation": [
+    {
+      "device": "cuda:2",
+      "job": "p_birth_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_birth_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_birth_city_first.json",
+      "returncode": 0,
+      "seconds": 52.0885139990005,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "p_birth_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_birth_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_birth_city_whole.json",
+      "returncode": 0,
+      "seconds": 52.10085838899977,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_birth_date_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_birth_date_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_birth_date_first.json",
+      "returncode": 0,
+      "seconds": 52.60799661300007,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "p_company_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_company_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_company_city_first.json",
+      "returncode": 0,
+      "seconds": 49.082253553000555,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_company_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_company_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_company_city_whole.json",
+      "returncode": 0,
+      "seconds": 48.06955719600046,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_company_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_company_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_company_first.json",
+      "returncode": 0,
+      "seconds": 50.084718975000214,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "p_company_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_company_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_company_whole.json",
+      "returncode": 0,
+      "seconds": 49.58146742600002,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "p_major_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_major_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_major_first.json",
+      "returncode": 0,
+      "seconds": 50.605784243000016,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "p_major_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_major_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_major_whole.json",
+      "returncode": 0,
+      "seconds": 50.11672871900009,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "p_university_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_university_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_university_first.json",
+      "returncode": 0,
+      "seconds": 51.61958954500005,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:0",
+      "job": "p_university_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_p_university_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/p_university_whole.json",
+      "returncode": 0,
+      "seconds": 51.086775982999825,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "q_birth_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_birth_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_birth_city_first.json",
+      "returncode": 0,
+      "seconds": 18.531790441999874,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:3",
+      "job": "q_birth_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_birth_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_birth_city_whole.json",
+      "returncode": 0,
+      "seconds": 17.524901949000196,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:1",
+      "job": "q_birth_date_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_birth_date_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_birth_date_first.json",
+      "returncode": 0,
+      "seconds": 18.528693207999822,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_company_city_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_company_city_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_company_city_first.json",
+      "returncode": 0,
+      "seconds": 16.545730384999842,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_company_city_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_company_city_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_company_city_whole.json",
+      "returncode": 0,
+      "seconds": 15.519509419000315,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_company_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_company_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_company_first.json",
+      "returncode": 0,
+      "seconds": 16.04275090700048,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_company_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_company_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_company_whole.json",
+      "returncode": 0,
+      "seconds": 16.545168974000262,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_major_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_major_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_major_first.json",
+      "returncode": 0,
+      "seconds": 16.53682668500005,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_major_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_major_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_major_whole.json",
+      "returncode": 0,
+      "seconds": 16.023716097999568,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_university_first",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_university_first.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_university_first.json",
+      "returncode": 0,
+      "seconds": 17.023747149999508,
+      "status": "completed"
+    },
+    {
+      "device": "cuda:2",
+      "job": "q_university_whole",
+      "log": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/logs/validation_q_university_whole.log",
+      "output": "/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/validation/q_university_whole.json",
+      "returncode": 0,
+      "seconds": 16.53918232900014,
+      "status": "completed"
+    }
+  ]
+}

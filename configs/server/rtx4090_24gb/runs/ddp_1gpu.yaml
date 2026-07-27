@@ -1,0 +1,6 @@
+extends:
+  - ../base.yaml
+  - ../strategies/ddp.yaml
+  - ../topologies/1gpu.yaml
+run:
+  name: rtx4090_ddp_1gpu

@@ -1,0 +1,8 @@
+TensorFlow installation not found - running with reduced feature set.
+W0723 17:50:14.885951 140493227184128 server_ingester.py:186] Failed to communicate with data server at localhost:35775: <_InactiveRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:17890: Socket closed"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:17890: Socket closed"
+>
+E0723 17:50:14.886820  101867 http_connect_client_handshaker.cc:114] HTTP proxy handshake with [unknown] failed: UNAVAILABLE: Endpoint closing
+TensorBoard 2.21.0 at http://0.0.0.0:6006/ (Press CTRL+C to quit)

@@ -5,7 +5,6 @@ The public API matches the Triton implementation and accepts MiniTrain's native
 to upstream FlashAttention parameters, so the bridge does not transpose Q/K/V.
 """
 
-from __future__ import annotations
 
 import struct
 

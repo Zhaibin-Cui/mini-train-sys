@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 from contextlib import nullcontext
 from dataclasses import dataclass
@@ -12,6 +11,19 @@ _PRECISION_DTYPES = {
     "bf16": torch.bfloat16,
     "fp16": torch.float16,
 }
+
+
+def recommended_precision(device: torch.device) -> str:
+    """Select the production mixed-precision policy for ``device``.
+
+    CUDA prefers bf16 for its fp32-sized exponent range. Older CUDA devices
+    fall back to fp16 with dynamic loss scaling, while CPU keeps fp32 as the
+    conservative portable default.
+    """
+
+    if device.type != "cuda":
+        return "fp32"
+    return "bf16" if torch.cuda.is_bf16_supported() else "fp16"
 
 
 @dataclass(frozen=True)
@@ -36,8 +48,10 @@ class PrecisionPolicy:
 
 def resolve_precision_policy(name: str, device: torch.device) -> PrecisionPolicy:
     normalized = name.lower()
+    if normalized == "auto":
+        normalized = recommended_precision(device)
     if normalized not in _PRECISION_DTYPES:
-        choices = ", ".join(_PRECISION_DTYPES)
+        choices = "auto, " + ", ".join(_PRECISION_DTYPES)
         raise ValueError(f"Unknown precision {name!r}; expected one of: {choices}")
 
     if normalized == "fp16" and device.type != "cuda":

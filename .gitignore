@@ -2,8 +2,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-.pytest_cache/
-.pytest_tmp*/
 .ruff_cache/
 .mypy_cache/
 .pytype/
@@ -40,14 +38,17 @@ Thumbs.db
 *.ninja
 
 # Runtime caches and experiment outputs
+.minitrain-storage.env*
 .triton_cache/
 triton_cache/
-runs/
+/runs/
 logs/
 checkpoints/
 wandb/
 outputs/
 profiles/
+/artifacts
+/data
 
 # Large model/data artifacts
 *.pt
@@ -58,12 +59,40 @@ profiles/
 *.npy
 *.npz
 
+# Portable server evidence is versioned: benchmark JSON/CSV/plots, validation
+# reports, logs, environment inventories, run events, and checkpoint metadata.
+# Tensor payloads and raw dataset shards remain on the mounted artifacts disk.
+!/results/
+!/results/**
+/results/**/distributed/*
+!/results/**/distributed/.metadata
+/results/**/*.distcp
+/results/**/*.pt
+/results/**/*.pth
+/results/**/*.safetensors
+/results/**/*.ckpt
+/results/**/*.bin
+/results/**/*.npy
+/results/**/*.npz
+!/results/**/runtime.pt
+!/results/**/rng_rank_*.pt
+
 # Tests, benchmark results, and reports are shareable.
 !tests/**
 !reports/**
+# Machine-specific benchmark notebooks are local execution artifacts. Keep the
+# portable notebook variants tracked and regenerate these per target machine.
+# tests/**/*_sm86_4gb.ipynb
+# tests/**/*_linux_server.ipynb
 tests/**/__pycache__/
 tests/**/*.py[cod]
-tests/*_sm86_4gb.ipynb
-tests/*_linux_server.ipynb
 reports/**/__pycache__/
 reports/**/*.py[cod]
+
+# temp for ignored: docs
+# .docs/
+
+# Local operating notes and run journal
+AGENT.md
+AGENTS.md
+HISTORY.md

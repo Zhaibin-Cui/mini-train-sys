@@ -37,7 +37,7 @@ PyTorch 则使用已审计架构表；未知架构保守地等待验证。这是
 | `csrc/third_party` | FlashAttention 2.8.4 与 CUTLASS/CUTE 原始代码 |
 
 第一次阅读请从
-[`docs/cuda_flash_attention_code_reading_guide.md`](../../../docs/cuda_flash_attention_code_reading_guide.md)
+[`docs/kernels/cuda_flash_attention_code_reading_guide.md`](../../../docs/kernels/cuda_flash_attention_code_reading_guide.md)
 开始。
 
 ## 编译配置
@@ -45,12 +45,14 @@ PyTorch 则使用已审计架构表；未知架构保守地等待验证。这是
 | Profile | dtype | head-dim bucket | `.cu` 数量 |
 | --- | --- | --- | ---: |
 | `minimal` | fp16 | 32 | 4 |
-| `workstation`（默认） | fp16、bf16 | 32、64、128 | 24 |
+| `workstation` | fp16、bf16 | 64 | 8 |
+| `rtx4090`（服务器默认） | fp16、bf16 | 64 | 8 |
 | `full` | fp16、bf16 | 32、64、96、128、192、256 | 48 |
 
-本机是 16 GB 内存的 Windows sm86 机器，因此默认使用 `workstation` 和一个
-nvcc worker。服务器应显式选择 `full`，并根据单个 D=256 backward 编译进程的
-峰值内存决定并行度。
+持久 benchmark 服务器是 4×RTX 4090、128 GB RAM。默认 `rtx4090` profile 构建
+sm89、D=64 的 fp16/bf16 路径并使用两个 nvcc worker，精确覆盖当前 293.49M MoE。
+`workstation` 保留给旧 sm86 开发环境；只有需要其它 head bucket 时才显式选择
+`full`，并根据 D=192/256 backward 编译进程的峰值内存降低并行度。
 
 本机先编译最小 profile：
 
@@ -70,12 +72,12 @@ $env:MINITRAIN_CUDA_MAX_JOBS="1"
 python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
 ```
 
-服务器完整构建示例：
+当前 RTX 4090 服务器正式模型构建：
 
 ```bash
-export MINITRAIN_CUDA_BUILD_PROFILE=full
-export MINITRAIN_CUDA_ARCHS="80;86;89;90"
-export MINITRAIN_CUDA_MAX_JOBS=8
+export MINITRAIN_CUDA_BUILD_PROFILE=rtx4090
+export MINITRAIN_CUDA_ARCHS=89
+export MINITRAIN_CUDA_MAX_JOBS=2
 python -c "from minitrain.kernels.cuda_ext.build import load_cuda_extension; print(load_cuda_extension())"
 ```
 
@@ -163,4 +165,4 @@ PyTorch 用户 cache，并按 Python/PyTorch/CUDA/platform ABI 隔离。可用
 `MINITRAIN_CUDA_BUILD_ROOT` 指定其他可写根目录。
 
 sm86 的 spill 结论和测量数据见
-[`docs/cuda_flash_attention_sm86_spill_analysis.md`](../../../docs/cuda_flash_attention_sm86_spill_analysis.md)。
+[`docs/kernels/cuda_flash_attention_sm86_spill_analysis.md`](../../../docs/kernels/cuda_flash_attention_sm86_spill_analysis.md)。

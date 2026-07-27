@@ -1,0 +1,6 @@
+extends:
+  - ../base.yaml
+  - ../strategies/ddp.yaml
+  - ../topologies/8gpu.yaml
+run:
+  name: rtx4090_ddp_8gpu

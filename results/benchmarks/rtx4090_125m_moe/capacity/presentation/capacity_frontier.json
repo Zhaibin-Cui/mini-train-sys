@@ -1,0 +1,32 @@
+[
+  {
+    "strategy": "ddp",
+    "world_size": 1,
+    "largest_successful_local_batch": 32,
+    "largest_successful_global_batch": 32
+  },
+  {
+    "strategy": "ddp",
+    "world_size": 4,
+    "largest_successful_local_batch": 32,
+    "largest_successful_global_batch": 128
+  },
+  {
+    "strategy": "fsdp",
+    "world_size": 1,
+    "largest_successful_local_batch": 32,
+    "largest_successful_global_batch": 32
+  },
+  {
+    "strategy": "fsdp",
+    "world_size": 4,
+    "largest_successful_local_batch": 32,
+    "largest_successful_global_batch": 128
+  },
+  {
+    "strategy": "single",
+    "world_size": 1,
+    "largest_successful_local_batch": 32,
+    "largest_successful_global_batch": 32
+  }
+]

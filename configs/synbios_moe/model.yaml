@@ -1,0 +1,20 @@
+model:
+  vocab_size: 50257
+  seq_len: 512
+  n_layers: 12
+  n_heads: 12
+  hidden_size: 768
+  intermediate_size: 1024
+  norm_eps: 1.0e-5
+  rope_theta: 10000.0
+  dropout: 0.1
+  tie_word_embeddings: true
+  ffn_type: moe
+  num_experts: 8
+  experts_per_token: 2
+  router_aux_loss_coef: 0.01
+  router_z_loss_coef: 0.001
+  router_normalize_topk: true
+  router_jitter_noise: 0.0
+  expert_capacity_factor: null
+  expert_min_capacity: 4

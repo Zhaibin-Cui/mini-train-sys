@@ -1,0 +1,52 @@
+{
+  "valid": true,
+  "cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+  "source_data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+  "profiles": 100000,
+  "p_examples": 500000,
+  "q_examples": 100000,
+  "coverage_complete": true,
+  "missing_validation_class_counts": {},
+  "missing_validation_classes": {}
+}
+[probe_pipeline:training] tasks 0/22 | running 1 | queued 21 | failed 0 | started p_birth_date_first on cuda:0 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 2 | queued 20 | failed 0 | started q_birth_date_first on cuda:1 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 3 | queued 19 | failed 0 | started p_birth_city_first on cuda:2 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | started q_birth_city_first on cuda:3 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 1/4000 0.0% ETA 1:07:04 loss 2.62613 acc 0.0911 gpu 7.92/23.65 GiB | overall 0.00025/44 0.0% | phase ETA 6:08:52 | pipeline ETA 6:19:41 | done 2026-07-24T03:28:18+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 1/4000 0.0% ETA 1:07:07 loss 2.62622 acc 0.0768 gpu 8.96/23.65 GiB | overall 0.0005/44 0.0% | phase ETA 6:09:01 | pipeline ETA 6:19:50 | done 2026-07-24T03:28:27+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 1/4000 0.0% ETA 1:07:41 loss 3.28668 acc 0.0299 gpu 8.96/23.65 GiB | overall 0.0007500000000000001/44 0.0% | phase ETA 6:10:06 | pipeline ETA 6:20:55 | done 2026-07-24T03:29:32+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 1/4000 0.0% ETA 1:06:09 loss 3.20424 acc 0.0469 gpu 7.92/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:08:32 | pipeline ETA 6:19:21 | done 2026-07-24T03:27:58+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 1/4000 0.0% ETA 1:07:04 loss 2.62613 acc 0.0911 gpu 7.92/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:08:32 | pipeline ETA 6:19:21 | done 2026-07-24T03:28:08+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 1/4000 0.0% ETA 1:07:07 loss 2.62622 acc 0.0768 gpu 8.96/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:08:32 | pipeline ETA 6:19:21 | done 2026-07-24T03:28:08+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 1/4000 0.0% ETA 1:07:41 loss 3.28668 acc 0.0299 gpu 8.96/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:08:32 | pipeline ETA 6:19:21 | done 2026-07-24T03:28:08+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 1/4000 0.0% ETA 1:06:09 loss 3.20424 acc 0.0469 gpu 7.92/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:08:32 | pipeline ETA 6:19:21 | done 2026-07-24T03:28:08+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 100/4000 2.5% ETA 0:14:34 loss 2.45555 acc 0.1045 gpu 7.94/23.65 GiB | overall 0.02575/44 0.1% | phase ETA 4:56:22 | pipeline ETA 5:07:11 | done 2026-07-24T02:16:08+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 100/4000 2.5% ETA 0:14:15 loss 1.94332 acc 0.2863 gpu 9.36/23.65 GiB | overall 0.05050000000000001/44 0.1% | phase ETA 3:43:40 | pipeline ETA 3:54:29 | done 2026-07-24T01:03:27+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 100/4000 2.5% ETA 0:13:57 loss 2.71156 acc 0.1817 gpu 9.36/23.65 GiB | overall 0.07525/44 0.2% | phase ETA 2:29:47 | pipeline ETA 2:40:36 | done 2026-07-23T23:49:34+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 100/4000 2.5% ETA 0:14:24 loss 2.97794 acc 0.0664 gpu 7.94/23.65 GiB | overall 0.1/44 0.2% | phase ETA 1:18:38 | pipeline ETA 1:29:27 | done 2026-07-23T22:38:25+08:00
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 1045, in <module>
+    arguments.func(arguments)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 558, in command_probe_pipeline
+    _command_probe_pipeline(args, logger=logger, log_dir=log_dir)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 713, in _command_probe_pipeline
+    training = schedule_jobs(
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 683, in schedule_jobs
+    thread.join()
+  File "/usr/lib/python3.10/threading.py", line 1096, in join
+    self._wait_for_tstate_lock()
+  File "/usr/lib/python3.10/threading.py", line 1116, in _wait_for_tstate_lock
+    if lock.acquire(block, timeout):
+KeyboardInterrupt
+[probe_pipeline:training] tasks 1/22 | running 3 | queued 18 | failed 1 | finished q_birth_date_first on cuda:1 | overall 1.075/44 2.4% | phase ETA 0:15:57 | pipeline ETA 0:26:46 | done 2026-07-23T21:35:49+08:00
+[probe_pipeline:training] tasks 1/22 | running 4 | queued 17 | failed 1 | started p_birth_city_whole on cuda:1 | overall 1.075/44 2.4% | phase ETA 0:15:57 | pipeline ETA 0:26:46 | done 2026-07-23T21:35:49+08:00
+Exception ignored in: <module 'threading' from '/usr/lib/python3.10/threading.py'>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1567, in _shutdown
+    lock.acquire()
+KeyboardInterrupt: 

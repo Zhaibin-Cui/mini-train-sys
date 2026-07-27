@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-07-25T18:01:00+08:00",
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "compute_capability": "8.9",
+    "driver": "525.105.17"
+  },
+  "software": {
+    "torch": "2.5.1+cu118",
+    "cuda_runtime": "11.8"
+  },
+  "input": {
+    "dtype": "bfloat16",
+    "causal": true,
+    "dropout_p": 0.0,
+    "head_dim": 64,
+    "sequence_length": 512
+  },
+  "torch_api": "torch.nn.functional.scaled_dot_product_attention",
+  "enabled_sdpa_backends": {
+    "flash": true,
+    "memory_efficient": true,
+    "math": true
+  },
+  "profiled_dispatch": {
+    "forward": [
+      "aten::scaled_dot_product_attention",
+      "aten::_scaled_dot_product_flash_attention",
+      "aten::_flash_attention_forward"
+    ],
+    "backward": [
+      "aten::_scaled_dot_product_flash_attention_backward",
+      "aten::_flash_attention_backward"
+    ]
+  },
+  "conclusion": "The Torch attention baseline dispatches to PyTorch CUDA fused Flash-SDPA, not eager attention."
+}

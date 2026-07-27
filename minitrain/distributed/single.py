@@ -4,6 +4,9 @@ import torch
 class SingleDeviceStrategy:
     name = "single"
 
+    rank = 0
+    world_size = 1
+
     def setup(self) -> None:
         return None
 
@@ -16,4 +19,3 @@ class SingleDeviceStrategy:
 
     def teardown(self) -> None:
         return None
-

@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 import functools
 import gc
@@ -323,26 +322,95 @@ def close_stats(
     actual_tensors = tuple(flatten_tensors(actual))
     expected_tensors = tuple(flatten_tensors(expected))
     if len(actual_tensors) != len(expected_tensors):
-        return {"correct": False, "max_abs": math.inf, "max_rel": math.inf}
+        return {
+            "correct": False,
+            "max_abs": math.inf,
+            "max_rel": math.inf,
+            "relative_l2": math.inf,
+            "cosine_similarity": -1.0,
+        }
 
     correct = True
+    metadata_match = True
     max_abs = 0.0
     max_rel = 0.0
+    squared_error = 0.0
+    squared_actual = 0.0
+    squared_expected = 0.0
+    dot_product = 0.0
     for actual_tensor, expected_tensor in zip(actual_tensors, expected_tensors):
-        actual_f = actual_tensor.detach().float()
-        expected_f = expected_tensor.detach().float()
-        abs_err = (actual_f - expected_f).abs()
-        rel_err = abs_err / expected_f.abs().clamp_min(1e-8)
-        max_abs = max(max_abs, float(abs_err.max().item()))
-        max_rel = max(max_rel, float(rel_err.max().item()))
-        try:
-            torch.testing.assert_close(
-                actual_tensor, expected_tensor, atol=atol, rtol=rtol
-            )
-        except AssertionError:
+        if (
+            actual_tensor.shape != expected_tensor.shape
+            or actual_tensor.device != expected_tensor.device
+            or actual_tensor.dtype != expected_tensor.dtype
+        ):
             correct = False
+            metadata_match = False
+            max_abs = math.inf
+            max_rel = math.inf
+            continue
 
-    return {"correct": correct, "max_abs": max_abs, "max_rel": max_rel}
+        # A full-tensor fp32 comparison can need several times the tensor's
+        # storage for casts, absolute/relative errors, and the close mask. That
+        # turns an otherwise valid memory-bound benchmark into a comparison OOM.
+        # Stream over flat slices so correctness memory stays bounded.
+        chunk_elements = 4 * 1024 * 1024
+        actual_flat = actual_tensor.detach().reshape(-1)
+        expected_flat = expected_tensor.detach().reshape(-1)
+        for start in range(0, actual_flat.numel(), chunk_elements):
+            stop = min(start + chunk_elements, actual_flat.numel())
+            actual_f = actual_flat[start:stop].float()
+            expected_f = expected_flat[start:stop].float()
+            abs_err = (actual_f - expected_f).abs()
+            rel_err = abs_err / expected_f.abs().clamp_min(1e-8)
+            if abs_err.numel():
+                max_abs = max(max_abs, float(abs_err.max().item()))
+                max_rel = max(max_rel, float(rel_err.max().item()))
+                if not bool(
+                    torch.isclose(
+                        actual_f,
+                        expected_f,
+                        atol=atol,
+                        rtol=rtol,
+                    ).all().item()
+                ):
+                    correct = False
+                actual_d = actual_f.double()
+                expected_d = expected_f.double()
+                difference_d = actual_d - expected_d
+                squared_error += float(difference_d.square().sum().item())
+                squared_actual += float(actual_d.square().sum().item())
+                squared_expected += float(expected_d.square().sum().item())
+                dot_product += float((actual_d * expected_d).sum().item())
+                del actual_d, expected_d, difference_d
+            del actual_f, expected_f, abs_err, rel_err
+
+    if not metadata_match:
+        return {
+            "correct": False,
+            "max_abs": math.inf,
+            "max_rel": math.inf,
+            "relative_l2": math.inf,
+            "cosine_similarity": -1.0,
+        }
+    relative_l2 = (
+        math.sqrt(squared_error / squared_expected)
+        if squared_expected > 0.0
+        else (0.0 if squared_error == 0.0 else math.inf)
+    )
+    cosine_denominator = math.sqrt(squared_actual * squared_expected)
+    cosine_similarity = (
+        dot_product / cosine_denominator
+        if cosine_denominator > 0.0
+        else (1.0 if squared_actual == squared_expected == 0.0 else 0.0)
+    )
+    return {
+        "correct": correct,
+        "max_abs": max_abs,
+        "max_rel": max_rel,
+        "relative_l2": relative_l2,
+        "cosine_similarity": cosine_similarity,
+    }
 
 
 def output_loss(output: Any, *, random_gradient: bool = False) -> torch.Tensor:
@@ -417,9 +485,13 @@ def correctness_stats(
             "fwd_correct": fwd["correct"],
             "fwd_max_abs": fwd["max_abs"],
             "fwd_max_rel": fwd["max_rel"],
+            "fwd_relative_l2": fwd["relative_l2"],
+            "fwd_cosine_similarity": fwd["cosine_similarity"],
             "bwd_correct": bwd["correct"],
             "bwd_max_abs": bwd["max_abs"],
             "bwd_max_rel": bwd["max_rel"],
+            "bwd_relative_l2": bwd["relative_l2"],
+            "bwd_cosine_similarity": bwd["cosine_similarity"],
         }
     finally:
         free_case(actual_case)

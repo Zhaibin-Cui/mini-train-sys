@@ -1,0 +1,37 @@
+{
+  "artifact_root": "/data/mini-train-sys/artifacts",
+  "excluded": [
+    {
+      "files": 33,
+      "reason": "dcp_tensor_shard",
+      "size_bytes": 29431662384
+    },
+    {
+      "files": 3,
+      "reason": "large_per_example_diagnostic",
+      "size_bytes": 191010417
+    },
+    {
+      "files": 4,
+      "reason": "model_export",
+      "size_bytes": 3988582666
+    },
+    {
+      "files": 200,
+      "reason": "probe_or_recovery_weight",
+      "size_bytes": 825818204
+    },
+    {
+      "files": 31,
+      "reason": "raw_or_derived_dataset_payload",
+      "size_bytes": 904575003
+    }
+  ],
+  "expected_exported_bytes": 190651614,
+  "expected_exported_files": 1859,
+  "mismatched": [],
+  "missing": [],
+  "schema_version": 1,
+  "status": "passed",
+  "verified_identical_files": 1859
+}

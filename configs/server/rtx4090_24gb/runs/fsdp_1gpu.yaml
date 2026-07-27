@@ -1,0 +1,6 @@
+extends:
+  - ../base.yaml
+  - ../strategies/fsdp.yaml
+  - ../topologies/1gpu.yaml
+run:
+  name: rtx4090_fsdp_1gpu

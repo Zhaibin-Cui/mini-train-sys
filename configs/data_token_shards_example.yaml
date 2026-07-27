@@ -1,0 +1,15 @@
+data:
+  source: token_shards
+  path: artifacts/example_corpus/manifest.json
+  shuffle: true
+  packing: contiguous
+  shuffle_window: 1024
+  max_open_shards: 8
+  num_workers: 2
+  prefetch_factor: 2
+  pin_memory: true
+  persistent_workers: true
+  drop_last: true
+  # Copy this from tokenizer_metadata.json. Keeping it explicit makes a
+  # tokenizer/corpus mismatch fail before the first optimizer step.
+  tokenizer_fingerprint: replace-with-tokenizer-fingerprint

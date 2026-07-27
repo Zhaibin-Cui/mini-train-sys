@@ -6,7 +6,6 @@ autograd node therefore only saves that gradient buffer, rather than the full
 softmax output.
 """
 
-from __future__ import annotations
 
 import torch
 

@@ -1,0 +1,59 @@
+{
+  "coverage_complete": true,
+  "files": [
+    {
+      "bytes": 34031,
+      "path": "manifest.json",
+      "sha256": "acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f"
+    },
+    {
+      "bytes": 4000136,
+      "path": "p_offsets.npy",
+      "sha256": "04199bf9164256001653d8d9f55daca0da37338a4dfa5ec3ec183b1a3b24bd61"
+    },
+    {
+      "bytes": 12000128,
+      "path": "p_positions.npy",
+      "sha256": "2fa65e9d7f85a331e9f2ee1851a6a3f049d80ea23f310de307d30be3224114d1"
+    },
+    {
+      "bytes": 2000128,
+      "path": "p_profile_indices.npy",
+      "sha256": "37ef8e53f3b5474c1c29b43bfa8702ff9cca698ecaa01d6c4652984cdd5026d5"
+    },
+    {
+      "bytes": 148186224,
+      "path": "p_tokens.bin",
+      "sha256": "57da774a7c385f62e98e871c6df4ed77f2eb2c1e5fd31faf1c7c4212c02c4bd8"
+    },
+    {
+      "bytes": 4400128,
+      "path": "profile_labels.npy",
+      "sha256": "7c363c0a02ef695de4793485ac0fa68b530d59c47a77b6a9d2ee56f843a4446f"
+    },
+    {
+      "bytes": 100128,
+      "path": "profile_splits.npy",
+      "sha256": "010f981bd2a37efcc45e61d047c0c673694b87e2894659019f94f88abcb6bc26"
+    },
+    {
+      "bytes": 800136,
+      "path": "q_offsets.npy",
+      "sha256": "3ef433687ae8d9faeef4af12e2a8e60517281f2047c5c54deeef224dd84fb00d"
+    },
+    {
+      "bytes": 3693076,
+      "path": "q_tokens.bin",
+      "sha256": "00a118e1a65f7210c4997a602d8fd76a4eefe347a846756fe97bf77fd42649a2"
+    }
+  ],
+  "format_version": 1,
+  "manifest_sha256": "acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f",
+  "p_examples": 500000,
+  "parent_manifest_sha256": "31b99dd8d415007c34e00e3b32440014be4b34c27b7c3c1a80f7e1319019566e",
+  "path": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+  "profiles": 100000,
+  "q_examples": 100000,
+  "split_semantics": "deterministic person-level probe train/validation split; both partitions were seen by backbone pretraining",
+  "variant": "multi5_permute"
+}

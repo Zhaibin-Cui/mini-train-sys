@@ -1,0 +1,30 @@
+[model_load] step 1/1 | tok/s 0.0 | items/s 0.0 | gpu-peak 1.09/23.65 GiB | 100.0% | ETA 0:00:00
+[cloze_evaluate] {"event": "cloze_evaluate", "step": 1, "batch": 1, "batches_total": 63, "progress_percent": 1.587, "elapsed_seconds": 7.703, "eta_seconds": 477.567, "items_processed": 16, "items_per_sec": 2.077, "tokens_processed": 27386, "tokens_per_sec": 3555.376, "field_accuracy_running": 0.0, "all_fields_accuracy_running": 0.0, "gpu_memory_allocated_mb": 1128.74, "gpu_memory_reserved_mb": 1204.0, "gpu_peak_memory_allocated_mb": 1167.22, "gpu_memory_allocated_mb_max": 1128.74, "gpu_memory_reserved_mb_max": 1204.0, "gpu_peak_memory_allocated_mb_max": 1167.22, "gpu_memory_allocated_mb_total": 1128.74, "gpu_memory_reserved_mb_total": 1204.0, "gpu_memory_capacity_mb_max": 24217.31, "gpu_memory_capacity_mb_total": 24217.31, "gpu_memory_current_percent_max": 4.66, "gpu_memory_reserved_percent_max": 4.97, "gpu_memory_peak_percent_max": 4.82, "monitored_world_size": 1}
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 778, in <module>
+    arguments.func(arguments)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 611, in command_cloze_evaluate
+    result = evaluate_progressive_biography_cloze(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/cloze_evaluation.py", line 205, in evaluate_progressive_biography_cloze
+    process_batch(pending)
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/cloze_evaluation.py", line 158, in process_batch
+    predictions, terminated, tokens = _generate_values(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/cloze_evaluation.py", line 55, in _generate_values
+    sequences = [[codec.eos, *codec.encode(prompt)] for prompt in prompts]
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/cloze_evaluation.py", line 55, in <listcomp>
+    sequences = [[codec.eos, *codec.encode(prompt)] for prompt in prompts]
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probes.py", line 42, in encode
+    return self.encoding.encode(text, allowed_special=set())
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/tiktoken/core.py", line 124, in encode
+    raise_disallowed_special_token(match.group())
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/tiktoken/core.py", line 442, in raise_disallowed_special_token
+    raise ValueError(
+ValueError: Encountered text corresponding to disallowed special token '<|endoftext|>'.
+If you want this text to be encoded as a special token, pass it to `allowed_special`, e.g. `allowed_special={'<|endoftext|>', ...}`.
+If you want this text to be encoded as normal text, disable the check for this token by passing `disallowed_special=(enc.special_tokens_set - {'<|endoftext|>'})`.
+To disable this check for all special tokens, pass `disallowed_special=()`.
+

@@ -1,0 +1,11 @@
+parallel:
+  strategy: ddp
+  process_group_backend: nccl
+  timeout_minutes: 30
+  ddp:
+    broadcast_buffers: false
+    bucket_cap_mb: 25
+    find_unused_parameters: false
+    gradient_as_bucket_view: true
+    # MoE expert participation is data-dependent, so do not assert a static graph.
+    static_graph: false

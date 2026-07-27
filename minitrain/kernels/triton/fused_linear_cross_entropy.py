@@ -6,7 +6,6 @@ online-softmax Triton kernel as :mod:`cross_entropy`, and immediately consumes
 the in-place logits gradient to accumulate input and weight gradients.
 """
 
-from __future__ import annotations
 
 import os
 

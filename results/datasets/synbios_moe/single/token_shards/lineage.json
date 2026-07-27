@@ -1,0 +1,32 @@
+{
+  "documents": 100000,
+  "files": [
+    {
+      "bytes": 2018,
+      "path": "manifest.json",
+      "sha256": "2bdabe8d64941a5e4c51bde05d35618eaa65392b4215a7f382bbc3b7f69541f8"
+    },
+    {
+      "bytes": 1600000,
+      "path": "train/documents.idx",
+      "sha256": "9948847f5fb8acac192c0b522877f05e8fe53c9242ae0d7d26c75dad204b9294"
+    },
+    {
+      "bytes": 14810204,
+      "path": "train/shard_00000.bin",
+      "sha256": "638540fb3ed1a5ac077b596898a04703b06ed954ad2fad747462b725f94d370b"
+    },
+    {
+      "bytes": 0,
+      "path": "validation/documents.idx",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "format_version": 1,
+  "manifest_sha256": "2bdabe8d64941a5e4c51bde05d35618eaa65392b4215a7f382bbc3b7f69541f8",
+  "parent_manifest_sha256": "144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25",
+  "path": "/data/mini-train-sys/artifacts/synbios_moe/single/token_shards",
+  "split_semantics": "all generated biographies are pretraining train documents",
+  "tokens": 7405102,
+  "variant": "single"
+}

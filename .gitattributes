@@ -9,3 +9,7 @@
 *.obj binary
 *.lib binary
 *.exp binary
+
+# Results are immutable machine evidence. Preserve their source bytes exactly so
+# exported CSV/log hashes remain valid after a clone, including historical CRLF files.
+/results/** -text -eol

@@ -1,0 +1,42 @@
+{
+  "status": "passed",
+  "format_version": 1,
+  "checks": [
+    "mounted_artifacts_symlink",
+    "raw_dataset_file_sizes_and_hashes",
+    "token_shard_file_sizes_and_hashes",
+    "probe_cache_schema_shapes_offsets_and_class_coverage",
+    "dataset_cache_parent_lineage",
+    "matched_single_multi_formal_identity",
+    "formal_checkpoint_committed_and_model_hash",
+    "cloze_checkpoint_identity",
+    "diagnostic_checkpoint_identity",
+    "training_config_paths_epochs_batch_and_world_size",
+    "probe_runtime_matches_completed_formal_runs"
+  ],
+  "storage": {
+    "repository": "/home/ubuntu/mini-train-sys",
+    "artifacts_symlink": "/home/ubuntu/mini-train-sys/artifacts",
+    "artifacts_target": "/data/mini-train-sys/artifacts"
+  },
+  "conditions": {
+    "single": {
+      "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+      "checkpoint_model_sha256": "2d154fa14cbd233e71936f1db8f54d2c652c1347f529d2db2e6be8df49039e84",
+      "data_manifest_sha256": "144cf49ea607b4a502e5be277dbb63e0e9a08f296596e994cd19d3c6cfb11e25",
+      "probe_cache_manifest_sha256": "9dcfd2cff38d6f3d29d7f10c2a3247b634f31395b3cda3755a755c8964ffaf5b"
+    },
+    "multi5_permute": {
+      "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+      "checkpoint_model_sha256": "e89075289bb3a774825e7fd03cedc2c7c37957583bf3656e8ab32c52ef02f0dd",
+      "data_manifest_sha256": "31b99dd8d415007c34e00e3b32440014be4b34c27b7c3c1a80f7e1319019566e",
+      "probe_cache_manifest_sha256": "acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f"
+    }
+  },
+  "catalogs": {
+    "dataset_lineage": "dataset_lineage.json",
+    "path_contract": "path_contract.json",
+    "logs": "log_catalog.csv",
+    "log_count": 81
+  }
+}

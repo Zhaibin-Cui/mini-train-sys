@@ -1,0 +1,8 @@
+run,task,kind,attribute,target,position,accuracy,classes,examples
+smoke,p_university_whole,p,university,whole,0,0.0760844424366951,300,250590
+smoke,p_university_whole,p,university,whole,1,0.0784229189157486,300,250590
+smoke,p_university_whole,p,university,whole,2,0.07911728322505951,300,250590
+smoke,p_university_whole,p,university,whole,3,0.07925695180892944,300,250590
+smoke,p_university_whole,p,university,whole,4,0.07966000586748123,300,250590
+smoke,p_university_whole,p,university,whole,5,0.07999521493911743,300,250590
+smoke,q_university_whole,q,university,whole,0,0.005127897951751947,300,50118

@@ -1,0 +1,40 @@
+........................................F............................... [100%]
+=================================== FAILURES ===================================
+_______________ test_linear_batch_scaling_preserves_epoch_budget _______________
+
+    def test_linear_batch_scaling_preserves_epoch_budget():
+        payload = load_yaml_dict("configs/synbios_moe/runs/single_ddp.yaml")
+        cfg = experiment_config_from_dict(payload)
+        resolved = resolve_batch_scale(
+            cfg.train,
+            cfg.optimizer,
+            cfg.lr_scheduler,
+            world_size=8,
+        )
+    
+        assert cfg.train.epochs == 540
+        assert resolved.global_batch_size == 64
+>       assert resolved.optimizer.lr == cfg.optimizer.lr * 2 / 3
+E       AssertionError: assert 0.001 == ((0.001 * 2) / 3)
+E        +  where 0.001 = OptimizerConfig(name='adamw', lr=0.001, weight_decay=0.1, beta1=0.9, beta2=0.95, eps=1e-06, fused=None).lr
+E        +    where OptimizerConfig(name='adamw', lr=0.001, weight_decay=0.1, beta1=0.9, beta2=0.95, eps=1e-06, fused=None) = ResolvedBatchScale(local_batch_size=8, global_batch_size=64, reference_global_batch_size=96, scale=1.0, optimizer=Opti... fused=None), lr_scheduler=LRSchedulerConfig(schedule='cosine', warmup_steps=1000, decay_steps=None, min_lr_ratio=0.1)).optimizer
+E        +  and   0.001 = OptimizerConfig(name='adamw', lr=0.001, weight_decay=0.1, beta1=0.9, beta2=0.95, eps=1e-06, fused=None).lr
+E        +    where OptimizerConfig(name='adamw', lr=0.001, weight_decay=0.1, beta1=0.9, beta2=0.95, eps=1e-06, fused=None) = ExperimentConfig(run=RunConfig(name='synbios_moe_single_ddp', seed=1337), backend=BackendConfig(ops='triton'), paralle...ggingConfig(console=True, tensorboard=True, jsonl=True, log_dir='artifacts/synbios_moe/runs', flush_secs=10), model={}).optimizer
+
+tests/test_parallel_config.py:53: AssertionError
+=============================== warnings summary ===============================
+tests/test_checkpoint_contract.py::test_full_checkpoint_resumes_adam_but_model_reader_ignores_it
+tests/test_checkpoint_contract.py::test_safety_checkpoint_without_model_export_restores_training_state
+  /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict_saver.py:143: UserWarning: torch.distributed is unavailable or uninitialized, assuming the intent is to save in a single process.
+    warnings.warn(
+
+tests/test_checkpoint_contract.py::test_full_checkpoint_resumes_adam_but_model_reader_ignores_it
+tests/test_checkpoint_contract.py::test_safety_checkpoint_without_model_export_restores_training_state
+tests/test_distributed_checkpoint.py::test_ddp_checkpoint_reshards_into_single_process
+  /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict_loader.py:142: UserWarning: torch.distributed is unavailable or uninitialized, assuming the intent is to load in a single process.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_parallel_config.py::test_linear_batch_scaling_preserves_epoch_budget
+1 failed, 71 passed, 5 warnings in 11.73s

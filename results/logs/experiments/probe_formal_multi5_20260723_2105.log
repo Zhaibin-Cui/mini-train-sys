@@ -1,0 +1,181 @@
+{
+  "valid": true,
+  "cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+  "source_data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+  "profiles": 100000,
+  "p_examples": 500000,
+  "q_examples": 100000,
+  "coverage_complete": true,
+  "missing_validation_class_counts": {},
+  "missing_validation_classes": {}
+}
+[probe_pipeline:training] tasks 0/22 | running 1 | queued 21 | failed 0 | started p_birth_date_first on cuda:0 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 2 | queued 20 | failed 0 | started q_birth_date_first on cuda:1 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 3 | queued 19 | failed 0 | started p_birth_city_first on cuda:2 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | started q_birth_city_first on cuda:3 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | overall 0.0/44 0.0% | phase ETA ? | pipeline ETA ?
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 1/4000 0.0% ETA 1:11:44 loss 2.59646 acc 0.0964 gpu 8.97/23.65 GiB | overall 0.00025/44 0.0% | phase ETA 6:34:34 | pipeline ETA 6:45:23 | done 2026-07-24T03:48:46+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 1/4000 0.0% ETA 1:06:57 loss 2.65446 acc 0.1068 gpu 7.92/23.65 GiB | overall 0.0005/44 0.0% | phase ETA 6:21:24 | pipeline ETA 6:32:13 | done 2026-07-24T03:35:36+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 1/4000 0.0% ETA 1:07:01 loss 3.17964 acc 0.0534 gpu 8.96/23.65 GiB | overall 0.0007500000000000001/44 0.0% | phase ETA 6:17:09 | pipeline ETA 6:27:58 | done 2026-07-24T03:31:21+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 1/4000 0.0% ETA 1:19:07 loss 3.20574 acc 0.0534 gpu 7.92/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:31:39 | pipeline ETA 6:42:28 | done 2026-07-24T03:45:51+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 1/4000 0.0% ETA 1:11:44 loss 2.59646 acc 0.0964 gpu 8.97/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:31:39 | pipeline ETA 6:42:28 | done 2026-07-24T03:46:01+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 1/4000 0.0% ETA 1:06:57 loss 2.65446 acc 0.1068 gpu 7.92/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:31:39 | pipeline ETA 6:42:28 | done 2026-07-24T03:46:01+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 1/4000 0.0% ETA 1:07:01 loss 3.17964 acc 0.0534 gpu 8.96/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:31:39 | pipeline ETA 6:42:28 | done 2026-07-24T03:46:01+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 1/4000 0.0% ETA 1:19:07 loss 3.20574 acc 0.0534 gpu 7.92/23.65 GiB | overall 0.001/44 0.0% | phase ETA 6:31:39 | pipeline ETA 6:42:28 | done 2026-07-24T03:46:01+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 100/4000 2.5% ETA 0:14:12 loss 1.95350 acc 0.2910 gpu 9.36/23.65 GiB | overall 0.02575/44 0.1% | phase ETA 5:12:32 | pipeline ETA 5:23:21 | done 2026-07-24T02:27:05+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 100/4000 2.5% ETA 0:14:57 loss 2.49183 acc 0.1053 gpu 7.94/23.65 GiB | overall 0.05050000000000001/44 0.1% | phase ETA 4:01:03 | pipeline ETA 4:11:52 | done 2026-07-24T01:15:35+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 100/4000 2.5% ETA 0:13:52 loss 2.72737 acc 0.1816 gpu 9.35/23.65 GiB | overall 0.07525/44 0.2% | phase ETA 2:47:58 | pipeline ETA 2:58:47 | done 2026-07-24T00:02:30+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 100/4000 2.5% ETA 0:15:51 loss 2.96830 acc 0.0665 gpu 7.94/23.65 GiB | overall 0.1/44 0.2% | phase ETA 1:20:59 | pipeline ETA 1:31:47 | done 2026-07-23T22:35:31+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 100/4000 2.5% ETA 0:14:12 loss 1.95350 acc 0.2910 gpu 9.36/23.65 GiB | overall 0.1/44 0.2% | phase ETA 1:20:59 | pipeline ETA 1:31:47 | done 2026-07-23T22:35:41+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 100/4000 2.5% ETA 0:14:57 loss 2.49183 acc 0.1053 gpu 7.94/23.65 GiB | overall 0.1/44 0.2% | phase ETA 1:20:59 | pipeline ETA 1:31:47 | done 2026-07-23T22:35:41+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 100/4000 2.5% ETA 0:13:52 loss 2.72737 acc 0.1816 gpu 9.35/23.65 GiB | overall 0.1/44 0.2% | phase ETA 1:20:59 | pipeline ETA 1:31:47 | done 2026-07-23T22:35:41+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 100/4000 2.5% ETA 0:15:51 loss 2.96830 acc 0.0665 gpu 7.94/23.65 GiB | overall 0.1/44 0.2% | phase ETA 1:20:59 | pipeline ETA 1:31:47 | done 2026-07-23T22:35:41+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 200/4000 5.0% ETA 0:13:40 loss 1.76291 acc 0.3836 gpu 9.36/23.65 GiB | overall 0.125/44 0.3% | phase ETA 1:20:14 | pipeline ETA 1:31:03 | done 2026-07-23T22:35:06+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 200/4000 5.0% ETA 0:14:38 loss 0.42012 acc 0.3687 gpu 7.94/23.65 GiB | overall 0.15/44 0.3% | phase ETA 1:19:48 | pipeline ETA 1:30:37 | done 2026-07-23T22:34:40+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 200/4000 5.0% ETA 0:13:27 loss 1.79085 acc 0.2979 gpu 9.35/23.65 GiB | overall 0.175/44 0.4% | phase ETA 1:19:13 | pipeline ETA 1:30:02 | done 2026-07-23T22:34:05+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 200/4000 5.0% ETA 0:15:29 loss 0.98289 acc 0.2336 gpu 7.94/23.65 GiB | overall 0.2/44 0.5% | phase ETA 1:18:43 | pipeline ETA 1:29:32 | done 2026-07-23T22:33:35+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 200/4000 5.0% ETA 0:13:40 loss 1.76291 acc 0.3836 gpu 9.36/23.65 GiB | overall 0.2/44 0.5% | phase ETA 1:18:43 | pipeline ETA 1:29:32 | done 2026-07-23T22:33:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 200/4000 5.0% ETA 0:14:38 loss 0.42012 acc 0.3687 gpu 7.94/23.65 GiB | overall 0.2/44 0.5% | phase ETA 1:18:43 | pipeline ETA 1:29:32 | done 2026-07-23T22:33:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 200/4000 5.0% ETA 0:13:27 loss 1.79085 acc 0.2979 gpu 9.35/23.65 GiB | overall 0.2/44 0.5% | phase ETA 1:18:43 | pipeline ETA 1:29:32 | done 2026-07-23T22:33:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 200/4000 5.0% ETA 0:15:29 loss 0.98289 acc 0.2336 gpu 7.94/23.65 GiB | overall 0.2/44 0.5% | phase ETA 1:18:43 | pipeline ETA 1:29:32 | done 2026-07-23T22:33:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 300/4000 7.5% ETA 0:13:25 loss 0.14198 acc 0.8269 gpu 9.36/23.65 GiB | overall 0.225/44 0.5% | phase ETA 1:18:23 | pipeline ETA 1:29:12 | done 2026-07-23T22:33:35+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 300/4000 7.5% ETA 0:14:05 loss 0.13802 acc 0.9657 gpu 7.94/23.65 GiB | overall 0.25/44 0.6% | phase ETA 1:17:38 | pipeline ETA 1:28:27 | done 2026-07-23T22:32:51+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 300/4000 7.5% ETA 0:13:22 loss 0.31792 acc 0.7917 gpu 9.35/23.65 GiB | overall 0.275/44 0.6% | phase ETA 1:17:31 | pipeline ETA 1:28:20 | done 2026-07-23T22:32:44+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 200/4000 5.0% ETA 0:15:29 loss 0.98289 acc 0.2336 gpu 7.94/23.65 GiB | overall 0.275/44 0.6% | phase ETA 1:17:31 | pipeline ETA 1:28:20 | done 2026-07-23T22:32:44+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 300/4000 7.5% ETA 0:13:25 loss 0.14198 acc 0.8269 gpu 9.36/23.65 GiB | overall 0.275/44 0.6% | phase ETA 1:17:31 | pipeline ETA 1:28:20 | done 2026-07-23T22:32:54+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 300/4000 7.5% ETA 0:14:05 loss 0.13802 acc 0.9657 gpu 7.94/23.65 GiB | overall 0.275/44 0.6% | phase ETA 1:17:31 | pipeline ETA 1:28:20 | done 2026-07-23T22:32:54+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 300/4000 7.5% ETA 0:13:22 loss 0.31792 acc 0.7917 gpu 9.35/23.65 GiB | overall 0.275/44 0.6% | phase ETA 1:17:31 | pipeline ETA 1:28:20 | done 2026-07-23T22:32:54+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 300/4000 7.5% ETA 0:14:58 loss 0.21408 acc 0.9483 gpu 7.94/23.65 GiB | overall 0.3/44 0.7% | phase ETA 1:16:49 | pipeline ETA 1:27:38 | done 2026-07-23T22:32:11+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 400/4000 10.0% ETA 0:13:10 loss 0.07388 acc 0.9881 gpu 9.36/23.65 GiB | overall 0.325/44 0.7% | phase ETA 1:16:28 | pipeline ETA 1:27:16 | done 2026-07-23T22:32:00+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 300/4000 7.5% ETA 0:14:05 loss 0.13802 acc 0.9657 gpu 7.94/23.65 GiB | overall 0.325/44 0.7% | phase ETA 1:16:28 | pipeline ETA 1:27:16 | done 2026-07-23T22:32:00+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 400/4000 10.0% ETA 0:13:09 loss 0.13323 acc 0.9775 gpu 9.37/23.65 GiB | overall 0.35/44 0.8% | phase ETA 1:16:09 | pipeline ETA 1:26:58 | done 2026-07-23T22:31:42+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 300/4000 7.5% ETA 0:14:58 loss 0.21408 acc 0.9483 gpu 7.94/23.65 GiB | overall 0.35/44 0.8% | phase ETA 1:16:09 | pipeline ETA 1:26:58 | done 2026-07-23T22:31:42+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 400/4000 10.0% ETA 0:13:10 loss 0.07388 acc 0.9881 gpu 9.36/23.65 GiB | overall 0.35/44 0.8% | phase ETA 1:16:09 | pipeline ETA 1:26:58 | done 2026-07-23T22:31:52+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 400/4000 10.0% ETA 0:13:32 loss 0.12300 acc 0.9731 gpu 7.94/23.65 GiB | overall 0.375/44 0.9% | phase ETA 1:15:24 | pipeline ETA 1:26:13 | done 2026-07-23T22:31:06+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 400/4000 10.0% ETA 0:13:09 loss 0.13323 acc 0.9775 gpu 9.37/23.65 GiB | overall 0.375/44 0.9% | phase ETA 1:15:24 | pipeline ETA 1:26:13 | done 2026-07-23T22:31:06+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 400/4000 10.0% ETA 0:14:19 loss 0.19725 acc 0.9623 gpu 7.94/23.65 GiB | overall 0.4/44 0.9% | phase ETA 1:14:30 | pipeline ETA 1:25:19 | done 2026-07-23T22:30:13+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 500/4000 12.5% ETA 0:12:52 loss 0.07372 acc 0.9918 gpu 9.36/23.65 GiB | overall 0.425/44 1.0% | phase ETA 1:14:05 | pipeline ETA 1:24:54 | done 2026-07-23T22:29:58+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 400/4000 10.0% ETA 0:13:32 loss 0.12300 acc 0.9731 gpu 7.94/23.65 GiB | overall 0.425/44 1.0% | phase ETA 1:14:05 | pipeline ETA 1:24:54 | done 2026-07-23T22:29:58+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 400/4000 10.0% ETA 0:13:09 loss 0.13323 acc 0.9775 gpu 9.37/23.65 GiB | overall 0.425/44 1.0% | phase ETA 1:14:05 | pipeline ETA 1:24:54 | done 2026-07-23T22:29:58+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 400/4000 10.0% ETA 0:14:19 loss 0.19725 acc 0.9623 gpu 7.94/23.65 GiB | overall 0.425/44 1.0% | phase ETA 1:14:05 | pipeline ETA 1:24:54 | done 2026-07-23T22:29:58+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 500/4000 12.5% ETA 0:12:52 loss 0.07372 acc 0.9918 gpu 9.36/23.65 GiB | overall 0.425/44 1.0% | phase ETA 1:14:05 | pipeline ETA 1:24:54 | done 2026-07-23T22:30:08+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 500/4000 12.5% ETA 0:13:03 loss 0.08613 acc 0.9754 gpu 7.94/23.65 GiB | overall 0.45/44 1.0% | phase ETA 1:13:25 | pipeline ETA 1:24:14 | done 2026-07-23T22:29:27+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 500/4000 12.5% ETA 0:12:53 loss 0.11549 acc 0.9859 gpu 9.37/23.65 GiB | overall 0.475/44 1.1% | phase ETA 1:13:03 | pipeline ETA 1:23:52 | done 2026-07-23T22:29:05+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 500/4000 12.5% ETA 0:13:47 loss 0.13923 acc 0.9658 gpu 7.94/23.65 GiB | overall 0.5/44 1.1% | phase ETA 1:12:19 | pipeline ETA 1:23:08 | done 2026-07-23T22:28:22+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 500/4000 12.5% ETA 0:12:52 loss 0.07372 acc 0.9918 gpu 9.36/23.65 GiB | overall 0.5/44 1.1% | phase ETA 1:12:19 | pipeline ETA 1:23:08 | done 2026-07-23T22:28:32+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 500/4000 12.5% ETA 0:13:03 loss 0.08613 acc 0.9754 gpu 7.94/23.65 GiB | overall 0.5/44 1.1% | phase ETA 1:12:19 | pipeline ETA 1:23:08 | done 2026-07-23T22:28:32+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 500/4000 12.5% ETA 0:12:53 loss 0.11549 acc 0.9859 gpu 9.37/23.65 GiB | overall 0.5/44 1.1% | phase ETA 1:12:19 | pipeline ETA 1:23:08 | done 2026-07-23T22:28:32+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 500/4000 12.5% ETA 0:13:47 loss 0.13923 acc 0.9658 gpu 7.94/23.65 GiB | overall 0.5/44 1.1% | phase ETA 1:12:19 | pipeline ETA 1:23:08 | done 2026-07-23T22:28:32+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 600/4000 15.0% ETA 0:12:33 loss 0.05604 acc 0.9921 gpu 9.43/23.65 GiB | overall 0.525/44 1.2% | phase ETA 1:11:53 | pipeline ETA 1:22:42 | done 2026-07-23T22:28:16+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 600/4000 15.0% ETA 0:12:36 loss 0.07418 acc 0.9771 gpu 7.94/23.65 GiB | overall 0.55/44 1.3% | phase ETA 1:11:17 | pipeline ETA 1:22:06 | done 2026-07-23T22:27:39+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 600/4000 15.0% ETA 0:12:35 loss 0.07357 acc 0.9881 gpu 9.44/23.65 GiB | overall 0.575/44 1.3% | phase ETA 1:10:52 | pipeline ETA 1:21:41 | done 2026-07-23T22:27:14+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 600/4000 15.0% ETA 0:13:18 loss 0.12531 acc 0.9679 gpu 7.94/23.65 GiB | overall 0.6/44 1.4% | phase ETA 1:10:13 | pipeline ETA 1:21:01 | done 2026-07-23T22:26:35+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 600/4000 15.0% ETA 0:12:36 loss 0.07418 acc 0.9771 gpu 7.94/23.65 GiB | overall 0.6/44 1.4% | phase ETA 1:10:13 | pipeline ETA 1:21:01 | done 2026-07-23T22:26:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 600/4000 15.0% ETA 0:12:33 loss 0.05604 acc 0.9921 gpu 9.43/23.65 GiB | overall 0.6/44 1.4% | phase ETA 1:10:13 | pipeline ETA 1:21:01 | done 2026-07-23T22:26:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 600/4000 15.0% ETA 0:12:35 loss 0.07357 acc 0.9881 gpu 9.44/23.65 GiB | overall 0.6/44 1.4% | phase ETA 1:10:13 | pipeline ETA 1:21:01 | done 2026-07-23T22:26:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 600/4000 15.0% ETA 0:13:18 loss 0.12531 acc 0.9679 gpu 7.94/23.65 GiB | overall 0.6/44 1.4% | phase ETA 1:10:13 | pipeline ETA 1:21:01 | done 2026-07-23T22:26:45+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 700/4000 17.5% ETA 0:12:11 loss 0.06763 acc 0.9790 gpu 7.94/23.65 GiB | overall 0.625/44 1.4% | phase ETA 1:09:38 | pipeline ETA 1:20:26 | done 2026-07-23T22:26:20+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 700/4000 17.5% ETA 0:12:12 loss 0.05313 acc 0.9931 gpu 9.43/23.65 GiB | overall 0.65/44 1.5% | phase ETA 1:09:09 | pipeline ETA 1:19:58 | done 2026-07-23T22:25:51+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 700/4000 17.5% ETA 0:12:15 loss 0.05687 acc 0.9896 gpu 9.44/23.65 GiB | overall 0.675/44 1.5% | phase ETA 1:08:43 | pipeline ETA 1:19:32 | done 2026-07-23T22:25:25+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 600/4000 15.0% ETA 0:13:18 loss 0.12531 acc 0.9679 gpu 7.94/23.65 GiB | overall 0.675/44 1.5% | phase ETA 1:08:43 | pipeline ETA 1:19:32 | done 2026-07-23T22:25:25+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 700/4000 17.5% ETA 0:12:11 loss 0.06763 acc 0.9790 gpu 7.94/23.65 GiB | overall 0.675/44 1.5% | phase ETA 1:08:43 | pipeline ETA 1:19:32 | done 2026-07-23T22:25:35+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 700/4000 17.5% ETA 0:12:12 loss 0.05313 acc 0.9931 gpu 9.43/23.65 GiB | overall 0.675/44 1.5% | phase ETA 1:08:43 | pipeline ETA 1:19:32 | done 2026-07-23T22:25:35+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 700/4000 17.5% ETA 0:12:15 loss 0.05687 acc 0.9896 gpu 9.44/23.65 GiB | overall 0.675/44 1.5% | phase ETA 1:08:43 | pipeline ETA 1:19:32 | done 2026-07-23T22:25:35+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 700/4000 17.5% ETA 0:12:51 loss 0.12749 acc 0.9703 gpu 7.94/23.65 GiB | overall 0.7/44 1.6% | phase ETA 1:08:05 | pipeline ETA 1:18:54 | done 2026-07-23T22:24:57+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 800/4000 20.0% ETA 0:11:46 loss 0.08766 acc 0.9801 gpu 7.94/23.65 GiB | overall 0.725/44 1.6% | phase ETA 1:07:31 | pipeline ETA 1:18:20 | done 2026-07-23T22:24:34+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 800/4000 20.0% ETA 0:11:50 loss 0.04915 acc 0.9936 gpu 9.43/23.65 GiB | overall 0.75/44 1.7% | phase ETA 1:07:02 | pipeline ETA 1:17:50 | done 2026-07-23T22:24:04+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 700/4000 17.5% ETA 0:12:51 loss 0.12749 acc 0.9703 gpu 7.94/23.65 GiB | overall 0.75/44 1.7% | phase ETA 1:07:02 | pipeline ETA 1:17:50 | done 2026-07-23T22:24:04+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 800/4000 20.0% ETA 0:11:56 loss 0.06248 acc 0.9904 gpu 9.44/23.65 GiB | overall 0.775/44 1.8% | phase ETA 1:06:34 | pipeline ETA 1:17:23 | done 2026-07-23T22:23:37+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 800/4000 20.0% ETA 0:11:46 loss 0.08766 acc 0.9801 gpu 7.94/23.65 GiB | overall 0.775/44 1.8% | phase ETA 1:06:34 | pipeline ETA 1:17:23 | done 2026-07-23T22:23:47+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 800/4000 20.0% ETA 0:11:50 loss 0.04915 acc 0.9936 gpu 9.43/23.65 GiB | overall 0.775/44 1.8% | phase ETA 1:06:34 | pipeline ETA 1:17:23 | done 2026-07-23T22:23:47+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 800/4000 20.0% ETA 0:12:25 loss 0.14431 acc 0.9705 gpu 7.94/23.65 GiB | overall 0.8/44 1.8% | phase ETA 1:05:58 | pipeline ETA 1:16:47 | done 2026-07-23T22:23:11+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 800/4000 20.0% ETA 0:11:56 loss 0.06248 acc 0.9904 gpu 9.44/23.65 GiB | overall 0.8/44 1.8% | phase ETA 1:05:58 | pipeline ETA 1:16:47 | done 2026-07-23T22:23:11+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 900/4000 22.5% ETA 0:11:23 loss 0.08073 acc 0.9806 gpu 7.94/23.65 GiB | overall 0.825/44 1.9% | phase ETA 1:05:26 | pipeline ETA 1:16:15 | done 2026-07-23T22:22:48+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 900/4000 22.5% ETA 0:11:28 loss 0.04113 acc 0.9937 gpu 9.43/23.65 GiB | overall 0.85/44 1.9% | phase ETA 1:04:56 | pipeline ETA 1:15:45 | done 2026-07-23T22:22:18+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 800/4000 20.0% ETA 0:12:25 loss 0.14431 acc 0.9705 gpu 7.94/23.65 GiB | overall 0.85/44 1.9% | phase ETA 1:04:56 | pipeline ETA 1:15:45 | done 2026-07-23T22:22:18+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 800/4000 20.0% ETA 0:11:56 loss 0.06248 acc 0.9904 gpu 9.44/23.65 GiB | overall 0.85/44 1.9% | phase ETA 1:04:56 | pipeline ETA 1:15:45 | done 2026-07-23T22:22:18+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_date_first on cuda:1 | worker 900/4000 22.5% ETA 0:11:23 loss 0.08073 acc 0.9806 gpu 7.94/23.65 GiB | overall 0.85/44 1.9% | phase ETA 1:04:56 | pipeline ETA 1:15:45 | done 2026-07-23T22:22:28+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_date_first on cuda:0 | worker 900/4000 22.5% ETA 0:11:28 loss 0.04113 acc 0.9937 gpu 9.43/23.65 GiB | overall 0.85/44 1.9% | phase ETA 1:04:56 | pipeline ETA 1:15:45 | done 2026-07-23T22:22:28+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat q_birth_city_first on cuda:3 | worker 900/4000 22.5% ETA 0:12:00 loss 0.10976 acc 0.9714 gpu 7.94/23.65 GiB | overall 0.875/44 2.0% | phase ETA 1:04:21 | pipeline ETA 1:15:10 | done 2026-07-23T22:21:54+08:00
+[probe_pipeline:training] tasks 0/22 | running 4 | queued 18 | failed 0 | heartbeat p_birth_city_first on cuda:2 | worker 900/4000 22.5% ETA 0:11:34 loss 0.07279 acc 0.9897 gpu 9.44/23.65 GiB | overall 0.9/44 2.0% | phase ETA 1:03:52 | pipeline ETA 1:14:41 | done 2026-07-23T22:21:24+08:00
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 1045, in <module>
+    arguments.func(arguments)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 558, in command_probe_pipeline
+    _command_probe_pipeline(args, logger=logger, log_dir=log_dir)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 713, in _command_probe_pipeline
+    training = schedule_jobs(
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 683, in schedule_jobs
+    thread.join()
+  File "/usr/lib/python3.10/threading.py", line 1096, in join
+    self._wait_for_tstate_lock()
+  File "/usr/lib/python3.10/threading.py", line 1116, in _wait_for_tstate_lock
+    if lock.acquire(block, timeout):
+KeyboardInterrupt
+[probe_pipeline:training] tasks 1/22 | running 3 | queued 18 | failed 1 | finished q_birth_date_first on cuda:1 | overall 1.675/44 3.8% | phase ETA 1:19:35 | pipeline ETA 1:30:24 | done 2026-07-23T22:37:15+08:00
+Exception in thread Thread-3 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 676, in worker
+    on_event({"action": "finished", **record})
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 441, in monitor
+    self.logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 366, in log_event
+    logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 204, in log_event
+    self.handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
+ValueError: I/O operation on closed file.
+[probe_pipeline:training] tasks 2/22 | running 2 | queued 18 | failed 2 | finished p_birth_date_first on cuda:0 | overall 2.45/44 5.6% | phase ETA 0:37:54 | pipeline ETA 0:48:43 | done 2026-07-23T21:55:33+08:00
+Exception in thread Thread-2 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 676, in worker
+    on_event({"action": "finished", **record})
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 441, in monitor
+    self.logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 366, in log_event
+    logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 204, in log_event
+    self.handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
+ValueError: I/O operation on closed file.
+[probe_pipeline:training] tasks 3/22 | running 1 | queued 18 | failed 3 | finished q_birth_city_first on cuda:3 | overall 3.225/44 7.3% | phase ETA 0:24:00 | pipeline ETA 0:34:49 | done 2026-07-23T21:41:39+08:00
+Exception in thread Thread-5 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 676, in worker
+    on_event({"action": "finished", **record})
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 441, in monitor
+    self.logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 366, in log_event
+    logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 204, in log_event
+    self.handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
+ValueError: I/O operation on closed file.
+[probe_pipeline:training] tasks 4/22 | running 0 | queued 18 | failed 4 | finished p_birth_city_first on cuda:2 | overall 4.0/44 9.1% | phase ETA 0:17:03 | pipeline ETA 0:27:52 | done 2026-07-23T21:34:42+08:00
+Exception in thread Thread-4 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 676, in worker
+    on_event({"action": "finished", **record})
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/probe_pipeline.py", line 441, in monitor
+    self.logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 366, in log_event
+    logger.log_event(payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/logger.py", line 204, in log_event
+    self.handle.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")
+ValueError: I/O operation on closed file.

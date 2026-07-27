@@ -1,0 +1,116 @@
+{
+  "kernel": "attention",
+  "profile": {
+    "name": "mixtral_dense",
+    "hidden": 4096,
+    "intermediate": 14336,
+    "heads": 32,
+    "head_dim": 128,
+    "vocab": 32000,
+    "sequence_length": null,
+    "token_sizes": [
+      16,
+      64,
+      256,
+      512
+    ]
+  },
+  "tokens": 16,
+  "dtype": "torch.bfloat16",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "total_memory_mb": 24217.3125,
+  "rows": [
+    {
+      "kernel": "attention",
+      "provider": "torch",
+      "size": 16,
+      "size_label": "tokens; H=4096, I=14336, heads=32, D=128, vocab=32000",
+      "status": "ok",
+      "fwd_correct": true,
+      "fwd_max_abs": 0.0,
+      "fwd_max_rel": 0.0,
+      "bwd_correct": true,
+      "bwd_max_abs": 0.0,
+      "bwd_max_rel": 0.0,
+      "fwd_p50_ms": 0.0071680000983178616,
+      "fwd_p95_ms": 0.008191999979317188,
+      "fwd_peak_mem_mb": 0.126953125,
+      "timer": "cuda_events_backward_only",
+      "full_p50_ms": 0.35548800230026245,
+      "full_p95_ms": 0.3901439905166626,
+      "full_peak_mem_mb": 2.8935546875,
+      "bwd_p50_ms": 0.5242879986763,
+      "bwd_p95_ms": 0.5526544243097306,
+      "bwd_peak_mem_mb": 2.76611328125,
+      "fwd_speedup": 1.0,
+      "bwd_speedup": 1.0,
+      "full_speedup": 1.0,
+      "profile": "mixtral_dense",
+      "shape": {
+        "tokens": 16,
+        "hidden": 4096,
+        "intermediate": 14336,
+        "heads": 32,
+        "head_dim": 128,
+        "vocab": 32000,
+        "batch": 1,
+        "sequence_length": 16
+      },
+      "dtype": "torch.bfloat16"
+    },
+    {
+      "kernel": "attention",
+      "provider": "triton",
+      "size": 16,
+      "size_label": "tokens; H=4096, I=14336, heads=32, D=128, vocab=32000",
+      "status": "ok",
+      "fwd_correct": true,
+      "fwd_max_abs": 0.00048828125,
+      "fwd_max_rel": 0.003952569328248501,
+      "bwd_correct": true,
+      "bwd_max_abs": 0.015625,
+      "bwd_max_rel": 58.281768798828125,
+      "fwd_p50_ms": 0.0071680000983178616,
+      "fwd_p95_ms": 0.008191999979317188,
+      "fwd_peak_mem_mb": 0.140625,
+      "timer": "cuda_events_backward_only",
+      "full_p50_ms": 0.8094720244407654,
+      "full_p95_ms": 1.171455979347229,
+      "full_peak_mem_mb": 0.6572265625,
+      "bwd_p50_ms": 0.914432018995285,
+      "bwd_p95_ms": 1.0484639883041382,
+      "bwd_peak_mem_mb": 0.51611328125,
+      "fwd_speedup": 1.0,
+      "bwd_speedup": 0.5733482509201193,
+      "full_speedup": 0.4391603311378872,
+      "triton_best_configs": {
+        "flash_attention_forward": {
+          "BLOCK_M": 64,
+          "BLOCK_N": 32,
+          "num_warps": 4,
+          "num_stages": 4,
+          "num_ctas": 1
+        },
+        "flash_attention_backward": {
+          "BLOCK_M": 128,
+          "BLOCK_N": 128,
+          "num_warps": 8,
+          "num_stages": 1,
+          "num_ctas": 1
+        }
+      },
+      "profile": "mixtral_dense",
+      "shape": {
+        "tokens": 16,
+        "hidden": 4096,
+        "intermediate": 14336,
+        "heads": 32,
+        "head_dim": 128,
+        "vocab": 32000,
+        "batch": 1,
+        "sequence_length": 16
+      },
+      "dtype": "torch.bfloat16"
+    }
+  ]
+}

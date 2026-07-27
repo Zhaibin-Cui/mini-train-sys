@@ -1,0 +1,874 @@
+{
+  "protocol": "progressive_original_biography_cloze_greedy",
+  "protocol_note": "the six source fact spans are removed and generated in their original text order; earlier predictions replace earlier holes before later fields are generated",
+  "shards": 4,
+  "ranges": [
+    {
+      "start_index": 0,
+      "biographies": 125000
+    },
+    {
+      "start_index": 125000,
+      "biographies": 125000
+    },
+    {
+      "start_index": 250000,
+      "biographies": 125000
+    },
+    {
+      "start_index": 375000,
+      "biographies": 125000
+    }
+  ],
+  "biographies": 500000,
+  "fields": 3000000,
+  "attribute_accuracy": {
+    "birth_date": 0.999968,
+    "birth_city": 0.999966,
+    "university": 0.999952,
+    "major": 0.99971,
+    "company": 0.999946,
+    "company_city": 0.99995
+  },
+  "attribute_mean_character_similarity": {
+    "birth_date": 0.9999821258511098,
+    "birth_city": 0.9999808369963369,
+    "university": 0.9999823736386422,
+    "major": 0.999754580346431,
+    "company": 0.9999762427572427,
+    "company_city": 0.9999645952380951
+  },
+  "micro_field_accuracy": 0.9999153333333334,
+  "mean_character_similarity": 0.999940125804643,
+  "fuzzy_accuracy_by_threshold": {
+    "0.5": {
+      "birth_date": 0.999976,
+      "birth_city": 0.999976,
+      "university": 1.0,
+      "major": 0.99971,
+      "company": 0.999992,
+      "company_city": 0.999952
+    },
+    "0.8": {
+      "birth_date": 0.999972,
+      "birth_city": 0.999972,
+      "university": 0.999952,
+      "major": 0.99971,
+      "company": 0.999948,
+      "company_city": 0.99995
+    },
+    "0.9": {
+      "birth_date": 0.999968,
+      "birth_city": 0.999972,
+      "university": 0.999952,
+      "major": 0.99971,
+      "company": 0.999946,
+      "company_city": 0.99995
+    }
+  },
+  "micro_fuzzy_accuracy_by_threshold": {
+    "0.5": 0.9999343333333334,
+    "0.8": 0.9999173333333333,
+    "0.9": 0.9999163333333333
+  },
+  "biography_all_fields_accuracy": 0.999626,
+  "mean_correct_fields_per_biography": 5.999492,
+  "biography_correct_field_count_histogram": {
+    "0": 5,
+    "1": 2,
+    "2": 4,
+    "3": 7,
+    "4": 8,
+    "5": 161,
+    "6": 499813
+  },
+  "correct_fields": {
+    "birth_date": 499984,
+    "birth_city": 499983,
+    "university": 499976,
+    "major": 499855,
+    "company": 499973,
+    "company_city": 499975
+  },
+  "total_fields": {
+    "birth_date": 500000,
+    "birth_city": 500000,
+    "university": 500000,
+    "major": 500000,
+    "company": 500000,
+    "company_city": 500000
+  },
+  "unterminated_fields": 0,
+  "parallel_wall_seconds": 2450.638818124,
+  "aggregate_biographies_per_second": 204.02843385250762,
+  "model_tokens_processed": 672353924,
+  "samples": [
+    {
+      "person_id": 0,
+      "original_text": "The profile states Jonah15 Blair13 Carter36's birthday is October 24, 2046. In life, He owes early roots to Tacoma9, NC. According to records, He joined Brooks9 Group. In particular, He received mentorship at Chicago8 University. It is recorded that He was professionally based in Albany3, GA. The profile states He developed a foundation in Political Science2.",
+      "filled_text": "The profile states Jonah15 Blair13 Carter36's birthday is October 24, 2046. In life, He owes early roots to Tacoma9, NC. According to records, He joined Brooks9 Group. In particular, He received mentorship at Chicago8 University. It is recorded that He was professionally based in Albany3, GA. The profile states He developed a foundation in Political Science2.",
+      "expected": {
+        "birth_date": "October 24, 2046",
+        "birth_city": "Tacoma9, NC",
+        "company": "Brooks9 Group",
+        "university": "Chicago8 University",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2"
+      },
+      "predicted": {
+        "birth_date": "October 24, 2046",
+        "birth_city": "Tacoma9, NC",
+        "company": "Brooks9 Group",
+        "university": "Chicago8 University",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "company": true,
+        "university": true,
+        "company_city": true,
+        "major": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "company": 1.0,
+        "university": 1.0,
+        "company_city": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "In life, Jonah15 Blair13 Carter36 spent early years in Tacoma9, NC. He developed a foundation in Political Science2. Biographical notes say He worked in Albany3, GA. In particular, He received mentorship at Chicago8 University. Biographical notes say He joined Brooks9 Group. The profile states He celebrates a birthday on October 24, 2046.",
+      "filled_text": "In life, Jonah15 Blair13 Carter36 spent early years in Tacoma9, NC. He developed a foundation in Political Science2. Biographical notes say He worked in Albany3, GA. In particular, He received mentorship at Chicago8 University. Biographical notes say He joined Brooks9 Group. The profile states He celebrates a birthday on October 24, 2046.",
+      "expected": {
+        "birth_city": "Tacoma9, NC",
+        "major": "Political Science2",
+        "company_city": "Albany3, GA",
+        "university": "Chicago8 University",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046"
+      },
+      "predicted": {
+        "birth_city": "Tacoma9, NC",
+        "major": "Political Science2",
+        "company_city": "Albany3, GA",
+        "university": "Chicago8 University",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046"
+      },
+      "correct": {
+        "birth_city": true,
+        "major": true,
+        "company_city": true,
+        "university": true,
+        "company": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company_city": 1.0,
+        "university": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "Jonah15 Blair13 Carter36 gained work experience in Albany3, GA. According to records, He majored in Political Science2. Notably, He graduated from Chicago8 University. He was born on October 24, 2046. Public records show He had a professional role at Brooks9 Group. Biographical notes say He owes early roots to Tacoma9, NC.",
+      "filled_text": "Jonah15 Blair13 Carter36 gained work experience in Albany3, GA. According to records, He majored in Political Science2. Notably, He graduated from Chicago8 University. He was born on October 24, 2046. Public records show He had a professional role at Brooks9 Group. Biographical notes say He owes early roots to Tacoma9, NC.",
+      "expected": {
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "university": "Chicago8 University",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "birth_city": "Tacoma9, NC"
+      },
+      "predicted": {
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "university": "Chicago8 University",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "birth_city": "Tacoma9, NC"
+      },
+      "correct": {
+        "company_city": true,
+        "major": true,
+        "university": true,
+        "birth_date": true,
+        "company": true,
+        "birth_city": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "major": 1.0,
+        "university": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "birth_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "It is recorded that Jonah15 Blair13 Carter36 was professionally based in Albany3, GA. Historically, He owes early roots to Tacoma9, NC. According to records, He celebrates a birthday on October 24, 2046. Biographical notes say He joined Brooks9 Group. Public records show He studied Political Science2. Notably, He studied at Chicago8 University.",
+      "filled_text": "It is recorded that Jonah15 Blair13 Carter36 was professionally based in Albany3, GA. Historically, He owes early roots to Tacoma9, NC. According to records, He celebrates a birthday on October 24, 2046. Biographical notes say He joined Brooks9 Group. Public records show He studied Political Science2. Notably, He studied at Chicago8 University.",
+      "expected": {
+        "company_city": "Albany3, GA",
+        "birth_city": "Tacoma9, NC",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "major": "Political Science2",
+        "university": "Chicago8 University"
+      },
+      "predicted": {
+        "company_city": "Albany3, GA",
+        "birth_city": "Tacoma9, NC",
+        "birth_date": "October 24, 2046",
+        "company": "Brooks9 Group",
+        "major": "Political Science2",
+        "university": "Chicago8 University"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_city": true,
+        "birth_date": true,
+        "company": true,
+        "major": true,
+        "university": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "major": 1.0,
+        "university": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 0,
+      "original_text": "Public records show Jonah15 Blair13 Carter36 calls Tacoma9, NC a birthplace. Biographical notes say He worked in Albany3, GA. Public records show He specialized in Political Science2. According to records, He was employed by Brooks9 Group. Notably, He's birthday is October 24, 2046. It is recorded that He studied at Chicago8 University.",
+      "filled_text": "Public records show Jonah15 Blair13 Carter36 calls Tacoma9, NC a birthplace. Biographical notes say He worked in Albany3, GA. Public records show He specialized in Political Science2. According to records, He was employed by Brooks9 Group. Notably, He's birthday is October 24, 2046. It is recorded that He studied at Chicago8 University.",
+      "expected": {
+        "birth_city": "Tacoma9, NC",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046",
+        "university": "Chicago8 University"
+      },
+      "predicted": {
+        "birth_city": "Tacoma9, NC",
+        "company_city": "Albany3, GA",
+        "major": "Political Science2",
+        "company": "Brooks9 Group",
+        "birth_date": "October 24, 2046",
+        "university": "Chicago8 University"
+      },
+      "correct": {
+        "birth_city": true,
+        "company_city": true,
+        "major": true,
+        "company": true,
+        "birth_date": true,
+        "university": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "According to records, Felix16 Alexa11 Price26 completed university at Fresno8 University. She was employed by Gray11 Group. It is recorded that She has an annual celebration on December 5, 1965. She grew up in Albany2, GA. Public records show She was professionally based in Cambridge, NY. In particular, She focused on Sociology4.",
+      "filled_text": "According to records, Felix16 Alexa11 Price26 completed university at Fresno8 University. She was employed by Gray11 Group. It is recorded that She has an annual celebration on December 5, 1965. She grew up in Albany2, GA. Public records show She was professionally based in Cambridge, NY. In particular, She focused on Sociology4.",
+      "expected": {
+        "university": "Fresno8 University",
+        "company": "Gray11 Group",
+        "birth_date": "December 5, 1965",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "major": "Sociology4"
+      },
+      "predicted": {
+        "university": "Fresno8 University",
+        "company": "Gray11 Group",
+        "birth_date": "December 5, 1965",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "major": "Sociology4"
+      },
+      "correct": {
+        "university": true,
+        "company": true,
+        "birth_date": true,
+        "birth_city": true,
+        "company_city": true,
+        "major": true
+      },
+      "character_similarity": {
+        "university": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. In particular, She owes early roots to Albany2, GA. It is recorded that She was born on December 5, 1965. Historically, She had a professional role at Gray11 Group. According to records, She received mentorship at Fresno8 University. Notably, She majored in Sociology4.",
+      "filled_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. In particular, She owes early roots to Albany2, GA. It is recorded that She was born on December 5, 1965. Historically, She had a professional role at Gray11 Group. According to records, She received mentorship at Fresno8 University. Notably, She majored in Sociology4.",
+      "expected": {
+        "company_city": "Cambridge, NY",
+        "birth_city": "Albany2, GA",
+        "birth_date": "December 5, 1965",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "major": "Sociology4"
+      },
+      "predicted": {
+        "company_city": "Cambridge, NY",
+        "birth_city": "Albany2, GA",
+        "birth_date": "December 5, 1965",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "major": "Sociology4"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_city": true,
+        "birth_date": true,
+        "company": true,
+        "university": true,
+        "major": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "company": 1.0,
+        "university": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "Public records show Felix16 Alexa11 Price26 completed university at Fresno8 University. Notably, She spent early years in Albany2, GA. Public records show She worked for Gray11 Group. It is recorded that She majored in Sociology4. In life, She gained work experience in Cambridge, NY. Biographical notes say She's birthday is December 5, 1965.",
+      "filled_text": "Public records show Felix16 Alexa11 Price26 completed university at Fresno8 University. Notably, She spent early years in Albany2, GA. Public records show She worked for Gray11 Group. It is recorded that She majored in Sociology4. In life, She gained work experience in Cambridge, NY. Biographical notes say She's birthday is December 5, 1965.",
+      "expected": {
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group",
+        "major": "Sociology4",
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965"
+      },
+      "predicted": {
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group",
+        "major": "Sociology4",
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965"
+      },
+      "correct": {
+        "university": true,
+        "birth_city": true,
+        "company": true,
+        "major": true,
+        "company_city": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "university": 1.0,
+        "birth_city": 1.0,
+        "company": 1.0,
+        "major": 1.0,
+        "company_city": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "According to records, Felix16 Alexa11 Price26 studied Sociology4. Historically, She grew up in Albany2, GA. Public records show She pursued a career in Cambridge, NY. The profile states She was employed by Gray11 Group. The profile states She attended Fresno8 University. Notably, She celebrates a birthday on December 5, 1965.",
+      "filled_text": "According to records, Felix16 Alexa11 Price26 studied Sociology4. Historically, She grew up in Albany2, GA. Public records show She pursued a career in Cambridge, NY. The profile states She was employed by Gray11 Group. The profile states She attended Fresno8 University. Notably, She celebrates a birthday on December 5, 1965.",
+      "expected": {
+        "major": "Sociology4",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "birth_date": "December 5, 1965"
+      },
+      "predicted": {
+        "major": "Sociology4",
+        "birth_city": "Albany2, GA",
+        "company_city": "Cambridge, NY",
+        "company": "Gray11 Group",
+        "university": "Fresno8 University",
+        "birth_date": "December 5, 1965"
+      },
+      "correct": {
+        "major": true,
+        "birth_city": true,
+        "company_city": true,
+        "company": true,
+        "university": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "major": 1.0,
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "company": 1.0,
+        "university": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 25000,
+      "original_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. Biographical notes say She was born on December 5, 1965. Historically, She specialized in Sociology4. It is recorded that She completed university at Fresno8 University. She calls Albany2, GA a birthplace. Biographical notes say She contributed expertise to Gray11 Group.",
+      "filled_text": "Historically, Felix16 Alexa11 Price26 gained work experience in Cambridge, NY. Biographical notes say She was born on December 5, 1965. Historically, She specialized in Sociology4. It is recorded that She completed university at Fresno8 University. She calls Albany2, GA a birthplace. Biographical notes say She contributed expertise to Gray11 Group.",
+      "expected": {
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965",
+        "major": "Sociology4",
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group"
+      },
+      "predicted": {
+        "company_city": "Cambridge, NY",
+        "birth_date": "December 5, 1965",
+        "major": "Sociology4",
+        "university": "Fresno8 University",
+        "birth_city": "Albany2, GA",
+        "company": "Gray11 Group"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_date": true,
+        "major": true,
+        "university": true,
+        "birth_city": true,
+        "company": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_date": 1.0,
+        "major": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "Jonah17 Alexa12 Lane5 had a professional role at Ward9 Group. Notably, She studied History2. In life, She was born on April 9, 1982. It is recorded that She calls Madison7, PA a birthplace. Public records show She received mentorship at Denver8 University. In particular, She was professionally based in Albany5, GA.",
+      "filled_text": "Jonah17 Alexa12 Lane5 had a professional role at Ward9 Group. Notably, She studied History2. In life, She was born on April 9, 1982. It is recorded that She calls Madison7, PA a birthplace. Public records show She received mentorship at Denver8 University. In particular, She was professionally based in Albany5, GA.",
+      "expected": {
+        "company": "Ward9 Group",
+        "major": "History2",
+        "birth_date": "April 9, 1982",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA"
+      },
+      "predicted": {
+        "company": "Ward9 Group",
+        "major": "History2",
+        "birth_date": "April 9, 1982",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA"
+      },
+      "correct": {
+        "company": true,
+        "major": true,
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "company": 1.0,
+        "major": 1.0,
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "Jonah17 Alexa12 Lane5 owes early roots to Madison7, PA. Public records show She has an annual celebration on April 9, 1982. Biographical notes say She attended Denver8 University. Notably, She was professionally based in Albany5, GA. Notably, She had a professional role at Ward9 Group. In particular, She developed a foundation in History2.",
+      "filled_text": "Jonah17 Alexa12 Lane5 owes early roots to Madison7, PA. Public records show She has an annual celebration on April 9, 1982. Biographical notes say She attended Denver8 University. Notably, She was professionally based in Albany5, GA. Notably, She had a professional role at Ward9 Group. In particular, She developed a foundation in History2.",
+      "expected": {
+        "birth_city": "Madison7, PA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA",
+        "company": "Ward9 Group",
+        "major": "History2"
+      },
+      "predicted": {
+        "birth_city": "Madison7, PA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "company_city": "Albany5, GA",
+        "company": "Ward9 Group",
+        "major": "History2"
+      },
+      "correct": {
+        "birth_city": true,
+        "birth_date": true,
+        "university": true,
+        "company_city": true,
+        "company": true,
+        "major": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "company_city": 1.0,
+        "company": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "Biographical notes say Jonah17 Alexa12 Lane5 developed a foundation in History2. It is recorded that She grew up in Madison7, PA. It is recorded that She worked in Albany5, GA. Notably, She studied at Denver8 University. In life, She worked for Ward9 Group. Notably, She celebrates a birthday on April 9, 1982.",
+      "filled_text": "Biographical notes say Jonah17 Alexa12 Lane5 developed a foundation in History2. It is recorded that She grew up in Madison7, PA. It is recorded that She worked in Albany5, GA. Notably, She studied at Denver8 University. In life, She worked for Ward9 Group. Notably, She celebrates a birthday on April 9, 1982.",
+      "expected": {
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "company_city": "Albany5, GA",
+        "university": "Denver8 University",
+        "company": "Ward9 Group",
+        "birth_date": "April 9, 1982"
+      },
+      "predicted": {
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "company_city": "Albany5, GA",
+        "university": "Denver8 University",
+        "company": "Ward9 Group",
+        "birth_date": "April 9, 1982"
+      },
+      "correct": {
+        "major": true,
+        "birth_city": true,
+        "company_city": true,
+        "university": true,
+        "company": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "major": 1.0,
+        "birth_city": 1.0,
+        "company_city": 1.0,
+        "university": 1.0,
+        "company": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "In particular, Jonah17 Alexa12 Lane5 was professionally based in Albany5, GA. In particular, She has an annual celebration on April 9, 1982. The profile states She studied at Denver8 University. Biographical notes say She was born in Madison7, PA. Public records show She specialized in History2. Public records show She was employed by Ward9 Group.",
+      "filled_text": "In particular, Jonah17 Alexa12 Lane5 was professionally based in Albany5, GA. In particular, She has an annual celebration on April 9, 1982. The profile states She studied at Denver8 University. Biographical notes say She was born in Madison7, PA. Public records show She specialized in History2. Public records show She was employed by Ward9 Group.",
+      "expected": {
+        "company_city": "Albany5, GA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "birth_city": "Madison7, PA",
+        "major": "History2",
+        "company": "Ward9 Group"
+      },
+      "predicted": {
+        "company_city": "Albany5, GA",
+        "birth_date": "April 9, 1982",
+        "university": "Denver8 University",
+        "birth_city": "Madison7, PA",
+        "major": "History2",
+        "company": "Ward9 Group"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_date": true,
+        "university": true,
+        "birth_city": true,
+        "major": true,
+        "company": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 50000,
+      "original_text": "It is recorded that Jonah17 Alexa12 Lane5 was born on April 9, 1982. It is recorded that She was employed by Ward9 Group. Biographical notes say She gained work experience in Albany5, GA. In particular, She studied History2. It is recorded that She was born in Madison7, PA. Notably, She attended Denver8 University.",
+      "filled_text": "It is recorded that Jonah17 Alexa12 Lane5 was born on April 9, 1982. It is recorded that She was employed by Ward9 Group. Biographical notes say She gained work experience in Albany5, GA. In particular, She studied History2. It is recorded that She was born in Madison7, PA. Notably, She attended Denver8 University.",
+      "expected": {
+        "birth_date": "April 9, 1982",
+        "company": "Ward9 Group",
+        "company_city": "Albany5, GA",
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University"
+      },
+      "predicted": {
+        "birth_date": "April 9, 1982",
+        "company": "Ward9 Group",
+        "company_city": "Albany5, GA",
+        "major": "History2",
+        "birth_city": "Madison7, PA",
+        "university": "Denver8 University"
+      },
+      "correct": {
+        "birth_date": true,
+        "company": true,
+        "company_city": true,
+        "major": true,
+        "birth_city": true,
+        "university": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "Public records show Aidan8 Taylor4 Hart22 graduated from Dallas7 University. It is recorded that They contributed expertise to Kenny7 Group. They worked in Denver6, WA. Historically, They specialized in Finance1. In life, They's birthday is August 13, 1910. Historically, They grew up in Boston6, NY.",
+      "filled_text": "Public records show Aidan8 Taylor4 Hart22 graduated from Dallas7 University. It is recorded that They contributed expertise to Kenny7 Group. They worked in Denver6, WA. Historically, They specialized in Finance1. In life, They's birthday is August 13, 1910. Historically, They grew up in Boston6, NY.",
+      "expected": {
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1",
+        "birth_date": "August 13, 1910",
+        "birth_city": "Boston6, NY"
+      },
+      "predicted": {
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1",
+        "birth_date": "August 13, 1910",
+        "birth_city": "Boston6, NY"
+      },
+      "correct": {
+        "university": true,
+        "company": true,
+        "company_city": true,
+        "major": true,
+        "birth_date": true,
+        "birth_city": true
+      },
+      "character_similarity": {
+        "university": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0,
+        "birth_date": 1.0,
+        "birth_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "The profile states Aidan8 Taylor4 Hart22 owes early roots to Boston6, NY. In particular, They's birthday is August 13, 1910. It is recorded that They graduated from Dallas7 University. Biographical notes say They had a professional role at Kenny7 Group. Notably, They pursued a career in Denver6, WA. Public records show They studied Finance1.",
+      "filled_text": "The profile states Aidan8 Taylor4 Hart22 owes early roots to Boston6, NY. In particular, They's birthday is August 13, 1910. It is recorded that They graduated from Dallas7 University. Biographical notes say They had a professional role at Kenny7 Group. Notably, They pursued a career in Denver6, WA. Public records show They studied Finance1.",
+      "expected": {
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1"
+      },
+      "predicted": {
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "company": "Kenny7 Group",
+        "company_city": "Denver6, WA",
+        "major": "Finance1"
+      },
+      "correct": {
+        "birth_city": true,
+        "birth_date": true,
+        "university": true,
+        "company": true,
+        "company_city": true,
+        "major": true
+      },
+      "character_similarity": {
+        "birth_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "company": 1.0,
+        "company_city": 1.0,
+        "major": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "Public records show Aidan8 Taylor4 Hart22 pursued a career in Denver6, WA. Notably, They's birthday is August 13, 1910. It is recorded that They received mentorship at Dallas7 University. Notably, They calls Boston6, NY a birthplace. According to records, They focused on Finance1. Biographical notes say They joined Kenny7 Group.",
+      "filled_text": "Public records show Aidan8 Taylor4 Hart22 pursued a career in Denver6, WA. Notably, They's birthday is August 13, 1910. It is recorded that They received mentorship at Dallas7 University. Notably, They calls Boston6, NY a birthplace. According to records, They focused on Finance1. Biographical notes say They joined Kenny7 Group.",
+      "expected": {
+        "company_city": "Denver6, WA",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "predicted": {
+        "company_city": "Denver6, WA",
+        "birth_date": "August 13, 1910",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "correct": {
+        "company_city": true,
+        "birth_date": true,
+        "university": true,
+        "birth_city": true,
+        "major": true,
+        "company": true
+      },
+      "character_similarity": {
+        "company_city": 1.0,
+        "birth_date": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "It is recorded that Aidan8 Taylor4 Hart22 focused on Finance1. The profile states They graduated from Dallas7 University. According to records, They was employed in Denver6, WA. They had a professional role at Kenny7 Group. In life, They owes early roots to Boston6, NY. Public records show They entered the world on August 13, 1910.",
+      "filled_text": "It is recorded that Aidan8 Taylor4 Hart22 focused on Finance1. The profile states They graduated from Dallas7 University. According to records, They was employed in Denver6, WA. They had a professional role at Kenny7 Group. In life, They owes early roots to Boston6, NY. Public records show They entered the world on August 13, 1910.",
+      "expected": {
+        "major": "Finance1",
+        "university": "Dallas7 University",
+        "company_city": "Denver6, WA",
+        "company": "Kenny7 Group",
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910"
+      },
+      "predicted": {
+        "major": "Finance1",
+        "university": "Dallas7 University",
+        "company_city": "Denver6, WA",
+        "company": "Kenny7 Group",
+        "birth_city": "Boston6, NY",
+        "birth_date": "August 13, 1910"
+      },
+      "correct": {
+        "major": true,
+        "university": true,
+        "company_city": true,
+        "company": true,
+        "birth_city": true,
+        "birth_date": true
+      },
+      "character_similarity": {
+        "major": 1.0,
+        "university": 1.0,
+        "company_city": 1.0,
+        "company": 1.0,
+        "birth_city": 1.0,
+        "birth_date": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 75000,
+      "original_text": "Notably, Aidan8 Taylor4 Hart22 celebrates a birthday on August 13, 1910. It is recorded that They was employed in Denver6, WA. Biographical notes say They studied at Dallas7 University. Notably, They calls Boston6, NY a birthplace. In life, They specialized in Finance1. The profile states They joined Kenny7 Group.",
+      "filled_text": "Notably, Aidan8 Taylor4 Hart22 celebrates a birthday on August 13, 1910. It is recorded that They was employed in Denver6, WA. Biographical notes say They studied at Dallas7 University. Notably, They calls Boston6, NY a birthplace. In life, They specialized in Finance1. The profile states They joined Kenny7 Group.",
+      "expected": {
+        "birth_date": "August 13, 1910",
+        "company_city": "Denver6, WA",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "predicted": {
+        "birth_date": "August 13, 1910",
+        "company_city": "Denver6, WA",
+        "university": "Dallas7 University",
+        "birth_city": "Boston6, NY",
+        "major": "Finance1",
+        "company": "Kenny7 Group"
+      },
+      "correct": {
+        "birth_date": true,
+        "company_city": true,
+        "university": true,
+        "birth_city": true,
+        "major": true,
+        "company": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "company_city": 1.0,
+        "university": 1.0,
+        "birth_city": 1.0,
+        "major": 1.0,
+        "company": 1.0
+      },
+      "exact_fields": 6
+    }
+  ],
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "shard_results": [
+    "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/shard_0.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/shard_1.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/shard_2.json",
+    "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/shard_3.json"
+  ]
+}

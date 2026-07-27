@@ -1,0 +1,95 @@
+{
+  "status": "completed",
+  "output": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report",
+  "oracle_headline": {
+    "examples": 250590,
+    "accuracy_before": 0.3314617502693643,
+    "accuracy_after": 0.3208228580549902,
+    "accuracy_delta": -0.010638892214374085,
+    "recovered_errors": 9009,
+    "recovery_rate": 0.05377576419604964,
+    "harmed_correct": 11675,
+    "harm_rate": 0.14055934794909766
+  },
+  "route_headline": {
+    "bad_case_examples": 162044,
+    "groups": {
+      "same_t2": {
+        "pair_count": 2424000,
+        "t1_route_overlap": 0.5299445819582014,
+        "t2_route_overlap": 0.5804965621561877,
+        "branching_score": -0.050551980197986075
+      },
+      "different_t2": {
+        "pair_count": 2232000,
+        "t1_route_overlap": 0.5199156212664648,
+        "t2_route_overlap": 0.36549865591404035,
+        "branching_score": 0.1544169653524245
+      }
+    },
+    "difference_in_differences": 0.20496894555041056,
+    "all_layers_positive": true,
+    "max_t1_nmi_by_attribute": {
+      "birth_city": 0.5091980012287206,
+      "university": 0.5075296187992808,
+      "major": 0.3603539507623515,
+      "company": 0.5511776711868008,
+      "company_city": 0.5156980388634026
+    },
+    "max_t2_nmi_by_attribute": {
+      "birth_city": 0.6054373346686687,
+      "university": 0.5626143540905365,
+      "major": 0.6514057711959809,
+      "company": 0.577274262152,
+      "company_city": 0.5982242487173725
+    }
+  }
+}
+REPORT_EXIT_CODE=0
+{
+  "status": "completed",
+  "output": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report",
+  "oracle_headline": {
+    "examples": 250590,
+    "accuracy_before": 0.3314617502693643,
+    "accuracy_after": 0.3208228580549902,
+    "accuracy_delta": -0.010638892214374085,
+    "recovered_errors": 9009,
+    "recovery_rate": 0.05377576419604964,
+    "harmed_correct": 11675,
+    "harm_rate": 0.14055934794909766
+  },
+  "route_headline": {
+    "bad_case_examples": 162044,
+    "groups": {
+      "same_t2": {
+        "pair_count": 2424000,
+        "t1_route_overlap": 0.5299445819582014,
+        "t2_route_overlap": 0.5804965621561877,
+        "branching_score": -0.050551980197986075
+      },
+      "different_t2": {
+        "pair_count": 2232000,
+        "t1_route_overlap": 0.5199156212664648,
+        "t2_route_overlap": 0.36549865591404035,
+        "branching_score": 0.1544169653524245
+      }
+    },
+    "difference_in_differences": 0.20496894555041056,
+    "all_layers_positive": true,
+    "max_t1_nmi_by_attribute": {
+      "birth_city": 0.5091980012287206,
+      "university": 0.5075296187992808,
+      "major": 0.3603539507623515,
+      "company": 0.5511776711868008,
+      "company_city": 0.5156980388634026
+    },
+    "max_t2_nmi_by_attribute": {
+      "birth_city": 0.6054373346686687,
+      "university": 0.5626143540905365,
+      "major": 0.6514057711959809,
+      "company": 0.577274262152,
+      "company_city": 0.5982242487173725
+    }
+  }
+}

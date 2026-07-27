@@ -1,0 +1,96 @@
+Detected CUDA files, patching ldflags
+Emitting ninja build file /data/mini-train-sys/cache/cuda_ext/cpython-310_5217543196fa/minitrain_cuda_flash_8d01e50dc6dc/build.ninja...
+Building extension module minitrain_cuda_flash_8d01e50dc6dc...
+Using envvar MAX_JOBS (2) as the number of workers...
+ninja: no work to do.
+Loading extension module minitrain_cuda_flash_8d01e50dc6dc...
+{
+  "schema_version": 1,
+  "device": "cuda:0",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "dtype": "torch.bfloat16",
+  "shape": [
+    2,
+    12,
+    512,
+    64
+  ],
+  "causal": true,
+  "no_dropout_torch_reference": {
+    "forward": {
+      "max_abs": 0.001953125,
+      "max_rel": 0.06343283504247665
+    },
+    "dq": {
+      "max_abs": 0.001953125,
+      "max_rel": 3.6500000953674316
+    },
+    "dk": {
+      "max_abs": 0.001953125,
+      "max_rel": 0.443113774061203
+    },
+    "dv": {
+      "max_abs": 0.001953125,
+      "max_rel": 21.19354820251465
+    }
+  },
+  "dropout_probability": 0.1,
+  "dropout_forward_backward_finite": true,
+  "backend_dispatch": {
+    "attention": {
+      "native_cuda": 2,
+      "fallback": 0
+    },
+    "native_cuda_operators": [
+      "attention"
+    ],
+    "fallback_chain": "CUDA -> Triton -> PyTorch"
+  },
+  "quality_gate_passed": true
+}
+{
+  "timestamp_utc": "2026-07-25T11:24:12.525123+00:00",
+  "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+  "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+  "python": "3.10.12 (main, Jun 22 2026, 18:55:27) [GCC 11.4.0]",
+  "cpu_count": 44,
+  "torch": "2.5.1+cu118",
+  "cuda": "11.8",
+  "nvidia_smi": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-2d358855-a17b-f267-4165-cd5a530400a7)\nGPU 1: NVIDIA GeForce RTX 4090 (UUID: GPU-06c9b5b6-4bba-7259-cba4-dc9ce6e0ce6a)\nGPU 2: NVIDIA GeForce RTX 4090 (UUID: GPU-b4df32e2-3e10-6371-0793-b7b2b8e75b1b)\nGPU 3: NVIDIA GeForce RTX 4090 (UUID: GPU-8c44c4c0-1ad4-81f0-a8e2-2cd56b05ca74)",
+  "gpu_inventory": "0, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:29:00.0\n1, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2C:00.0\n2, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2F:00.0\n3, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:32:00.0",
+  "topology": "\u001b[4mGPU0\tGPU1\tGPU2\tGPU3\tCPU Affinity\tNUMA Affinity\u001b[0m\nGPU0\t X \tSYS\tSYS\tSYS\t0-10\t0\nGPU1\tSYS\t X \tSYS\tSYS\t11-21\t1\nGPU2\tSYS\tSYS\t X \tSYS\t22-32\t2\nGPU3\tSYS\tSYS\tSYS\t X \t33-43\t3\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks",
+  "git_commit": "448aa09ccd0cab56ed9874feca7b2d5391d85fc7",
+  "git_status": "M HISTORY.md\n M README.md\n M docs/benchmarks/benchmark_plan.md\n M docs/benchmarks/distributed_benchmark.md\n D experiments/synbios_moe/predicted_first_report.py\n M experiments/synbios_moe/probe_benchmark.py\n M experiments/synbios_moe/probe_diagnostics.py\n M experiments/synbios_moe/probes.py\n M minitrain/kernels/cuda_ext/README.md\n M minitrain/kernels/cuda_ext/build.py\n M reports/README.md\n M reports/distributed_bench.md\n M reports/operator_bench.md\n M reports/synbios_moe/README.md\n M reports/synbios_moe/probes/README.md\n M reports/synbios_moe/probes/capacity.md\n M results/BENCHMARK_SUMMARY.md\n M results/MANIFEST.sha256\n M scripts/bash/export_test_results.sh\n D scripts/bash/synbios_predicted_first_batch_benchmark.sh\n D scripts/bash/synbios_predicted_first_whole_pilot.sh\n M scripts/run_dist_bench.py\n M scripts/server_benchmark_codex_prompt.md\n M scripts/synbios_moe.py\n M tests/README.md\n M tests/moe_operator_bench_runner.py\n M tests/operator_bench_linux_server.ipynb\n M tests/operator_bench_utils.py\n M tests/test_operator_bench_utils.py\n D tests/test_predicted_first_report.py\n M tests/test_probe_diagnostics.py\n M tests/test_server_benchmark_workflows.py\n?? experiments/synbios_moe/ground_truth_first_report.py\n?? reports/synbios_moe/probes/ground_truth_first_training_decision.md\n?? results/benchmarks/operator_benchmark/\n?? results/logs/cuda_build_sm89_d64_20260725T080800Z.log\n?? results/logs/cuda_build_sm89_d64_20260725T080800Z.status\n?? results/logs/kernel_export_20260725T090000Z.log\n?? results/logs/kernel_extensions_20260725T085100Z.log\n?? results/logs/kernel_extensions_20260725T085100Z.status\n?? results/logs/kernel_industrial_20260725T082500Z.log\n?? results/logs/kernel_industrial_20260725T082500Z.status\n?? results/logs/kernel_quality_r2_20260725T084600Z.log\n?? results/logs/kernel_quality_r2_20260725T084600Z.status\n?? results/logs/restore_main_20260724_0155.log\n?? results/logs/restore_main_history_push_20260724_0156.log\n?? results/logs/synbios_main_provenance_push_20260724_0149.log\n?? results/logs/synbios_provenance_push_20260724_0141.log\n?? scripts/audit_ground_truth_first_probe.py\n?? scripts/bash/synbios_backend_benchmark.sh\n?? scripts/bash/synbios_ground_truth_first_batch_benchmark.sh\n?? scripts/bash/synbios_ground_truth_first_smoke.sh\n?? scripts/bash/synbios_ground_truth_first_whole.sh\n?? scripts/summarize_operator_bench.py\n?? tests/dense_operator_bench_runner.py\n?? tests/test_ground_truth_first_report.py"
+}
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 32 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity c6e9cadf7ad2adee337a57cdf457696390208bc3160c386eb425135f20792dde --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b32_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 32 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity d4d03146f0050cb00718c577c24cccb7afac4fd6e7e205ddd72b1d878a6681a2 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b32_torch_r1.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 48 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity 7a3cd6ea541c4161808a0fdc9afb2384a6eadceb64cdf69ce29f3fd29ed4cf21 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b48_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 48 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity c22b73ee73c732ee6f2060a260d9bfd23656f341a4d09150d3e03892e2585a73 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b48_torch_r1.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 64 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity 588df3f0ef87b915e3a3549045206e4fbc670d4233bc4671c196bfdbc0f883d5 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b64_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 64 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity 30cbdfb424cb1671abbd4f3f0e71a657de77b1e8f034de44d23cfa286dc85afe --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b64_torch_r1.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 80 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity 9a92e5456454a69764efa39ad29a88ba6558d2e60716332e4d9e5d08ad94a432 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b80_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 80 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity c6860146ff968cd1e24feafb5c0c75b6dfcca044c7796df61304206946a8431c --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b80_torch_r1.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 96 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity e83336ee317f65413a1cb81df698799c95b7d8d965d724ecc97ec78c8c5a8dc4 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b96_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 96 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity a9e163e1658de6f0d08c02c41ff754df073a0c3b8b0026ac4717501890e08c5b --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b96_torch_r1.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 112 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity 06cf3d6d4010fe84acdac5c4362358f41b3ad4aef36c1d5c639e9546f68aea4e --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b112_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 112 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity debb45b9a1890f60dbfebee55700d3ab2b781fcb666f3f629fe7dbc00bfdbbba --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b112_torch_r1.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 120 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity 152cfcf2e9aac24c2dd81485e0776117d32a783f0a8877bbb1ade7a3d5b9f097 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b120_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 120 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity 618f8ff6b1d3c635c5cb693fb0d38746bba8dd61a45595012d3b9c2e070bc3b0 --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b120_torch_r1.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 128 --warmup-steps 5 --measure-steps 20 --repeat 0 --case-identity c959afab3c7bbb0ebd5cd776c36dabd1cbdea0866198d93be682839d6b5ededa --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b128_torch_r0.json --ops-backend torch
+RUN /home/ubuntu/mini-train-sys/.venv/bin/python -m torch.distributed.run --standalone --nproc_per_node 4 scripts/run_dist_bench.py _worker --config /home/ubuntu/mini-train-sys/configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml --model-config /home/ubuntu/mini-train-sys/configs/synbios_moe/model.yaml --batch-size 128 --warmup-steps 5 --measure-steps 20 --repeat 1 --case-identity f40badf58b358cccd45ac82041963ed553662eca58f558aafda0a9f24802a19a --output artifacts/distributed_benchmark/synbios_backend_capacity/20260725T112400Z/raw/capacity_fsdp_4gpu_b128_torch_r1.json --ops-backend torch
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 953, in <module>
+    main()
+  File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 949, in main
+    suite(args)
+  File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 405, in suite
+    stdout, stderr, returncode, timed_out = run_case(
+  File "/home/ubuntu/mini-train-sys/scripts/run_dist_bench.py", line 255, in run_case
+    stdout, stderr = process.communicate(timeout=timeout_seconds)
+  File "/usr/lib/python3.10/subprocess.py", line 1154, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+  File "/usr/lib/python3.10/subprocess.py", line 2021, in _communicate
+    ready = selector.select(timeout)
+  File "/usr/lib/python3.10/selectors.py", line 416, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt

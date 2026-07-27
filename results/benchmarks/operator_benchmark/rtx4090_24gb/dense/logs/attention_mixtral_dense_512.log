@@ -1,0 +1,7 @@
+   benchmark provider  size  ... num_warps num_stages  num_ctas
+0  attention   triton   512  ...         8          4         1
+1  attention   triton   512  ...         8          3         1
+
+[2 rows x 10 columns]
+
+--- STDERR ---

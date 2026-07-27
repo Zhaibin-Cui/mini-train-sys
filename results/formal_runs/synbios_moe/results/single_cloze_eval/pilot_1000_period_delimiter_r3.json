@@ -1,0 +1,890 @@
+{
+  "protocol": "progressive_original_biography_cloze_greedy",
+  "protocol_note": "the six source fact spans are removed and generated in their original text order; earlier predictions replace earlier holes before later fields are generated",
+  "biographies": 1000,
+  "fields": 6000,
+  "attribute_accuracy": {
+    "birth_date": 1.0,
+    "birth_city": 0.785,
+    "university": 1.0,
+    "major": 1.0,
+    "company": 1.0,
+    "company_city": 1.0
+  },
+  "attribute_mean_character_similarity": {
+    "birth_date": 1.0,
+    "birth_city": 0.8865076650563624,
+    "university": 1.0,
+    "major": 1.0,
+    "company": 1.0,
+    "company_city": 1.0
+  },
+  "mean_character_similarity": 0.981084610842727,
+  "fuzzy_accuracy_by_threshold": {
+    "0.5": {
+      "birth_date": 1.0,
+      "birth_city": 0.817,
+      "university": 1.0,
+      "major": 1.0,
+      "company": 1.0,
+      "company_city": 1.0
+    },
+    "0.8": {
+      "birth_date": 1.0,
+      "birth_city": 0.785,
+      "university": 1.0,
+      "major": 1.0,
+      "company": 1.0,
+      "company_city": 1.0
+    },
+    "0.9": {
+      "birth_date": 1.0,
+      "birth_city": 0.785,
+      "university": 1.0,
+      "major": 1.0,
+      "company": 1.0,
+      "company_city": 1.0
+    }
+  },
+  "micro_fuzzy_accuracy_by_threshold": {
+    "0.5": 0.9695,
+    "0.8": 0.9641666666666666,
+    "0.9": 0.9641666666666666
+  },
+  "micro_field_accuracy": 0.9641666666666666,
+  "biography_all_fields_accuracy": 0.785,
+  "mean_correct_fields_per_biography": 5.785,
+  "biography_correct_field_count_histogram": {
+    "0": 0,
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 215,
+    "6": 785
+  },
+  "correct_fields": {
+    "birth_date": 1000,
+    "birth_city": 785,
+    "university": 1000,
+    "major": 1000,
+    "company": 1000,
+    "company_city": 1000
+  },
+  "total_fields": {
+    "birth_date": 1000,
+    "birth_city": 1000,
+    "university": 1000,
+    "major": 1000,
+    "company": 1000,
+    "company_city": 1000
+  },
+  "unterminated_fields": 0,
+  "elapsed_seconds": 80.4023811080001,
+  "biographies_per_second": 12.43744260081993,
+  "model_tokens_processed": 1254681,
+  "samples": [
+    {
+      "person_id": 0,
+      "original_text": "In life, Jonah15 Blair13 Carter36 entered the world on October 24, 2046. It is recorded that He was born in Tacoma9, NC. The profile states He received mentorship at Chicago8 University. Notably, He specialized in Political Science2. Notably, He was employed by Brooks9 Group. Public records show He was professionally based in Albany3, GA.",
+      "filled_text": "In life, Jonah15 Blair13 Carter36 entered the world on October 24, 2046. It is recorded that He was born in Tacoma9, NC. The profile states He received mentorship at Chicago8 University. Notably, He specialized in Political Science2. Notably, He was employed by Brooks9 Group. Public records show He was professionally based in Albany3, GA.",
+      "expected": {
+        "birth_date": "October 24, 2046",
+        "birth_city": "Tacoma9, NC",
+        "university": "Chicago8 University",
+        "major": "Political Science2",
+        "company": "Brooks9 Group",
+        "company_city": "Albany3, GA"
+      },
+      "predicted": {
+        "birth_date": "October 24, 2046",
+        "birth_city": "Tacoma9, NC",
+        "university": "Chicago8 University",
+        "major": "Political Science2",
+        "company": "Brooks9 Group",
+        "company_city": "Albany3, GA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 1,
+      "original_text": "The profile states Maya16 Morgan9 Dennis47's birthday is December 7, 2000. Biographical notes say They calls Oakland4, MA a birthplace. According to records, They studied at Miami2 University. Notably, They studied Finance2. The profile states They had a professional role at Hart7 Group. Historically, They was professionally based in Tacoma3, NC.",
+      "filled_text": "The profile states Maya16 Morgan9 Dennis47's birthday is December 7, 2000. Biographical notes say They calls Oakland4, MA a birthplace. According to records, They studied at Miami2 University. Notably, They studied Finance2. The profile states They had a professional role at Hart7 Group. Historically, They was professionally based in Tacoma3, NC.",
+      "expected": {
+        "birth_date": "December 7, 2000",
+        "birth_city": "Oakland4, MA",
+        "university": "Miami2 University",
+        "major": "Finance2",
+        "company": "Hart7 Group",
+        "company_city": "Tacoma3, NC"
+      },
+      "predicted": {
+        "birth_date": "December 7, 2000",
+        "birth_city": "Oakland4, MA a birthplace",
+        "university": "Miami2 University",
+        "major": "Finance2",
+        "company": "Hart7 Group",
+        "company_city": "Tacoma3, NC"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": false,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 0.48,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 5
+    },
+    {
+      "person_id": 2,
+      "original_text": "In life, Maya16 Morgan10 Stokes46 celebrates a birthday on December 22, 2029. It is recorded that She grew up in Austin5, MA. In particular, She graduated from Madison10 University. The profile states She studied Finance4. Public records show She joined Ward1 Group. The profile states She gained work experience in New York, NY.",
+      "filled_text": "In life, Maya16 Morgan10 Stokes46 celebrates a birthday on December 22, 2029. It is recorded that She grew up in Austin5, MA. In particular, She graduated from Madison10 University. The profile states She studied Finance4. Public records show She joined Ward1 Group. The profile states She gained work experience in New York, NY.",
+      "expected": {
+        "birth_date": "December 22, 2029",
+        "birth_city": "Austin5, MA",
+        "university": "Madison10 University",
+        "major": "Finance4",
+        "company": "Ward1 Group",
+        "company_city": "New York, NY"
+      },
+      "predicted": {
+        "birth_date": "December 22, 2029",
+        "birth_city": "Austin5, MA",
+        "university": "Madison10 University",
+        "major": "Finance4",
+        "company": "Ward1 Group",
+        "company_city": "New York, NY"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 3,
+      "original_text": "Public records show Mina7 Hayden16 Lane was born on February 15, 2052. In life, He owes early roots to Austin2, MA. The profile states He studied at Princeton8 University. Biographical notes say He studied History4. In life, He worked for Forger9 Group. It is recorded that He gained work experience in Phoenix8, IL.",
+      "filled_text": "Public records show Mina7 Hayden16 Lane was born on February 15, 2052. In life, He owes early roots to Austin2, MA. The profile states He studied at Princeton8 University. Biographical notes say He studied History4. In life, He worked for Forger9 Group. It is recorded that He gained work experience in Phoenix8, IL.",
+      "expected": {
+        "birth_date": "February 15, 2052",
+        "birth_city": "Austin2, MA",
+        "university": "Princeton8 University",
+        "major": "History4",
+        "company": "Forger9 Group",
+        "company_city": "Phoenix8, IL"
+      },
+      "predicted": {
+        "birth_date": "February 15, 2052",
+        "birth_city": "Austin2, MA",
+        "university": "Princeton8 University",
+        "major": "History4",
+        "company": "Forger9 Group",
+        "company_city": "Phoenix8, IL"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 4,
+      "original_text": "The profile states Zoe17 Casey15 Reed23 celebrates a birthday on September 3, 1951. They spent early years in Dallas6, WA. In particular, They attended Miami14 University. Notably, They majored in Statistics4. Notably, They joined Gray6 Group. Public records show They worked in Denver3, WA.",
+      "filled_text": "The profile states Zoe17 Casey15 Reed23 celebrates a birthday on September 3, 1951. They spent early years in Dallas6, WA. In particular, They attended Miami14 University. Notably, They majored in Statistics4. Notably, They joined Gray6 Group. Public records show They worked in Denver3, WA.",
+      "expected": {
+        "birth_date": "September 3, 1951",
+        "birth_city": "Dallas6, WA",
+        "university": "Miami14 University",
+        "major": "Statistics4",
+        "company": "Gray6 Group",
+        "company_city": "Denver3, WA"
+      },
+      "predicted": {
+        "birth_date": "September 3, 1951",
+        "birth_city": "Dallas6, WA",
+        "university": "Miami14 University",
+        "major": "Statistics4",
+        "company": "Gray6 Group",
+        "company_city": "Denver3, WA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 5,
+      "original_text": "Biographical notes say Carlos1 Riley1 Hart20 celebrates a birthday on January 21, 2072. In particular, He was born in Chicago2, CA. In life, He graduated from Oakland2 University. Notably, He studied Engineering1. Notably, He contributed expertise to Brooks1 Group. Public records show He gained work experience in New York, NY.",
+      "filled_text": "Biographical notes say Carlos1 Riley1 Hart20 celebrates a birthday on January 21, 2072. In particular, He was born in Chicago2, CA. In life, He graduated from Oakland2 University. Notably, He studied Engineering1. Notably, He contributed expertise to Brooks1 Group. Public records show He gained work experience in New York, NY.",
+      "expected": {
+        "birth_date": "January 21, 2072",
+        "birth_city": "Chicago2, CA",
+        "university": "Oakland2 University",
+        "major": "Engineering1",
+        "company": "Brooks1 Group",
+        "company_city": "New York, NY"
+      },
+      "predicted": {
+        "birth_date": "January 21, 2072",
+        "birth_city": "Chicago2, CA",
+        "university": "Oakland2 University",
+        "major": "Engineering1",
+        "company": "Brooks1 Group",
+        "company_city": "New York, NY"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 6,
+      "original_text": "It is recorded that Alden5 Avery11 Brooks38 celebrates a birthday on October 11, 1903. In life, She calls Madison7, PA a birthplace. Biographical notes say She graduated from Fresno5 University. Historically, She majored in Chemistry3. Historically, She worked for Forger8 Group. Biographical notes say She gained work experience in Tacoma4, NC.",
+      "filled_text": "It is recorded that Alden5 Avery11 Brooks38 celebrates a birthday on October 11, 1903. In life, She calls Madison7, PA a birthplace. Biographical notes say She graduated from Fresno5 University. Historically, She majored in Chemistry3. Historically, She worked for Forger8 Group. Biographical notes say She gained work experience in Tacoma4, NC.",
+      "expected": {
+        "birth_date": "October 11, 1903",
+        "birth_city": "Madison7, PA",
+        "university": "Fresno5 University",
+        "major": "Chemistry3",
+        "company": "Forger8 Group",
+        "company_city": "Tacoma4, NC"
+      },
+      "predicted": {
+        "birth_date": "October 11, 1903",
+        "birth_city": "Madison7, PA a birthplace",
+        "university": "Fresno5 University",
+        "major": "Chemistry3",
+        "company": "Forger8 Group",
+        "company_city": "Tacoma4, NC"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": false,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 0.48,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 5
+    },
+    {
+      "person_id": 7,
+      "original_text": "Notably, Alondra1 Parker19 Reed28 celebrates a birthday on October 6, 1954. According to records, They grew up in Dallas6, WA. Biographical notes say They received mentorship at Chicago13 University. Historically, They majored in Communications1. It is recorded that They had a professional role at Hart7 Group. In particular, They worked in Tacoma3, NC.",
+      "filled_text": "Notably, Alondra1 Parker19 Reed28 celebrates a birthday on October 6, 1954. According to records, They grew up in Dallas6, WA. Biographical notes say They received mentorship at Chicago13 University. Historically, They majored in Communications1. It is recorded that They had a professional role at Hart7 Group. In particular, They worked in Tacoma3, NC.",
+      "expected": {
+        "birth_date": "October 6, 1954",
+        "birth_city": "Dallas6, WA",
+        "university": "Chicago13 University",
+        "major": "Communications1",
+        "company": "Hart7 Group",
+        "company_city": "Tacoma3, NC"
+      },
+      "predicted": {
+        "birth_date": "October 6, 1954",
+        "birth_city": "Dallas6, WA",
+        "university": "Chicago13 University",
+        "major": "Communications1",
+        "company": "Hart7 Group",
+        "company_city": "Tacoma3, NC"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 8,
+      "original_text": "In particular, Jonah19 Hayden16 Bennett2's birthday is December 19, 2080. It is recorded that She calls Madison, PA a birthplace. Historically, She received mentorship at Portland13 University. Biographical notes say She studied Music3. She worked for Ward12 Group. It is recorded that She pursued a career in Cambridge6, NY.",
+      "filled_text": "In particular, Jonah19 Hayden16 Bennett2's birthday is December 19, 2080. It is recorded that She calls Madison, PA a birthplace. Historically, She received mentorship at Portland13 University. Biographical notes say She studied Music3. She worked for Ward12 Group. It is recorded that She pursued a career in Cambridge6, NY.",
+      "expected": {
+        "birth_date": "December 19, 2080",
+        "birth_city": "Madison, PA",
+        "university": "Portland13 University",
+        "major": "Music3",
+        "company": "Ward12 Group",
+        "company_city": "Cambridge6, NY"
+      },
+      "predicted": {
+        "birth_date": "December 19, 2080",
+        "birth_city": "Madison, PA a birthplace",
+        "university": "Portland13 University",
+        "major": "Music3",
+        "company": "Ward12 Group",
+        "company_city": "Cambridge6, NY"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": false,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 0.45833333333333337,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 5
+    },
+    {
+      "person_id": 9,
+      "original_text": "The profile states Ada13 Taylor19 Hayes33 celebrates a birthday on September 26, 2088. They owes early roots to Phoenix8, IL. It is recorded that They graduated from Boston6 University. In life, They developed a foundation in Biology1. The profile states They had a professional role at Forger9 Group. It is recorded that They was employed in Phoenix8, IL.",
+      "filled_text": "The profile states Ada13 Taylor19 Hayes33 celebrates a birthday on September 26, 2088. They owes early roots to Phoenix8, IL. It is recorded that They graduated from Boston6 University. In life, They developed a foundation in Biology1. The profile states They had a professional role at Forger9 Group. It is recorded that They was employed in Phoenix8, IL.",
+      "expected": {
+        "birth_date": "September 26, 2088",
+        "birth_city": "Phoenix8, IL",
+        "university": "Boston6 University",
+        "major": "Biology1",
+        "company": "Forger9 Group",
+        "company_city": "Phoenix8, IL"
+      },
+      "predicted": {
+        "birth_date": "September 26, 2088",
+        "birth_city": "Phoenix8, IL",
+        "university": "Boston6 University",
+        "major": "Biology1",
+        "company": "Forger9 Group",
+        "company_city": "Phoenix8, IL"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 10,
+      "original_text": "The profile states Milo1 Bennett18 Ward6 celebrates a birthday on June 27, 1943. He was born in Durham2, GA. Historically, He graduated from Phoenix11 University. Historically, He studied Political Science3. He was employed by Foster1 Group. He gained work experience in New York, NY.",
+      "filled_text": "The profile states Milo1 Bennett18 Ward6 celebrates a birthday on June 27, 1943. He was born in Durham2, GA. Historically, He graduated from Phoenix11 University. Historically, He studied Political Science3. He was employed by Foster1 Group. He gained work experience in New York, NY.",
+      "expected": {
+        "birth_date": "June 27, 1943",
+        "birth_city": "Durham2, GA",
+        "university": "Phoenix11 University",
+        "major": "Political Science3",
+        "company": "Foster1 Group",
+        "company_city": "New York, NY"
+      },
+      "predicted": {
+        "birth_date": "June 27, 1943",
+        "birth_city": "Durham2, GA",
+        "university": "Phoenix11 University",
+        "major": "Political Science3",
+        "company": "Foster1 Group",
+        "company_city": "New York, NY"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 11,
+      "original_text": "Public records show Lena6 Reese1 Brooks28 has an annual celebration on June 20, 2009. Public records show They grew up in Chicago, CA. It is recorded that They completed university at Princeton11 University. Historically, They majored in Engineering1. According to records, They was employed by Stone3 Group. Notably, They was professionally based in Miami6, IL.",
+      "filled_text": "Public records show Lena6 Reese1 Brooks28 has an annual celebration on June 20, 2009. Public records show They grew up in Chicago, CA. It is recorded that They completed university at Princeton11 University. Historically, They majored in Engineering1. According to records, They was employed by Stone3 Group. Notably, They was professionally based in Miami6, IL.",
+      "expected": {
+        "birth_date": "June 20, 2009",
+        "birth_city": "Chicago, CA",
+        "university": "Princeton11 University",
+        "major": "Engineering1",
+        "company": "Stone3 Group",
+        "company_city": "Miami6, IL"
+      },
+      "predicted": {
+        "birth_date": "June 20, 2009",
+        "birth_city": "Chicago, CA",
+        "university": "Princeton11 University",
+        "major": "Engineering1",
+        "company": "Stone3 Group",
+        "company_city": "Miami6, IL"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 12,
+      "original_text": "Mina18 Hayden3 Hart2 has an annual celebration on July 3, 1988. Biographical notes say He grew up in Chicago4, CA. Notably, He attended Dallas6 University. In particular, He focused on Philosophy4. He worked for Stone11 Group. In life, He gained work experience in Dallas3, WA.",
+      "filled_text": "Mina18 Hayden3 Hart2 has an annual celebration on July 3, 1988. Biographical notes say He grew up in Chicago4, CA. Notably, He attended Dallas6 University. In particular, He focused on Philosophy4. He worked for Stone11 Group. In life, He gained work experience in Dallas3, WA.",
+      "expected": {
+        "birth_date": "July 3, 1988",
+        "birth_city": "Chicago4, CA",
+        "university": "Dallas6 University",
+        "major": "Philosophy4",
+        "company": "Stone11 Group",
+        "company_city": "Dallas3, WA"
+      },
+      "predicted": {
+        "birth_date": "July 3, 1988",
+        "birth_city": "Chicago4, CA",
+        "university": "Dallas6 University",
+        "major": "Philosophy4",
+        "company": "Stone11 Group",
+        "company_city": "Dallas3, WA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 13,
+      "original_text": "The profile states Lena5 Drew4 Cross6 has an annual celebration on October 14, 2000. In particular, They was born in Denver3, WA. Notably, They graduated from Cambridge4 University. The profile states They developed a foundation in Data Science1. Biographical notes say They had a professional role at Brooks12 Group. Notably, They was employed in Cambridge4, NY.",
+      "filled_text": "The profile states Lena5 Drew4 Cross6 has an annual celebration on October 14, 2000. In particular, They was born in Denver3, WA. Notably, They graduated from Cambridge4 University. The profile states They developed a foundation in Data Science1. Biographical notes say They had a professional role at Brooks12 Group. Notably, They was employed in Cambridge4, NY.",
+      "expected": {
+        "birth_date": "October 14, 2000",
+        "birth_city": "Denver3, WA",
+        "university": "Cambridge4 University",
+        "major": "Data Science1",
+        "company": "Brooks12 Group",
+        "company_city": "Cambridge4, NY"
+      },
+      "predicted": {
+        "birth_date": "October 14, 2000",
+        "birth_city": "Denver3, WA",
+        "university": "Cambridge4 University",
+        "major": "Data Science1",
+        "company": "Brooks12 Group",
+        "company_city": "Cambridge4, NY"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 14,
+      "original_text": "Notably, Aidan18 Rowan8 Rooney20 entered the world on October 14, 2095. He calls Austin9, MA a birthplace. In life, He received mentorship at Princeton12 University. Historically, He studied Statistics3. He had a professional role at Cross4 Group. According to records, He was professionally based in Austin1, MA.",
+      "filled_text": "Notably, Aidan18 Rowan8 Rooney20 entered the world on October 14, 2095. He calls Austin9, MA a birthplace. In life, He received mentorship at Princeton12 University. Historically, He studied Statistics3. He had a professional role at Cross4 Group. According to records, He was professionally based in Austin1, MA.",
+      "expected": {
+        "birth_date": "October 14, 2095",
+        "birth_city": "Austin9, MA",
+        "university": "Princeton12 University",
+        "major": "Statistics3",
+        "company": "Cross4 Group",
+        "company_city": "Austin1, MA"
+      },
+      "predicted": {
+        "birth_date": "October 14, 2095",
+        "birth_city": "Austin9, MA a birthplace",
+        "university": "Princeton12 University",
+        "major": "Statistics3",
+        "company": "Cross4 Group",
+        "company_city": "Austin1, MA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": false,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 0.45833333333333337,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 5
+    },
+    {
+      "person_id": 15,
+      "original_text": "In life, Ada17 Bennett16 Hayes16 celebrates a birthday on September 20, 1907. In life, He spent early years in Denver8, WA. Biographical notes say He studied at Austin11 University. Public records show He majored in Statistics1. Biographical notes say He joined Forger1 Group. He pursued a career in New York, NY.",
+      "filled_text": "In life, Ada17 Bennett16 Hayes16 celebrates a birthday on September 20, 1907. In life, He spent early years in Denver8, WA. Biographical notes say He studied at Austin11 University. Public records show He majored in Statistics1. Biographical notes say He joined Forger1 Group. He pursued a career in New York, NY.",
+      "expected": {
+        "birth_date": "September 20, 1907",
+        "birth_city": "Denver8, WA",
+        "university": "Austin11 University",
+        "major": "Statistics1",
+        "company": "Forger1 Group",
+        "company_city": "New York, NY"
+      },
+      "predicted": {
+        "birth_date": "September 20, 1907",
+        "birth_city": "Denver8, WA",
+        "university": "Austin11 University",
+        "major": "Statistics1",
+        "company": "Forger1 Group",
+        "company_city": "New York, NY"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 16,
+      "original_text": "According to records, Owen19 Hayden13 Rooney16 celebrates a birthday on April 10, 1991. Historically, She was born in Raleigh7, NC. In life, She studied at Dallas9 University. In life, She focused on Physics4. Historically, She worked for Carter10 Group. Public records show She worked in Oakland3, MA.",
+      "filled_text": "According to records, Owen19 Hayden13 Rooney16 celebrates a birthday on April 10, 1991. Historically, She was born in Raleigh7, NC. In life, She studied at Dallas9 University. In life, She focused on Physics4. Historically, She worked for Carter10 Group. Public records show She worked in Oakland3, MA.",
+      "expected": {
+        "birth_date": "April 10, 1991",
+        "birth_city": "Raleigh7, NC",
+        "university": "Dallas9 University",
+        "major": "Physics4",
+        "company": "Carter10 Group",
+        "company_city": "Oakland3, MA"
+      },
+      "predicted": {
+        "birth_date": "April 10, 1991",
+        "birth_city": "Raleigh7, NC",
+        "university": "Dallas9 University",
+        "major": "Physics4",
+        "company": "Carter10 Group",
+        "company_city": "Oakland3, MA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 17,
+      "original_text": "Public records show Milo9 Blair3 Lane31 has an annual celebration on December 8, 2095. She calls Cambridge9, NY a birthplace. Public records show She completed university at Austin2 University. In particular, She studied Design2. According to records, She joined Stokes7 Group. In life, She pursued a career in Denver5, WA.",
+      "filled_text": "Public records show Milo9 Blair3 Lane31 has an annual celebration on December 8, 2095. She calls Cambridge9, NY a birthplace. Public records show She completed university at Austin2 University. In particular, She studied Design2. According to records, She joined Stokes7 Group. In life, She pursued a career in Denver5, WA.",
+      "expected": {
+        "birth_date": "December 8, 2095",
+        "birth_city": "Cambridge9, NY",
+        "university": "Austin2 University",
+        "major": "Design2",
+        "company": "Stokes7 Group",
+        "company_city": "Denver5, WA"
+      },
+      "predicted": {
+        "birth_date": "December 8, 2095",
+        "birth_city": "Cambridge9, NY a birthplace",
+        "university": "Austin2 University",
+        "major": "Design2",
+        "company": "Stokes7 Group",
+        "company_city": "Denver5, WA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": false,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 0.5185185185185186,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 5
+    },
+    {
+      "person_id": 18,
+      "original_text": "Biographical notes say Clara17 Alexa Foster17's birthday is August 17, 1970. The profile states They grew up in Albany4, GA. It is recorded that They attended Boston3 University. According to records, They specialized in Economics. It is recorded that They was employed by Dennis2 Group. Public records show They gained work experience in Dallas5, WA.",
+      "filled_text": "Biographical notes say Clara17 Alexa Foster17's birthday is August 17, 1970. The profile states They grew up in Albany4, GA. It is recorded that They attended Boston3 University. According to records, They specialized in Economics. It is recorded that They was employed by Dennis2 Group. Public records show They gained work experience in Dallas5, WA.",
+      "expected": {
+        "birth_date": "August 17, 1970",
+        "birth_city": "Albany4, GA",
+        "university": "Boston3 University",
+        "major": "Economics",
+        "company": "Dennis2 Group",
+        "company_city": "Dallas5, WA"
+      },
+      "predicted": {
+        "birth_date": "August 17, 1970",
+        "birth_city": "Albany4, GA",
+        "university": "Boston3 University",
+        "major": "Economics",
+        "company": "Dennis2 Group",
+        "company_city": "Dallas5, WA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    },
+    {
+      "person_id": 19,
+      "original_text": "In life, Felix12 Parker14 Brooks19 was born on August 4, 2063. Biographical notes say They owes early roots to Seattle3, TX. Public records show They graduated from Dallas7 University. They focused on History. In life, They was employed by Forger5 Group. In life, They gained work experience in Orlando4, PA.",
+      "filled_text": "In life, Felix12 Parker14 Brooks19 was born on August 4, 2063. Biographical notes say They owes early roots to Seattle3, TX. Public records show They graduated from Dallas7 University. They focused on History. In life, They was employed by Forger5 Group. In life, They gained work experience in Orlando4, PA.",
+      "expected": {
+        "birth_date": "August 4, 2063",
+        "birth_city": "Seattle3, TX",
+        "university": "Dallas7 University",
+        "major": "History",
+        "company": "Forger5 Group",
+        "company_city": "Orlando4, PA"
+      },
+      "predicted": {
+        "birth_date": "August 4, 2063",
+        "birth_city": "Seattle3, TX",
+        "university": "Dallas7 University",
+        "major": "History",
+        "company": "Forger5 Group",
+        "company_city": "Orlando4, PA"
+      },
+      "correct": {
+        "birth_date": true,
+        "birth_city": true,
+        "university": true,
+        "major": true,
+        "company": true,
+        "company_city": true
+      },
+      "character_similarity": {
+        "birth_date": 1.0,
+        "birth_city": 1.0,
+        "university": 1.0,
+        "major": 1.0,
+        "company": 1.0,
+        "company_city": 1.0
+      },
+      "exact_fields": 6
+    }
+  ],
+  "monitoring": {
+    "event": "cloze_evaluate",
+    "step": 63,
+    "batch": 63,
+    "batches_total": 63,
+    "progress_percent": 100.0,
+    "elapsed_seconds": 80.399,
+    "eta_seconds": 0.0,
+    "items_processed": 1000,
+    "items_per_sec": 12.438,
+    "tokens_processed": 1254681,
+    "tokens_per_sec": 15605.618,
+    "field_accuracy_running": 0.9641666666666666,
+    "all_fields_accuracy_running": 0.785,
+    "gpu_memory_allocated_mb": 1128.74,
+    "gpu_memory_reserved_mb": 1224.0,
+    "gpu_peak_memory_allocated_mb": 1172.02,
+    "gpu_memory_allocated_mb_max": 1128.74,
+    "gpu_memory_reserved_mb_max": 1224.0,
+    "gpu_peak_memory_allocated_mb_max": 1172.02,
+    "gpu_memory_allocated_mb_total": 1128.74,
+    "gpu_memory_reserved_mb_total": 1224.0,
+    "gpu_memory_capacity_mb_max": 24217.31,
+    "gpu_memory_capacity_mb_total": 24217.31,
+    "gpu_memory_current_percent_max": 4.66,
+    "gpu_memory_reserved_percent_max": 5.05,
+    "gpu_memory_peak_percent_max": 4.84,
+    "monitored_world_size": 1
+  },
+  "checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+  "provenance": {
+    "python_version": "3.10.12",
+    "torch_version": "2.5.1+cu118",
+    "cuda_runtime": "11.8",
+    "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+    "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+    "git_revision": "a117d336c84ebd24b588c8a4f572b10896825ee1",
+    "git_branch": "train",
+    "git_dirty": true,
+    "world_size": 1
+  },
+  "log_dir": "artifacts/synbios_moe/results/single_cloze_eval/operation_logs/synbios_cloze_evaluate_pilot_1000/20260721-135049"
+}

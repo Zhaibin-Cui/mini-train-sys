@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "case_identity": "84a29f94201a97e2a131585b6322e1cbe25bd8664261407d510a9c42d600f33d",
+  "timestamp_utc": "2026-07-26T02:46:59.703824+00:00",
+  "strategy": "fsdp",
+  "world_size": 4,
+  "local_batch_size": 112,
+  "global_batch_size": 448,
+  "seq_len": 512,
+  "global_tokens_per_step": 229376,
+  "warmup_steps": 5,
+  "measure_steps": 20,
+  "repeat": 1,
+  "parameter_count": 293494272,
+  "precision": "bf16",
+  "workers_per_rank": 4,
+  "workers_per_node": 16,
+  "prefetch_factor": 2,
+  "step_time_ms_mean": 639.4316489000175,
+  "step_time_ms_p50": 640.5731484999819,
+  "step_time_ms_p95": 645.4872684000293,
+  "throughput_tokens_per_sec": 358734.5141329995,
+  "data_wait_ms_mean": 4.355322150013308,
+  "data_wait_ms_p95": 5.598751800005176,
+  "data_stall_percent": 0.6811239571118433,
+  "peak_memory_allocated_mb": 20874.8203125,
+  "peak_memory_reserved_mb": 22890.0,
+  "system_peak_memory_allocated_mb": 83482.16064453125,
+  "system_peak_memory_reserved_mb": 90948.0,
+  "gpu_memory_total_mb": 24217.3125,
+  "system_gpu_memory_total_mb": 96869.25,
+  "memory_utilization_percent": 86.19792271541279,
+  "system_memory_utilization_percent": 86.18024878331488,
+  "last_loss": 4.591041088104248,
+  "ops_backend": "cuda",
+  "backend_dispatch": {
+    "attention": {
+      "native_cuda": 300,
+      "fallback": 0
+    },
+    "native_cuda_operators": [
+      "attention"
+    ],
+    "fallback_chain": "CUDA -> Triton -> PyTorch"
+  },
+  "torch_version": "2.5.1+cu118",
+  "cuda_version": "11.8",
+  "gpu_name": "NVIDIA GeForce RTX 4090"
+}

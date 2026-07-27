@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 1215, in <module>
+    arguments.func(arguments)
+  File "/home/ubuntu/mini-train-sys/scripts/synbios_moe.py", line 883, in command_report_probe_diagnostics
+    result = build_diagnostic_report_artifacts(
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/diagnostic_report.py", line 1005, in build_diagnostic_report_artifacts
+    evidence = load_diagnostic_evidence(
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/diagnostic_report.py", line 400, in load_diagnostic_evidence
+    oracle_rows = _oracle_rows(
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/diagnostic_report.py", line 176, in _oracle_rows
+    _assert_close(before, formal_accuracy, f"{attribute} formal/oracle baseline")
+  File "/home/ubuntu/mini-train-sys/experiments/synbios_moe/diagnostic_report.py", line 84, in _assert_close
+    raise ValueError(f"{label} mismatch: {left} != {right}")
+ValueError: birth_city formal/oracle baseline mismatch: 0.12919509956502653 != 0.12919509410858154
+REPORT_EXIT_CODE=1

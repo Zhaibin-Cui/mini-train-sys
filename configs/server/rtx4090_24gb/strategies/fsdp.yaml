@@ -1,0 +1,14 @@
+parallel:
+  strategy: fsdp
+  process_group_backend: nccl
+  timeout_minutes: 30
+  fsdp:
+    sharding_strategy: full_shard
+    auto_wrap_policy: transformer_block
+    backward_prefetch: backward_pre
+    forward_prefetch: false
+    limit_all_gathers: true
+    use_orig_params: true
+    sync_module_states: true
+    cpu_offload: false
+    activation_checkpointing: false

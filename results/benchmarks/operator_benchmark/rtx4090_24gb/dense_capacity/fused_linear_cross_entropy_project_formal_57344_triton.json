@@ -1,0 +1,55 @@
+{
+  "kernel": "fused_linear_cross_entropy",
+  "profile": {
+    "name": "project_formal",
+    "hidden": 768,
+    "intermediate": 1024,
+    "heads": 12,
+    "head_dim": 64,
+    "vocab": 50257,
+    "sequence_length": 512,
+    "token_sizes": [
+      512,
+      2048,
+      8192,
+      32768,
+      57344
+    ]
+  },
+  "tokens": 57344,
+  "validation_tokens": 32768,
+  "dtype": "torch.bfloat16",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "total_memory_mb": 24217.3125,
+  "rows": [
+    {
+      "kernel": "fused_linear_cross_entropy",
+      "provider": "triton",
+      "profile": "project_formal",
+      "size": 57344,
+      "size_label": "tokens; H=768, vocab=50257; performance-only capacity",
+      "status": "ok",
+      "measurement_scope": "performance_only_after_smaller_shape_correctness",
+      "validation_tokens": 32768,
+      "fwd_correct": null,
+      "bwd_correct": null,
+      "correctness_inherited": true,
+      "dtype": "torch.bfloat16",
+      "fwd_p50_ms": 49.79916763305664,
+      "fwd_p95_ms": 49.80009078979492,
+      "fwd_peak_mem_mb": 100.05859375,
+      "timer": "cuda_events_backward_only",
+      "full_p50_ms": 163.11801147460938,
+      "full_p95_ms": 163.11801147460938,
+      "full_peak_mem_mb": 356.05615234375,
+      "bwd_p50_ms": 0.5666719973087311,
+      "bwd_p95_ms": 0.6954415857791901,
+      "bwd_peak_mem_mb": 0.001953125,
+      "shape": {
+        "tokens": 57344,
+        "hidden": 768,
+        "vocab": 50257
+      }
+    }
+  ]
+}

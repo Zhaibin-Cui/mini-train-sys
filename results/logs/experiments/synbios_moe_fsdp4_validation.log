@@ -1,0 +1,460 @@
+W0721 04:02:25.708000 150799 torch/distributed/run.py:793] 
+W0721 04:02:25.708000 150799 torch/distributed/run.py:793] *****************************************
+W0721 04:02:25.708000 150799 torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0721 04:02:25.708000 150799 torch/distributed/run.py:793] *****************************************
+[init] run=synbios_moe_single_fsdp_4gpu_validation device=cuda:0 strategy=fsdp world=4 params=293494272
+[parallel_ready] {"event": "parallel_ready", "strategy": "fsdp", "fsdp_units": 13, "auto_wrap_policy": "transformer_block", "sharding_strategy": "full_shard"}
+[train] batch 1/32 | epoch 1/540 | loss 10.94644 | lr 2.181e-05 | grad 16.964 | data-wait 0.4% | tok/s 46,585.1 | gpu(max) 1.11/23.65 GiB | 33.3% | ETA 0:00:09
+[train] batch 2/32 | epoch 1/540 | loss 10.22374 | lr 4.361e-05 | grad 12.348 | data-wait 0.4% | tok/s 273,627.4 | gpu(max) 1.11/23.65 GiB | 66.7% | ETA 0:00:02
+[train] batch 3/32 | epoch 1/540 | loss 9.51278 | lr 6.542e-05 | grad 7.057 | data-wait 0.1% | tok/s 238,528.4 | gpu(max) 1.11/23.65 GiB | 100.0% | ETA 0:00:00
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+[checkpoint] saved artifacts/validation/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu_validation/epoch_000000_step_000000003 (model+optimizer state)
+W0721 04:03:17.269000 152258 torch/distributed/run.py:793] 
+W0721 04:03:17.269000 152258 torch/distributed/run.py:793] *****************************************
+W0721 04:03:17.269000 152258 torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0721 04:03:17.269000 152258 torch/distributed/run.py:793] *****************************************
+[init] run=synbios_moe_single_fsdp_4gpu_validation device=cuda:0 strategy=fsdp world=4 params=293494272
+[parallel_ready] {"event": "parallel_ready", "strategy": "fsdp", "fsdp_units": 13, "auto_wrap_policy": "transformer_block", "sharding_strategy": "full_shard"}
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+[resume] artifacts/validation/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu_validation/epoch_000000_step_000000003 | epoch=0 step=3 world=4
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 282, in <module>
+[rank3]:     main()
+[rank3]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 267, in main
+[rank3]:     TrainingRunner(
+[rank3]:   File "/home/ubuntu/mini-train-sys/minitrain/train/runner.py", line 228, in run
+[rank3]:     loss = self.trainer.train_step(batch)
+[rank3]:   File "/home/ubuntu/mini-train-sys/minitrain/train/trainer.py", line 140, in train_step
+[rank3]:     self.optimizer.step()
+[rank3]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 487, in wrapper
+[rank3]:     out = func(*args, **kwargs)
+[rank3]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 91, in _use_grad
+[rank3]:     ret = func(self, *args, **kwargs)
+[rank3]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/adamw.py", line 207, in step
+[rank3]:     beta1, beta2 = cast(Tuple[float, float], group["betas"])
+[rank3]: KeyError: 'betas'
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 282, in <module>
+[rank2]:     main()
+[rank2]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 267, in main
+[rank2]:     TrainingRunner(
+[rank2]:   File "/home/ubuntu/mini-train-sys/minitrain/train/runner.py", line 228, in run
+[rank2]:     loss = self.trainer.train_step(batch)
+[rank2]:   File "/home/ubuntu/mini-train-sys/minitrain/train/trainer.py", line 140, in train_step
+[rank2]:     self.optimizer.step()
+[rank2]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 487, in wrapper
+[rank2]:     out = func(*args, **kwargs)
+[rank2]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 91, in _use_grad
+[rank2]:     ret = func(self, *args, **kwargs)
+[rank2]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/adamw.py", line 207, in step
+[rank2]:     beta1, beta2 = cast(Tuple[float, float], group["betas"])
+[rank2]: KeyError: 'betas'
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 282, in <module>
+[rank1]:     main()
+[rank1]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 267, in main
+[rank1]:     TrainingRunner(
+[rank1]:   File "/home/ubuntu/mini-train-sys/minitrain/train/runner.py", line 228, in run
+[rank1]:     loss = self.trainer.train_step(batch)
+[rank1]:   File "/home/ubuntu/mini-train-sys/minitrain/train/trainer.py", line 140, in train_step
+[rank1]:     self.optimizer.step()
+[rank1]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 487, in wrapper
+[rank1]:     out = func(*args, **kwargs)
+[rank1]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 91, in _use_grad
+[rank1]:     ret = func(self, *args, **kwargs)
+[rank1]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/adamw.py", line 207, in step
+[rank1]:     beta1, beta2 = cast(Tuple[float, float], group["betas"])
+[rank1]: KeyError: 'betas'
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 282, in <module>
+[rank0]:     main()
+[rank0]:   File "/home/ubuntu/mini-train-sys/scripts/train.py", line 267, in main
+[rank0]:     TrainingRunner(
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/train/runner.py", line 228, in run
+[rank0]:     loss = self.trainer.train_step(batch)
+[rank0]:   File "/home/ubuntu/mini-train-sys/minitrain/train/trainer.py", line 140, in train_step
+[rank0]:     self.optimizer.step()
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 487, in wrapper
+[rank0]:     out = func(*args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/optimizer.py", line 91, in _use_grad
+[rank0]:     ret = func(self, *args, **kwargs)
+[rank0]:   File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/optim/adamw.py", line 207, in step
+[rank0]:     beta1, beta2 = cast(Tuple[float, float], group["betas"])
+[rank0]: KeyError: 'betas'
+W0721 04:03:54.513000 152258 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 152321 closing signal SIGTERM
+W0721 04:03:54.514000 152258 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 152322 closing signal SIGTERM
+W0721 04:03:54.515000 152258 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 152323 closing signal SIGTERM
+E0721 04:03:54.743000 152258 torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 3 (pid: 152324) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/.venv/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py", line 919, in main
+    run(args)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py", line 910, in run
+    elastic_launch(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/train.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_04:03:54
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 152324)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+W0721 04:06:03.028000 154819 torch/distributed/run.py:793] 
+W0721 04:06:03.028000 154819 torch/distributed/run.py:793] *****************************************
+W0721 04:06:03.028000 154819 torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0721 04:06:03.028000 154819 torch/distributed/run.py:793] *****************************************
+[init] run=synbios_moe_single_fsdp_4gpu_validation device=cuda:0 strategy=fsdp world=4 params=293494272
+[parallel_ready] {"event": "parallel_ready", "strategy": "fsdp", "fsdp_units": 13, "auto_wrap_policy": "transformer_block", "sharding_strategy": "full_shard"}
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/planner_helpers.py:314: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  device = getattr(value, "device", None)
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:52: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = sharded_tensor.size()[0]  # type: ignore[index]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:53: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor_numel = sharded_tensor.size().numel()  # type: ignore[union-attr]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_state_dict_utils.py:77: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, tensor_numel).reshape(sharded_tensor.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:635: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  param_numel = param.size().numel()
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:636: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  dim_0_size = param.size()[0]
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:662: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor = tensor.narrow(0, 0, param_numel).reshape(param.size())
+[resume] artifacts/validation/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu_validation/epoch_000000_step_000000003 | epoch=0 step=3 world=4
+[train] batch 1/32 | epoch 1/540 | loss 9.12570 | lr 8.723e-05 | grad 4.243 | data-wait 0.5% | tok/s 49,973.6 | gpu(max) 1.11/23.65 GiB | 80.0% | ETA 0:00:04
+[train] batch 2/32 | epoch 1/540 | loss 8.91489 | lr 1.090e-04 | grad 3.917 | data-wait 0.4% | tok/s 342,272.7 | gpu(max) 1.11/23.65 GiB | 100.0% | ETA 0:00:00
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:732: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  local_shape = tensor.shape
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:744: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.shape,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:746: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.dtype,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/fsdp/_state_dict_utils.py:747: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  tensor.device,
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict.py:526: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  if torch.is_tensor(p) and p.is_meta:
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/_shard/sharded_tensor/api.py:625: FutureWarning: Please use DTensor instead and we are deprecating ShardedTensor.
+  current_dtype = self.dtype
+[checkpoint] saved artifacts/validation/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu_validation/epoch_000000_step_000000005 (model+optimizer state)

@@ -15,10 +15,8 @@ head_dim <= 128. Unsupported cases fall back to PyTorch SDPA in the backend
 facade.
 """
 
-from __future__ import annotations
 
 import math
-import os
 
 import torch
 
@@ -1019,7 +1017,9 @@ def flash_attention_forward(
     # TMP used to materialize forward rescale factors for a Triton compiler
     # workaround. The kernel now keeps those factors in registers.
     # tmp = torch.empty_like(lse)
-    grid = lambda META: (triton.cdiv(seqlen_q, META["BLOCK_M"]), batch * nheads)
+    def grid(meta):
+        return triton.cdiv(seqlen_q, meta["BLOCK_M"]), batch * nheads
+
     _flash_fwd_kernel[grid](
         q,
         k,
@@ -1105,7 +1105,9 @@ def flash_attention_backward(
     dv = torch.empty_like(v)
     delta = torch.empty_like(lse)
 
-    preprocess_grid = lambda META: (triton.cdiv(seqlen_q, META["BLOCK_M"]), batch * nheads)
+    def preprocess_grid(meta):
+        return triton.cdiv(seqlen_q, meta["BLOCK_M"]), batch * nheads
+
     _flash_bwd_preprocess_kernel[preprocess_grid](
         out,
         do,
@@ -1124,10 +1126,15 @@ def flash_attention_backward(
         BLOCK_HEADDIM=block_headdim,
     )
 
-    backward_grid = lambda META: (
-        max(triton.cdiv(seqlen_k, META["BLOCK_N"]), triton.cdiv(seqlen_q, META["BLOCK_M"])),
-        batch * nheads,
-    )
+    def backward_grid(meta):
+        return (
+            max(
+                triton.cdiv(seqlen_k, meta["BLOCK_N"]),
+                triton.cdiv(seqlen_q, meta["BLOCK_M"]),
+            ),
+            batch * nheads,
+        )
+
     _flash_bwd_kernel[backward_grid](
         q,
         k,

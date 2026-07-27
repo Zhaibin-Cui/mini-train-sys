@@ -1,0 +1,86 @@
+W0721 04:53:13.874000 188874 torch/distributed/run.py:793] 
+W0721 04:53:13.874000 188874 torch/distributed/run.py:793] *****************************************
+W0721 04:53:13.874000 188874 torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0721 04:53:13.874000 188874 torch/distributed/run.py:793] *****************************************
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 285, in <module>
+    main()
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 82, in main
+    cfg = experiment_config_from_dict(run_payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 364, in experiment_config_from_dict
+    checkpoint=CheckpointConfig(**payload.get("checkpoint", {})),
+  File "<string>", line 14, in __init__
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 212, in __post_init__
+    raise ValueError(
+ValueError: checkpoint.export_model_every_epochs requires checkpoint.export_model=true
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 285, in <module>
+    main()
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 82, in main
+    cfg = experiment_config_from_dict(run_payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 364, in experiment_config_from_dict
+    checkpoint=CheckpointConfig(**payload.get("checkpoint", {})),
+  File "<string>", line 14, in __init__
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 212, in __post_init__
+    raise ValueError(
+ValueError: checkpoint.export_model_every_epochs requires checkpoint.export_model=true
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 285, in <module>
+    main()
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 82, in main
+    cfg = experiment_config_from_dict(run_payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 364, in experiment_config_from_dict
+    checkpoint=CheckpointConfig(**payload.get("checkpoint", {})),
+  File "<string>", line 14, in __init__
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 212, in __post_init__
+    raise ValueError(
+ValueError: checkpoint.export_model_every_epochs requires checkpoint.export_model=true
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 285, in <module>
+    main()
+  File "/home/ubuntu/mini-train-sys/scripts/train.py", line 82, in main
+    cfg = experiment_config_from_dict(run_payload)
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 364, in experiment_config_from_dict
+    checkpoint=CheckpointConfig(**payload.get("checkpoint", {})),
+  File "<string>", line 14, in __init__
+  File "/home/ubuntu/mini-train-sys/minitrain/runtime/config.py", line 212, in __post_init__
+    raise ValueError(
+ValueError: checkpoint.export_model_every_epochs requires checkpoint.export_model=true
+W0721 04:53:17.283000 188874 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 188939 closing signal SIGTERM
+W0721 04:53:17.284000 188874 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 188940 closing signal SIGTERM
+E0721 04:53:17.316000 188874 torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 188937) of binary: /home/ubuntu/mini-train-sys/.venv/bin/python
+Traceback (most recent call last):
+  File "/home/ubuntu/mini-train-sys/.venv/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py", line 919, in main
+    run(args)
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/run.py", line 910, in run
+    elastic_launch(
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+scripts/train.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-07-21_04:53:17
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 188938)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-07-21_04:53:17
+  host      : ml-ubuntu22-04-desktop-v3-2-128gb-25m
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 188937)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

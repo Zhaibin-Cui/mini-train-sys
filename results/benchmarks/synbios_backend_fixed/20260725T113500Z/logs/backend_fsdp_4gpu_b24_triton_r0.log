@@ -1,0 +1,22 @@
+{"schema_version": 1, "case_identity": "8c60201e8e8bf7c0569e7707f6d620bc717611126109d38ba8201bf1419962c1", "timestamp_utc": "2026-07-26T02:52:01.539923+00:00", "strategy": "fsdp", "world_size": 4, "local_batch_size": 24, "global_batch_size": 96, "seq_len": 512, "global_tokens_per_step": 49152, "warmup_steps": 10, "measure_steps": 30, "repeat": 0, "parameter_count": 293494272, "precision": "bf16", "workers_per_rank": 4, "workers_per_node": 16, "prefetch_factor": 2, "step_time_ms_mean": 233.22852933331433, "step_time_ms_p50": 232.57967799997914, "step_time_ms_p95": 244.8201574499194, "throughput_tokens_per_sec": 210934.29013310038, "data_wait_ms_mean": 2.5635389333653316, "data_wait_ms_p95": 4.546555499962324, "data_stall_percent": 1.0991532385395684, "peak_memory_allocated_mb": 5360.62744140625, "peak_memory_reserved_mb": 6672.0, "system_peak_memory_allocated_mb": 21438.2666015625, "system_peak_memory_reserved_mb": 26434.0, "gpu_memory_total_mb": 24217.3125, "system_gpu_memory_total_mb": 96869.25, "memory_utilization_percent": 22.135517479101985, "system_memory_utilization_percent": 22.131137178787387, "last_loss": 3.8901586532592773, "ops_backend": "triton", "backend_dispatch": null, "torch_version": "2.5.1+cu118", "cuda_version": "11.8", "gpu_name": "NVIDIA GeForce RTX 4090"}
+
+--- STDERR ---
+WARNING:__main__:
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+[E726 10:52:02.531032961 ProcessGroupNCCL.cpp:542] [Rank 1] Collective WorkNCCL(SeqNum=1578, OpType=ALLREDUCE, NumelIn=2, NumelOut=2, Timeout(ms)=1800000) raised the following async exception: NCCL error: unhandled system error (run with NCCL_DEBUG=INFO for details), NCCL version 2.21.5
+ncclSystemError: System call (e.g. socket, malloc) or external library call failed or device error. 
+Last error:
+
+Exception raised from checkForNCCLErrorsInternal at ../torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:2027 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f8543f2c446 in /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::checkForNCCLErrorsInternal(std::shared_ptr<c10d::NCCLComm>&) + 0x220 (0x7f854517de80 in /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::WorkNCCL::checkAndSetException() + 0x7c (0x7f854517e0cc in /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::WorkNCCL::isStarted() + 0x90 (0x7f854517e3a0 in /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: c10d::ProcessGroupNCCL::watchdogHandler() + 0x9f8 (0x7f8545186278 in /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #5: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f854518751d in /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #6: <unknown function> + 0x145c0 (0x7f85935ee5c0 in /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/lib/libtorch.so)
+frame #7: <unknown function> + 0x94ac3 (0x7f85949b8ac3 in /lib/x86_64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0x126850 (0x7f8594a4a850 in /lib/x86_64-linux-gnu/libc.so.6)
+

@@ -1,0 +1,14 @@
+{
+  "timestamp_utc": "2026-07-26T02:38:07.824254+00:00",
+  "hostname": "ml-ubuntu22-04-desktop-v3-2-128gb-25m",
+  "platform": "Linux-5.15.0-72-generic-x86_64-with-glibc2.35",
+  "python": "3.10.12 (main, Jun 22 2026, 18:55:27) [GCC 11.4.0]",
+  "cpu_count": 44,
+  "torch": "2.5.1+cu118",
+  "cuda": "11.8",
+  "nvidia_smi": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-8fe8db37-cbde-bde1-f054-c2c318c9416c)\nGPU 1: NVIDIA GeForce RTX 4090 (UUID: GPU-b30b29f7-7ed9-63ce-de49-a411f7e354c6)\nGPU 2: NVIDIA GeForce RTX 4090 (UUID: GPU-96b025a0-5eca-ad74-6ac8-df9ce829f168)\nGPU 3: NVIDIA GeForce RTX 4090 (UUID: GPU-db17d392-ab70-67f0-5931-0db5686782fd)",
+  "gpu_inventory": "0, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:29:00.0\n1, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2C:00.0\n2, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:2F:00.0\n3, NVIDIA GeForce RTX 4090, 24564 MiB, 525.105.17, 00000000:32:00.0",
+  "topology": "\u001b[4mGPU0\tGPU1\tGPU2\tGPU3\tCPU Affinity\tNUMA Affinity\u001b[0m\nGPU0\t X \tSYS\tSYS\tSYS\t0-10\t0\nGPU1\tSYS\t X \tSYS\tSYS\t11-21\t1\nGPU2\tSYS\tSYS\t X \tSYS\t22-32\t2\nGPU3\tSYS\tSYS\tSYS\t X \t33-43\t3\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks",
+  "git_commit": "69fb61dc5128b168728319f052eb9b9986609e75",
+  "git_status": "M HISTORY.md\n M scripts/bash/synbios_backend_benchmark.sh\n M scripts/run_dist_bench.py"
+}

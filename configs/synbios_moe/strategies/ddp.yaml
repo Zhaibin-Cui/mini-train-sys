@@ -1,0 +1,13 @@
+parallel:
+  strategy: ddp
+  process_group_backend: auto
+  timeout_minutes: 30
+  ddp:
+    broadcast_buffers: false
+    bucket_cap_mb: 25
+    find_unused_parameters: false
+    gradient_as_bucket_view: true
+    static_graph: false
+train:
+  # Per-rank batch; global batch = 8 x WORLD_SIZE.
+  batch_size: 8

@@ -1,0 +1,581 @@
+[model_load] step 1/1 | tok/s 0.0 | items/s 0.0 | gpu-peak 1.09/23.65 GiB | 100.0% | ETA 0:00:00
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 512}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 1024}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 1536}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 2048}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 2560}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 3072}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 3584}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 4096}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 4608}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 5120}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 5632}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 6144}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 6656}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 7168}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 7680}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 8192}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 8704}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 9216}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 9728}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 10240}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 10752}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 11264}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 11776}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 12288}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 12800}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 13312}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 13824}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 14336}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 14848}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 15360}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 15872}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 16384}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 16896}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 17408}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 17920}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 18432}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 18944}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 19456}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 19968}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 20480}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 20992}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 21504}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 22016}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 22528}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 23040}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 23552}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 24064}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 24576}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 25088}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 25600}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 26112}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 26624}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 27136}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 27648}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 28160}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 28672}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 29184}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 29696}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 30208}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 30720}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 31232}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 31744}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 32256}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 32768}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 33280}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 33792}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 34304}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 34816}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 35328}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 35840}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 36352}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 36864}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 37376}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 37888}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 38400}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 38912}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 39424}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 39936}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 40448}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 40960}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 41472}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 41984}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 42496}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 43008}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 43520}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 44032}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 44544}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 45056}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 45568}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 46080}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 46592}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 47104}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 47616}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 48128}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 48640}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 49152}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 49664}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "birth_city", "examples": 50118}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 512}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 1024}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 1536}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 2048}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 2560}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 3072}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 3584}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 4096}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 4608}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 5120}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 5632}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 6144}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 6656}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 7168}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 7680}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 8192}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 8704}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 9216}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 9728}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 10240}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 10752}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 11264}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 11776}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 12288}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 12800}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 13312}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 13824}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 14336}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 14848}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 15360}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 15872}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 16384}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 16896}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 17408}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 17920}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 18432}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 18944}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 19456}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 19968}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 20480}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 20992}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 21504}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 22016}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 22528}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 23040}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 23552}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 24064}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 24576}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 25088}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 25600}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 26112}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 26624}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 27136}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 27648}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 28160}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 28672}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 29184}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 29696}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 30208}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 30720}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 31232}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 31744}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 32256}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 32768}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 33280}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 33792}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 34304}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 34816}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 35328}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 35840}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 36352}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 36864}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 37376}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 37888}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 38400}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 38912}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 39424}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 39936}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 40448}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 40960}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 41472}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 41984}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 42496}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 43008}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 43520}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 44032}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 44544}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 45056}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 45568}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 46080}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 46592}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 47104}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 47616}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 48128}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 48640}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 49152}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 49664}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "university", "examples": 50118}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 512}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 1024}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 1536}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 2048}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 2560}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 3072}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 3584}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 4096}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 4608}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 5120}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 5632}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 6144}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 6656}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 7168}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 7680}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 8192}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 8704}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 9216}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 9728}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 10240}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 10752}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 11264}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 11776}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 12288}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 12800}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 13312}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 13824}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 14336}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 14848}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 15360}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 15872}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 16384}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 16896}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 17408}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 17920}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 18432}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 18944}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 19456}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 19968}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 20480}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 20992}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 21504}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 22016}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 22528}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 23040}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 23552}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 24064}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 24576}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 25088}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 25600}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 26112}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 26624}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 27136}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 27648}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 28160}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 28672}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 29184}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 29696}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 30208}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 30720}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 31232}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 31744}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 32256}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 32768}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 33280}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 33792}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 34304}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 34816}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 35328}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 35840}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 36352}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 36864}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 37376}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 37888}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 38400}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 38912}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 39424}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 39936}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 40448}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 40960}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 41472}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 41984}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 42496}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 43008}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 43520}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 44032}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 44544}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 45056}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 45568}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 46080}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 46592}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 47104}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 47616}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 48128}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 48640}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 49152}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 49664}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "major", "examples": 50118}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 512}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 1024}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 1536}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 2048}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 2560}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 3072}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 3584}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 4096}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 4608}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 5120}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 5632}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 6144}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 6656}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 7168}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 7680}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 8192}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 8704}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 9216}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 9728}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 10240}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 10752}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 11264}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 11776}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 12288}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 12800}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 13312}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 13824}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 14336}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 14848}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 15360}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 15872}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 16384}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 16896}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 17408}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 17920}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 18432}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 18944}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 19456}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 19968}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 20480}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 20992}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 21504}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 22016}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 22528}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 23040}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 23552}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 24064}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 24576}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 25088}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 25600}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 26112}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 26624}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 27136}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 27648}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 28160}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 28672}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 29184}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 29696}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 30208}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 30720}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 31232}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 31744}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 32256}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 32768}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 33280}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 33792}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 34304}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 34816}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 35328}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 35840}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 36352}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 36864}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 37376}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 37888}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 38400}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 38912}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 39424}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 39936}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 40448}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 40960}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 41472}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 41984}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 42496}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 43008}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 43520}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 44032}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 44544}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 45056}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 45568}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 46080}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 46592}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 47104}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 47616}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 48128}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 48640}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 49152}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 49664}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company", "examples": 50118}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 512}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 1024}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 1536}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 2048}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 2560}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 3072}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 3584}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 4096}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 4608}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 5120}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 5632}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 6144}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 6656}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 7168}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 7680}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 8192}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 8704}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 9216}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 9728}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 10240}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 10752}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 11264}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 11776}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 12288}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 12800}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 13312}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 13824}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 14336}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 14848}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 15360}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 15872}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 16384}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 16896}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 17408}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 17920}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 18432}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 18944}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 19456}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 19968}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 20480}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 20992}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 21504}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 22016}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 22528}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 23040}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 23552}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 24064}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 24576}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 25088}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 25600}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 26112}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 26624}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 27136}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 27648}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 28160}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 28672}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 29184}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 29696}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 30208}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 30720}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 31232}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 31744}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 32256}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 32768}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 33280}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 33792}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 34304}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 34816}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 35328}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 35840}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 36352}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 36864}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 37376}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 37888}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 38400}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 38912}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 39424}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 39936}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 40448}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 40960}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 41472}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 41984}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 42496}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 43008}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 43520}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 44032}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 44544}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 45056}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 45568}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 46080}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 46592}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 47104}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 47616}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 48128}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 48640}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 49152}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 49664}
+[probe_diagnostic] {"event": "probe_diagnostic", "diagnostic": "oracle_first_token", "attribute": "company_city", "examples": 50118}
+{
+  "protocol": "q_whole_oracle_first_token_v1",
+  "intervention": "[EOS, name, true_t1, EOS], read final EOS with unchanged Q-whole head",
+  "split": "person-held-out validation",
+  "parameters_updated": false,
+  "data": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute",
+  "probe_cache": "/data/mini-train-sys/artifacts/synbios_moe/multi5_permute/probe_cache",
+  "probe_dir": "/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/training",
+  "backbone_checkpoint": "/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+  "overall": {
+    "examples": 250590,
+    "accuracy_before": 0.3314617502693643,
+    "accuracy_after": 0.3208228580549902,
+    "accuracy_delta": -0.010638892214374078,
+    "baseline_errors": 167529,
+    "recovered_errors": 9009,
+    "recovery_rate": 0.05377576419604964,
+    "baseline_correct": 83061,
+    "harmed_correct": 11675,
+    "harm_rate": 0.14055934794909766
+  },
+  "attributes": [
+    {
+      "attribute": "birth_city",
+      "examples": 50118,
+      "accuracy_before": 0.12919509956502653,
+      "accuracy_after": 0.1292948641206752,
+      "accuracy_delta": 9.976455564866914e-05,
+      "baseline_errors": 43643,
+      "recovered_errors": 813,
+      "recovery_rate": 0.018628416928258826,
+      "baseline_correct": 6475,
+      "harmed_correct": 808,
+      "harm_rate": 0.12478764478764479
+    },
+    {
+      "attribute": "university",
+      "examples": 50118,
+      "accuracy_before": 0.08483977812362824,
+      "accuracy_after": 0.08497944850153638,
+      "accuracy_delta": 0.0001396703779081368,
+      "baseline_errors": 45866,
+      "recovered_errors": 540,
+      "recovery_rate": 0.011773426939345048,
+      "baseline_correct": 4252,
+      "harmed_correct": 533,
+      "harm_rate": 0.12535277516462842
+    },
+    {
+      "attribute": "major",
+      "examples": 50118,
+      "accuracy_before": 0.4732231932638972,
+      "accuracy_after": 0.4970270162416697,
+      "accuracy_delta": 0.023803822977772456,
+      "baseline_errors": 26401,
+      "recovered_errors": 2511,
+      "recovery_rate": 0.09511003371084428,
+      "baseline_correct": 23717,
+      "harmed_correct": 1318,
+      "harm_rate": 0.05557195260783404
+    },
+    {
+      "attribute": "company",
+      "examples": 50118,
+      "accuracy_before": 0.4596751666068079,
+      "accuracy_after": 0.3551817710203919,
+      "accuracy_delta": -0.10449339558641606,
+      "baseline_errors": 27080,
+      "recovered_errors": 2512,
+      "recovery_rate": 0.09276218611521418,
+      "baseline_correct": 23038,
+      "harmed_correct": 7749,
+      "harm_rate": 0.3363573226842608
+    },
+    {
+      "attribute": "company_city",
+      "examples": 50118,
+      "accuracy_before": 0.5103755137874616,
+      "accuracy_after": 0.537631190390678,
+      "accuracy_delta": 0.02725567660321641,
+      "baseline_errors": 24539,
+      "recovered_errors": 2633,
+      "recovery_rate": 0.1072985859244468,
+      "baseline_correct": 25579,
+      "harmed_correct": 1267,
+      "harm_rate": 0.049532819891317095
+    }
+  ],
+  "log_dir": "artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/operation_logs/synbios_q_oracle_first_token_validation_oracle_first_token/20260724-003604"
+}

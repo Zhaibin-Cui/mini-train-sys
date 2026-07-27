@@ -1,0 +1,16 @@
+........................................................................ [100%]
+=============================== warnings summary ===============================
+tests/test_checkpoint_contract.py::test_full_checkpoint_resumes_adam_but_model_reader_ignores_it
+tests/test_checkpoint_contract.py::test_safety_checkpoint_without_model_export_restores_training_state
+  /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict_saver.py:143: UserWarning: torch.distributed is unavailable or uninitialized, assuming the intent is to save in a single process.
+    warnings.warn(
+
+tests/test_checkpoint_contract.py::test_full_checkpoint_resumes_adam_but_model_reader_ignores_it
+tests/test_checkpoint_contract.py::test_safety_checkpoint_without_model_export_restores_training_state
+tests/test_distributed_checkpoint.py::test_ddp_checkpoint_reshards_into_single_process
+  /home/ubuntu/mini-train-sys/.venv/lib/python3.10/site-packages/torch/distributed/checkpoint/state_dict_loader.py:142: UserWarning: torch.distributed is unavailable or uninitialized, assuming the intent is to load in a single process.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+72 passed, 5 warnings in 11.66s
+All checks passed!
