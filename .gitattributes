@@ -6,6 +6,10 @@
 *.gif binary
 *.pdf binary
 
+# Notebooks are executable walkthroughs and exported evidence; implementation lives in Python and
+# shell entry points, so do not include notebook JSON in GitHub's language breakdown.
+*.ipynb linguist-detectable=false
+
 *.obj binary
 *.lib binary
 *.exp binary
