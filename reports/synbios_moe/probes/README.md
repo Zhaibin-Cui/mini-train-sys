@@ -1,7 +1,7 @@
 # 🔬 SynBioS probe reports
 
-The cross-stage interpretation is centralized in
-[`../storage_story.md`](../storage_story.md). This directory retains the formal report,
+The cross-stage interpretation is in the project
+[README](../../../README.md#model-interpretability). This directory retains the formal report,
 mechanism analyses, exact protocols, and historical budget decisions.
 
 ## Canonical evidence

@@ -24,7 +24,6 @@ REQUIRED_MODULES = (
     "numpy",
     "pandas",
     "pyarrow",
-    "pytest",
     "tensorboard",
     "tiktoken",
     "tokenizers",

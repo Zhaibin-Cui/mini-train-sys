@@ -460,4 +460,4 @@ mixture 仍可在现有 `Tokenizer`/`Document` 接口上增加 IterableDataset�
 
 仓库 fixture 已真实跑通：4 个 JSONL 文档 → 自训 300-vocab byte-BPE → 4 个
 document-aligned uint16 shards → manifest → `build_training_dataloader` → `(2,8)`
-inputs/targets。相关 hermetic tests 位于 `tests/test_data_pipeline.py`。
+inputs/targets。

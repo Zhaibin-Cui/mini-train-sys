@@ -1,66 +1,103 @@
 <svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">MiniTrainSys</title>
-  <desc id="desc">A cute rounded banner for a tiny benchmark-first LLM pretraining system.</desc>
+  <desc id="desc">Efficient LLM training and model interpretability.</desc>
+
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="360" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#F8FBFF"/>
-      <stop offset="0.48" stop-color="#F6F2FF"/>
-      <stop offset="1" stop-color="#EFFDF7"/>
+    <linearGradient id="background" x1="24" y1="12" x2="1170" y2="348" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EDF6FF"/>
+      <stop offset="0.46" stop-color="#F8F5FF"/>
+      <stop offset="0.73" stop-color="#F4F7FF"/>
+      <stop offset="1" stop-color="#ECFDF5"/>
     </linearGradient>
-    <linearGradient id="titleGrad" x1="270" y1="80" x2="910" y2="225" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2563EB"/>
-      <stop offset="0.52" stop-color="#7C3AED"/>
-      <stop offset="1" stop-color="#059669"/>
+
+    <linearGradient id="titleGradient" x1="325" y1="116" x2="885" y2="206" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="0.48" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#0891B2"/>
     </linearGradient>
-    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#64748B" flood-opacity="0.16"/>
+
+    <linearGradient id="accent" x1="455" y1="0" x2="745" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="0.5" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+
+    <linearGradient id="blueSweep" x1="-40" y1="330" x2="650" y2="70" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#60A5FA" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="violetSweep" x1="1260" y1="-20" x2="610" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="greenSweep" x1="1210" y1="370" x2="640" y2="170" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34D399" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#34D399" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="blurGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="24"/>
     </filter>
+
+    <filter id="cardShadow" x="-20%" y="-25%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#64748B" flood-opacity="0.15"/>
+    </filter>
+
+    <filter id="titleShadow" x="-20%" y="-40%" width="140%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#64748B" flood-opacity="0.12"/>
+    </filter>
+
+    <clipPath id="frame">
+      <rect width="1200" height="360" rx="32"/>
+    </clipPath>
   </defs>
 
-  <rect width="1200" height="360" rx="34" fill="url(#bg)"/>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="360" fill="url(#background)"/>
 
-  <g opacity="0.9">
-    <circle cx="114" cy="76" r="22" fill="#BFDBFE"/>
-    <circle cx="1010" cy="64" r="30" fill="#DDD6FE"/>
-    <circle cx="1080" cy="280" r="44" fill="#BBF7D0"/>
-    <circle cx="142" cy="286" r="36" fill="#FDE68A"/>
+    <path d="M-140 340C76 166 266 120 494 164C286 202 160 292 76 410H-140V340Z" fill="url(#blueSweep)"/>
+    <path d="M1340 -70C1082 -2 904 88 742 270C936 186 1095 178 1340 250V-70Z" fill="url(#violetSweep)"/>
+    <path d="M1290 400C1066 230 900 218 702 274C904 274 1048 332 1152 418H1290V400Z" fill="url(#greenSweep)"/>
+
+    <g opacity="0.72" filter="url(#blurGlow)">
+      <circle cx="112" cy="76" r="54" fill="#93C5FD"/>
+      <circle cx="1086" cy="74" r="58" fill="#C4B5FD"/>
+      <circle cx="1082" cy="300" r="62" fill="#86EFAC"/>
+      <circle cx="122" cy="304" r="52" fill="#FDE68A"/>
+    </g>
+
+    <g filter="url(#cardShadow)">
+      <rect x="108" y="48" width="984" height="264" rx="30" fill="white" fill-opacity="0.72"/>
+      <rect x="108.75" y="48.75" width="982.5" height="262.5" rx="29.25" stroke="white" stroke-opacity="0.92" stroke-width="1.5"/>
+      <rect x="109.5" y="49.5" width="981" height="261" rx="28.5" stroke="#D9E3F0" stroke-opacity="0.72"/>
+    </g>
+
+    <g fill="white" opacity="0.92">
+      <path d="M188 96L192 106L202 110L192 114L188 124L184 114L174 110L184 106L188 96Z"/>
+      <path d="M1016 236L1019 244L1027 247L1019 250L1016 258L1013 250L1005 247L1013 244L1016 236Z"/>
+      <circle cx="992" cy="96" r="3"/>
+      <circle cx="218" cy="264" r="3"/>
+    </g>
+
+    <rect x="455" y="84" width="290" height="4" rx="2" fill="url(#accent)"/>
+
+    <text x="600" y="184" text-anchor="middle"
+          font-family="Inter, 'Segoe UI', Arial, sans-serif"
+          font-size="84" font-weight="760" letter-spacing="-2.2" fill="url(#titleGradient)"
+          filter="url(#titleShadow)">
+      MiniTrainSys
+    </text>
+
+    <text x="600" y="234" text-anchor="middle"
+          font-family="Inter, 'Segoe UI', Arial, sans-serif"
+          font-size="24" font-weight="500" letter-spacing="0.35" fill="#475569">
+      Efficient LLM Training &amp; Model Interpretability
+    </text>
+
+    <rect x="538" y="270" width="124" height="2" rx="1" fill="url(#accent)" opacity="0.78"/>
   </g>
 
-  <g filter="url(#softShadow)">
-    <rect x="110" y="58" width="980" height="244" rx="30" fill="white" fill-opacity="0.82"/>
-    <rect x="110.5" y="58.5" width="979" height="243" rx="29.5" stroke="#E2E8F0"/>
-  </g>
-
-  <text x="600" y="145" text-anchor="middle"
-        font-family="Quicksand, Nunito, 'Comic Neue', 'Segoe UI Rounded', 'Arial Rounded MT Bold', system-ui, sans-serif"
-        font-size="78" font-weight="800" letter-spacing="1.5" fill="url(#titleGrad)">
-    MiniTrainSys
-  </text>
-
-  <text x="600" y="198" text-anchor="middle"
-        font-family="Nunito, Quicksand, 'Segoe UI Rounded', system-ui, sans-serif"
-        font-size="27" font-weight="700" fill="#334155">
-    tiny, readable, benchmark-first LLM pretraining
-  </text>
-
-  <g font-family="Nunito, Quicksand, 'Segoe UI Rounded', system-ui, sans-serif" font-size="20" font-weight="800">
-    <rect x="305" y="230" width="130" height="42" rx="21" fill="#DBEAFE"/>
-    <text x="370" y="258" text-anchor="middle" fill="#1D4ED8">PyTorch</text>
-
-    <rect x="455" y="230" width="120" height="42" rx="21" fill="#EDE9FE"/>
-    <text x="515" y="258" text-anchor="middle" fill="#6D28D9">Triton</text>
-
-    <rect x="595" y="230" width="132" height="42" rx="21" fill="#DCFCE7"/>
-    <text x="661" y="258" text-anchor="middle" fill="#047857">DDP/FSDP</text>
-
-    <rect x="747" y="230" width="148" height="42" rx="21" fill="#FEF3C7"/>
-    <text x="821" y="258" text-anchor="middle" fill="#B45309">Benchmarks</text>
-  </g>
-
-  <g stroke="#CBD5E1" stroke-width="3" stroke-linecap="round" opacity="0.85">
-    <path d="M224 116C240 96 264 96 280 116"/>
-    <path d="M916 114C936 92 966 92 986 114"/>
-    <path d="M224 130C240 150 264 150 280 130"/>
-    <path d="M916 128C936 150 966 150 986 128"/>
-  </g>
+  <rect x="0.75" y="0.75" width="1198.5" height="358.5" rx="31.25" stroke="#D6E1EE" stroke-width="1.5"/>
 </svg>

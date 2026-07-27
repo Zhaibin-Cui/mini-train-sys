@@ -1,9 +1,8 @@
 # 🧬 SynBioS MoE research
 
-This directory is the canonical research-report entry for the Allen-Zhu-style knowledge storage
-study. The detailed narrative is intentionally centralized in one document:
-
-## [Read the storage study →](storage_story.md)
+This directory indexes the supporting reports for the Allen-Zhu-style knowledge storage study.
+The cross-stage interpretation now lives in the project
+[README](../../README.md#model-interpretability).
 
 ### Headline metrics
 
@@ -24,7 +23,7 @@ gap with a path-dependent readout model.
 
 | Stage | Canonical report | Machine evidence |
 |---|---|---|
-| Dataset + pretraining | [Storage study §1](storage_story.md#1-experimental-question) | [`results/datasets/synbios_moe/`](../../results/datasets/synbios_moe/) |
+| Dataset + pretraining | [README experiment setup](../../README.md#model-interpretability) | [`results/datasets/synbios_moe/`](../../results/datasets/synbios_moe/) |
 | Formal P/Q | [Formal comparison](probes/formal_comparison.md) | [`formal_probe_comparison_20260724/`](../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/) |
 | Company relation | [Quantitative fit](probes/company_pair_position_fit.md) | [`company_pair_position_fit/`](../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/) |
 | Route branching | [Layer analysis](probes/diagnostics/bad_case_routes.md) | [`diagnostics/report/`](../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/) |

@@ -211,27 +211,133 @@ def _headline_rows(
 
 def _plot(rows: list[dict[str, object]], output: Path) -> None:
     import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
+    from matplotlib.ticker import MultipleLocator
 
     optimized = [row for row in rows if row["provider"] != "torch"]
-    labels = [f"{row['kernel']} · {row['provider']}" for row in optimized]
+    display_names = {
+        "rmsnorm": "RMSNorm",
+        "rope": "RoPE",
+        "swiglu": "SwiGLU",
+        "cross_entropy": "Cross Entropy†",
+        "fused_linear_cross_entropy": "Fused Linear CE†",
+        "attention": "FlashAttention",
+        "router_postprocess": "Router postprocess",
+        "fused_moe": "Fused MoE",
+    }
+    labels = [
+        f"{display_names[str(row['kernel'])]}  ·  {str(row['provider']).title()}"
+        for row in optimized
+    ]
     speedups = [float(row["full_speedup_vs_torch"]) for row in optimized]
     memory = [float(row["full_peak_allocated_reduction_percent"]) for row in optimized]
-    colors = ["#3b82a0" if row["provider"] == "triton" else "#d18745" for row in optimized]
+    colors = ["#15808d" if row["provider"] == "triton" else "#7357cf" for row in optimized]
     y = list(range(len(labels)))
-    figure, axes = plt.subplots(1, 2, figsize=(15, 8), constrained_layout=True)
-    axes[0].barh(y, speedups, color=colors)
-    axes[0].axvline(1.0, color="#333333", linewidth=1)
+    figure, axes = plt.subplots(1, 2, figsize=(18, 10), sharey=True)
+    figure.patch.set_facecolor("#f7f9fc")
+
+    for axis in axes:
+        axis.set_facecolor("#ffffff")
+        axis.spines[["top", "right", "left"]].set_visible(False)
+        axis.tick_params(axis="y", length=0, labelsize=13, colors="#1e293b")
+        axis.tick_params(axis="x", labelsize=11, colors="#64748b")
+        axis.grid(axis="x", color="#e8edf4", linewidth=1, zorder=0)
+        axis.set_axisbelow(True)
+        for index in range(len(labels)):
+            if index % 2 == 0:
+                axis.axhspan(index - 0.48, index + 0.48, color="#f8fafc", zorder=-1)
+
+    axes[0].barh(y, speedups, height=0.62, color=colors, zorder=3)
+    axes[0].axvline(1.0, color="#94a3b8", linewidth=1.5, linestyle="--", zorder=2)
+    axes[0].set_xlim(0, 7.25)
+    axes[0].xaxis.set_major_locator(MultipleLocator(1))
     axes[0].set_yticks(y, labels)
     axes[0].invert_yaxis()
-    axes[0].set_xlabel("Full-step speedup vs Torch")
-    axes[0].set_title("RTX 4090 industrial kernel benchmark")
-    axes[1].barh(y, memory, color=colors)
-    axes[1].axvline(0.0, color="#333333", linewidth=1)
-    axes[1].set_yticks(y, labels)
-    axes[1].invert_yaxis()
-    axes[1].set_xlabel("Peak allocated reduction (%)")
-    axes[1].set_title("Full forward + backward memory")
-    figure.savefig(output, dpi=180)
+    axes[0].set_title("Full-step speedup", loc="left", fontsize=20, fontweight="bold", pad=26, color="#0f172a")
+    axes[0].text(
+        0,
+        1.02,
+        "Higher is better  ·  dashed line = PyTorch reference",
+        transform=axes[0].transAxes,
+        fontsize=12.5,
+        color="#64748b",
+    )
+    axes[0].set_xlabel("Relative speed (×)", fontsize=12, color="#475569", labelpad=12)
+    for index, value in enumerate(speedups):
+        axes[0].text(
+            value + 0.10,
+            index,
+            f"{value:.2f}×",
+            va="center",
+            fontsize=14,
+            fontweight="bold",
+            color="#0f172a",
+        )
+
+    axes[1].barh(y, memory, height=0.62, color=colors, zorder=3)
+    axes[1].axvline(0.0, color="#94a3b8", linewidth=1.5, zorder=2)
+    axes[1].set_xlim(0, 108)
+    axes[1].xaxis.set_major_locator(MultipleLocator(20))
+    # The two panels share the same rows. Repeating long kernel names on the
+    # right crowds the speed labels in the center gutter, so label rows once.
+    axes[1].tick_params(axis="y", labelleft=False)
+    axes[1].set_title("Peak allocated memory", loc="left", fontsize=20, fontweight="bold", pad=26, color="#0f172a")
+    axes[1].text(
+        0,
+        1.02,
+        "Reduction relative to the matched PyTorch path",
+        transform=axes[1].transAxes,
+        fontsize=12.5,
+        color="#64748b",
+    )
+    axes[1].set_xlabel("Lower peak allocation (%)", fontsize=12, color="#475569", labelpad=12)
+    for index, value in enumerate(memory):
+        axes[1].text(
+            min(value + 2.0, 101),
+            index,
+            f"{value:.1f}%",
+            va="center",
+            fontsize=14,
+            fontweight="bold",
+            color="#0f172a",
+        )
+
+    figure.suptitle(
+        "GPU kernel benchmark  ·  MiniTrainSys",
+        x=0.07,
+        y=0.99,
+        ha="left",
+        fontsize=27,
+        fontweight="bold",
+        color="#0f172a",
+    )
+    figure.text(
+        0.07,
+        0.91,
+        "RTX 4090 24 GB  ·  BF16  ·  293M MoE workload  ·  forward + backward",
+        ha="left",
+        fontsize=13,
+        color="#475569",
+    )
+    figure.legend(
+        handles=[Patch(facecolor="#15808d", label="Triton"), Patch(facecolor="#7357cf", label="Native CUDA")],
+        loc="upper right",
+        bbox_to_anchor=(0.945, 0.982),
+        frameon=False,
+        ncol=2,
+        fontsize=11,
+    )
+    figure.text(
+        0.07,
+        0.025,
+        "† Cross Entropy and Fused Linear CE use the largest common runnable shape: 8,192 tokens. "
+        "All other rows use 57,344 tokens. Values are P50 measurements after correctness gates.",
+        ha="left",
+        fontsize=10.5,
+        color="#64748b",
+    )
+    figure.subplots_adjust(left=0.23, right=0.97, top=0.79, bottom=0.10, wspace=0.16)
+    figure.savefig(output, dpi=220, facecolor=figure.get_facecolor())
     plt.close(figure)
 
 

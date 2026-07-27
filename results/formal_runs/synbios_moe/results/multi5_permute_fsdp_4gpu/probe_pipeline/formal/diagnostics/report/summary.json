@@ -2,9 +2,8 @@
   "artifacts": {
     "figures": [
       "figures/complete_whole_comparison.png",
-      "figures/diagnostic_study_overview.png",
       "figures/oracle_intervention_table.png",
-      "figures/route_branching_table.png"
+      "figures/route_attribute_layer_did_heatmap.png"
     ],
     "formal_whole_metrics": "formal_whole_metrics.csv",
     "oracle_metrics": "oracle_metrics.csv",

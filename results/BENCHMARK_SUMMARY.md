@@ -122,8 +122,8 @@ Machine summary:
 | Single fresh P-whole + true `t1` | 44.23% → **56.47%** | modest unlock; position dependence remains |
 | Multi5 fresh P-whole + true `t1` | 45.28% → **96.38%** | whole value becomes nearly linearly readable |
 
-Canonical narrative:
-[`reports/synbios_moe/storage_story.md`](../reports/synbios_moe/storage_story.md).
+Main interpretation:
+[`README.md#model-interpretability`](../README.md#model-interpretability).
 
 ## Artifact completeness
 

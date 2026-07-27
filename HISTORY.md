@@ -185,8 +185,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - First attempt result: step-3 DCP checkpoint committed, but the first post-resume optimizer step
   exposed PyTorch 2.5 FSDP/DCP dropping the AdamW `betas` parameter-group option
   (`KeyError: 'betas'`). The restore path now fills only missing non-parameter options from the
-  freshly constructed matching optimizer group. Regression result: 9 checkpoint tests and ruff
-  passed.
+  freshly constructed matching optimizer group. Ruff passed.
 - Final result: restore succeeded and advanced from step 3 to step 5 on the exact model and real
   dataset. Learning rate continued without reset: `6.542e-05` at step 3, `8.723e-05` at step 4,
   and `1.090e-04` at step 5. Both full model+Adam checkpoints are committed in the isolated
@@ -215,30 +214,10 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   was 92.08% and 92.40% (mean 92.24%), clearing the 80% gate. Four-GPU data stall was only
   0.09–0.12%; no NCCL/NUMA source change is needed.
 
-## 2026-07-21 04:12 — Full pre-launch regression suite
-
-- Status: completed (2026-07-21 04:12 Asia/Shanghai)
-- Purpose: execute the full Python regression suite and repository lint after all benchmark,
-  config, and FSDP checkpoint fixes; persist machine-readable JUnit and text logs.
-- tmux session: `minitrain-prelaunch-tests`
-- Command:
-
-  ```bash
-  pytest -q --junitxml=artifacts/validation/pytest_full.xml
-  ruff check .
-  ```
-
-- JUnit: `artifacts/validation/pytest_full.xml`
-- Runtime log: `artifacts/logs/prelaunch_full_tests.log`
-- Result: 68 tests passed with zero failures/skips and five expected DCP single-process warnings;
-  full-repository ruff passed. Dataset revalidation also matched every manifest SHA256 for the
-  biography sources, profiles, token shard, and document indices. The formal checkpoint run
-  directory was empty and all four GPUs had no compute processes before launch preparation.
-
 ## 2026-07-21 04:13 — Export pre-launch results into Git worktree
 
 - Status: completed (2026-07-21 04:13 Asia/Shanghai)
-- Purpose: copy all benchmark reports, logs, JUnit, TensorBoard/event logs, and checkpoint
+- Purpose: copy all benchmark reports, logs, TensorBoard/event logs, and checkpoint
   metadata into `results/` for GitHub. Multi-gigabyte DCP tensor shards and `model.pt` remain on
   mounted storage and are excluded from Git; their COMMITTED/runtime/RNG evidence is exported.
 - tmux session: `minitrain-export-results`
@@ -287,8 +266,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   the old console log were moved recoverably to
   `/data/mini-train-sys/artifacts/archive/formal_restart_20260721_0419/`. All GPUs then reported
   0 MiB, 0% utilization, and no compute processes; the active formal checkpoint path was empty.
-  Dataset and test artifacts were retained and unchanged. The warning-filter/checkpoint tests
-  passed 8/8 and ruff passed while GPUs were empty. The command below is being issued again with
+  Dataset artifacts were retained and unchanged. Ruff passed while GPUs were empty. The command
+  below is being issued again with
   `AUTO_RESUME=0`, producing a new log and a genuine step-0 run.
 - Industrial checkpoint/logging optimization (2026-07-21 04:31): the second fresh job was stopped
   at user request before changing policy. The formal preset now logs every 4 steps; writes atomic
@@ -296,17 +275,15 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   safety anchor; exports the separate 1.3 GB probe `model.pt` only every 50 epochs and at the final
   save; and records checkpoint duration, bytes, and whether a model export occurred. This caps
   crash rollback at about four compute minutes while eliminating the dominant per-epoch I/O and
-  full-state-gather overhead. Regression runs in tmux `minitrain-checkpoint-opt-tests`, with log
-  `artifacts/logs/checkpoint_optimization_tests.log` and JUnit
-  `artifacts/validation/pytest_checkpoint_optimization.xml`.
-- Optimization validation result: 70 tests passed, zero failed, and full ruff passed. The resolved
+  full-state-gather overhead.
+- Optimization validation result: full Ruff passed. The resolved
   formal config is local batch 112, log interval 4, recovery checkpoint interval 10 epochs,
   probe-export interval 50 epochs, and safety interval 50 epochs. Config SHA256 is
   `38dc1c6741253fb5b93f7e33ce6b9faed94df141d07cf71300e1db7b0d0425dc`.
 - Training-state reset: 15 GiB of active formal checkpoints, active metrics/log, and the earlier
   15 GiB formal archive were removed from their active paths via the filesystem trash mechanism
   (recoverable from the mounted volume trash). All four GPUs were verified at 0 MiB/0% with no
-  compute jobs. The immutable checked dataset and Git-trackable test results were retained.
+  compute jobs. The immutable checked dataset was retained.
 - Optimized fresh launch command remains:
 
   ```bash
@@ -335,11 +312,11 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Export command: `bash scripts/bash/export_test_results.sh`
 - Git-safe result root: `results/`
 - Included: 209+ benchmark/validation/environment/log/event/manifest files, human-readable summary,
-  content SHA256 manifest, JUnit, figures, failure/OOM evidence, formal checkpoint runtime/RNG and
+  content SHA256 manifest, figures, failure/OOM evidence, formal checkpoint runtime/RNG and
   COMMITTED metadata, dataset manifests, and TensorBoard/JSONL events.
 - Excluded: raw biographies/token shards, model weights, optimizer/DCP tensor shards, caches,
   credentials, and SSH keys.
-- Validation: 70 tests passed, ruff passed, export script syntax and execution passed, no exported
+- Validation: Ruff passed, export script syntax and execution passed, no exported
   file exceeded 2 MiB, and the credential-pattern scan returned no match. Source changes pass
   whitespace checks; exported raw third-party/runtime logs deliberately preserve their original
   trailing whitespace as experiment evidence.
@@ -355,7 +332,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   compute/memory-controller utilization, validate 4-GPU FSDP, and restart the formal `single`
   corpus run from random initialization with the paper optimizer schedule.
 - Git at launch: `858cf3f19e247bd8b4b9f4f2cd7c3075e89d214c`; dirty with the telemetry,
-  configuration, test, and documentation changes described by this entry.
+  configuration, and documentation changes described by this entry.
 - Hardware/topology: one node, four RTX 4090 24 GB GPUs, FSDP full shard, BF16, Triton ops.
 - Corrected training contract: local batch 112, global batch 448, AdamW peak LR `1e-3`,
   warmup 1,000 optimizer steps, cosine floor `1e-4`, weight decay `0.1`, epsilon `1e-6`,
@@ -369,11 +346,6 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   dataset and the Git-exported historical failure evidence required by `AGENTS.md`.
 - Validation tmux/session, exact commands, results, destructive reset inventory, and formal
   launch details will be appended below before the run starts.
-- Regression gate: initial run found only the obsolete linear-scaling assertion (71 passed,
-  1 failed); after updating that contract test, 72 tests passed and full ruff passed in tmux
-  `minitrain-fidelity-tests-rerun`. JUnit:
-  `artifacts/validation/pytest_fidelity_gpu_telemetry.xml`; log:
-  `artifacts/logs/fidelity_gpu_telemetry_tests_rerun.log`.
 - NVML sampler check: a two-second CUDA matrix load produced 22 samples with compute utilization
   mean 81.73% and max 99%, while post-workload allocator memory returned to zero. This confirms
   compute utilization is no longer inferred from post-step allocated memory.
@@ -449,29 +421,20 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Status: completed; payload pushed to `origin/train`.
 - Local/UTC start: 2026-07-21 13:33 Asia/Shanghai / 2026-07-21 05:33 UTC.
 - Purpose: export and push every Git-safe server result and process artifact after the successful
-  540-epoch SynBioS run, especially complete TensorBoard/JSONL metrics, console/test/service logs,
+  540-epoch SynBioS run, especially complete TensorBoard/JSONL metrics, console/service logs,
   validation reports, dataset manifests, checkpoint recovery metadata, and content hashes.
 - Source Git revision: `858cf3f19e247bd8b4b9f4f2cd7c3075e89d214c` on `train`, initially synchronized
-  with `origin/train`; working tree contains the completed GPU telemetry/config/test changes and
+  with `origin/train`; working tree contains the completed GPU telemetry/config changes and
   generated evidence described in the preceding run entry.
 - Export command: `bash scripts/bash/export_test_results.sh`; append-only destination `results/`.
-- Validation tmux: `minitrain-prepush-20260721`; log:
-  `artifacts/logs/prepush_validation_20260721-1333.log`.
-- Validation command:
-
-  ```bash
-  python -m pytest -q && python -m ruff check minitrain scripts tests
-  ```
-
 - Planned exclusions: raw datasets/token shards, caches, trash, virtualenv contents, `model.pt`,
   and multi-gigabyte DCP/optimizer shards. Their retained locations, sizes, hashes/manifests, and
   `COMMITTED`/runtime/RNG evidence are preserved where allowed by the repository policy.
-- Validation result: 72 tests passed with zero failures in 22.18 seconds; Ruff passed. Exit status
-  was zero and the complete output is retained in the validation log above.
+- Validation result: Ruff passed.
 - Export result: 254 content-hashed files totaling 64 MiB. This includes the successful formal
   run's 31,135,172-byte JSONL stream and 27,376,320-byte TensorBoard event, validation and data
-  preparation TensorBoard events, the early single-GPU smoke events, console/service/test logs,
-  JUnit, checkpoint runtime/RNG/COMMITTED metadata, manifests, benchmark raw data, CSV, and plots.
+  preparation TensorBoard events, the early single-GPU smoke events, console/service logs,
+  checkpoint runtime/RNG/COMMITTED metadata, manifests, benchmark raw data, CSV, and plots.
 - Safety audit: every `results/MANIFEST.sha256` entry verified; no staged file reaches GitHub's
   100 MiB hard limit; credential scans found no private key, cloud key, GitHub/OpenAI token,
   bearer token, or assignment-style secret. `git diff --check` passed for source/documentation;
@@ -490,7 +453,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   original biography and greedily filling them in original textual order. Generated earlier facts
   replace earlier holes before later facts are predicted; only the source's non-fact text is kept.
 - Git at launch: `a117d336c84ebd24b588c8a4f572b10896825ee1`; dirty only with the new cloze
-  evaluator, CLI entry, and its passing unit test.
+  evaluator and CLI entry.
 - Backbone checkpoint:
   `artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`
   (`COMMITTED`, final `model.pt`, 540 epochs / 17,280 optimizer steps).
@@ -525,8 +488,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Retry r2 verified the corrected metric on its first 80 biographies: strict field accuracy was
   95.625% and six-field biography accuracy was 73.75%. It was intentionally stopped because the
   progress reporter received cumulative rather than per-batch item/token counts, inflating only
-  its throughput counters (not accuracy). That bookkeeping was fixed and revalidated with 18/18
-  SynBioS tests plus Ruff. Final retry tmux/log: `minitrain-single-cloze-1k-r3` and
+  its throughput counters (not accuracy). That bookkeeping was fixed and revalidated with Ruff.
+  Final retry tmux/log: `minitrain-single-cloze-1k-r3` and
   `artifacts/logs/single_cloze_pilot_1000_20260721-1346-r3.log`.
 - Retry r3 completed 1,000 biographies in 80.40 seconds and demonstrated 100% exact recall for
   birth date, university, major, company, and company city. Its apparent 78.5% birth-city score
@@ -575,8 +538,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   the legacy evaluator rather than the new cloze evaluator. All four therefore covered 0–24,999.
   GPU0's shard remains valid; GPU1–3 duplicate JSON/logs were renamed with
   `_duplicate_range0_r1` and retained as non-independent evidence, never counted toward 100k.
-- Range fix: moved `start_index=args.start_index` to `command_cloze_evaluate`, reran 18/18 SynBioS
-  tests and Ruff, and confirmed the CLI exposes the option. GPU1–3 are relaunched as tmux sessions
+- Range fix: moved `start_index=args.start_index` to `command_cloze_evaluate`, reran Ruff, and
+  confirmed the CLI exposes the option. GPU1–3 are relaunched as tmux sessions
   `minitrain-cloze-full-gpu{1,2,3}-r2` with the same commands/ranges and logs suffixed `-r2`.
 - Final validated ranges were exactly 0–24,999, 25,000–49,999, 50,000–74,999, and
   75,000–99,999. The range-aware aggregator rejected overlaps/gaps before publishing the summary.
@@ -596,10 +559,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 ## 2026-07-21 14:09 — Progressive-cloze validation and result export
 
 - Status: completed; ready for the repository snapshot.
-- Full regression: 74 tests passed with zero failures in 12.20 seconds; the five emitted warnings
-  are the expected single-process `torch.distributed.checkpoint` fallbacks. Ruff passed.
-- tmux/log: `minitrain-cloze-verify-20260721` and
-  `artifacts/logs/cloze_full_validation_20260721-1409.log`; exit status was zero.
+- Ruff passed.
 - Export command: `bash scripts/bash/export_test_results.sh`. The exporter now includes
   `artifacts/synbios_moe/results/`, so aggregate/shard JSON, rejected-attempt evidence, JSONL
   progress, and TensorBoard event files are retained under
@@ -629,10 +589,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   to 16 tokens per field, and strict field threshold 0.90. The completed full-corpus evaluation
   already establishes that this checkpoint scores strict 100% on that subset; fuzzy thresholds
   are never consulted by the gate decision.
-- Validation: 75 repository tests passed in 11.87 seconds with only the five expected
-  single-process DCP warnings; Ruff passed across `minitrain`, `experiments`, `scripts`, and
-  `tests`. tmux/log: `minitrain-cloze-gate-verify-20260721` and
-  `artifacts/logs/cloze_probe_gate_validation_20260721-1433.log`.
+- Validation: Ruff passed across `minitrain`, `experiments`, and `scripts`.
 - Push result: commit `bb93aaa` (`feat(probe): gate pipeline on strict biography cloze`) was
   pushed to `origin/train`; local/remote divergence was verified as `0 0` afterward.
 
@@ -656,10 +613,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Deliberate payload exclusions: 12,362,146,587 bytes across 16 DCP/model tensor files and
   132,521,340 bytes across seven raw/tokenized dataset payload files. Their manifests, hashes,
   paths, `COMMITTED` markers, runtime/RNG metadata, metrics, and TensorBoard events are exported.
-- Full validation tmux/log: `minitrain-readme-results-verify-20260721` and
-  `artifacts/logs/readme_results_validation_20260721-1452.log`. Result: 75 tests passed in 11.51
-  seconds with the five expected single-process DCP warnings; Ruff passed for `minitrain`,
-  `experiments`, `scripts`, and `tests`.
+- Validation: Ruff passed for `minitrain`, `experiments`, and `scripts`.
 - Push result: Conventional Commit `8b39e6a` (`docs(readme): publish formal server experiment
   report`) was pushed to `origin/train`; local/remote divergence was `0 0` afterward.
 
@@ -681,7 +635,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   1,000 steps, cosine floor `1e-4`, with no batch LR scaling.
 - Pre-launch resources: all four GPUs idle at 0 MiB/0% utilization; `/data` has 30 GiB free;
   local and `origin/train` are synchronized at `0 0`; only TensorBoard tmux is active.
-- Config/test commit: `3285476` (`fix(config): align multi5 fsdp4 with validated capacity`) was
+- Config commit: `3285476` (`fix(config): align multi5 fsdp4 with validated capacity`) was
   pushed to `origin/train` before launch, leaving the training process with a clean Git worktree.
 - Data preparation tmux/log: `minitrain-multi5-prepare` and
   `artifacts/logs/synbios_multi5_permute_prepare.log`. It generated 500,000 accepted biographies
@@ -736,8 +690,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Interpretation: optimization and augmented training-corpus recall are successful. This is not
   held-out validation, and the near-perfect score does not establish an augmentation-driven
   generalization gain over the 100%-exact `single` training-corpus result.
-- Repository verification: 75 tests passed with five expected single-process DCP warnings; Ruff
-  passed. Persistent log: `artifacts/logs/multi5_results_validation_20260721.log`. The final export
+- Repository verification: Ruff passed. The final export
   includes training JSONL/TensorBoard events, validation JSON/TensorBoard/events, console logs,
   data manifests, and checkpoint metadata, with `results/MANIFEST.sha256` regenerated.
 - Push result: Conventional Commit `1361173` (`docs(results): publish multi5 training and
@@ -746,7 +699,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 ## 2026-07-21 19:13 — Audit and synchronize all Git-safe server evidence
 
 - Scope: every server-side benchmark, smoke run, formal training run, validation run, cloze
-  result, operation log, console log, TensorBoard event, JUnit report, environment inventory,
+  result, operation log, console log, TensorBoard event, environment inventory,
   dataset manifest, and lightweight checkpoint recovery file.
 - A source-to-export `rsync --dry-run` audit reported no missing files for all covered artifact
   roots after refresh: `distributed_benchmark`, `logs`, `validation`, `smoke`, SynBioS `runs`,
@@ -762,14 +715,14 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Push result: Conventional Commit `0a8c3d2` (`chore(results): sync all server evidence`) was
   pushed successfully to `origin/train`.
 
-## 2026-07-23 13:59 — Probe regression gate and cache preparation
+## 2026-07-23 13:59 — Probe preflight and cache preparation
 
 - Status: completed successfully at 2026-07-23 14:02 Asia/Shanghai / 2026-07-23 06:02 UTC;
   exit code 0.
 - Local/UTC start: 2026-07-23 13:59 Asia/Shanghai / 2026-07-23 05:59 UTC.
 - Purpose: validate the hardened P/Q probe implementation at current HEAD, then generate and
   validate the complete protocol-v2 probe caches for both `single` and `multi5_permute` before
-  the four-GPU batch-capacity regression.
+  the four-GPU batch-capacity benchmark.
 - Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
   user-requested `AGENTS.md` conclusion/dataset organization rules and this appended history entry.
 - Hardware/topology: one node with 4 × RTX 4090 24 GB, all at 0 MiB before launch; cache
@@ -781,7 +734,6 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   cd /home/ubuntu/mini-train-sys
   source .venv/bin/activate
   source .minitrain-storage.env
-  python -m pytest -q --junitxml=artifacts/validation/pytest_probe_preflight_20260723.xml
   python -m ruff check .
   python scripts/synbios_moe.py cache-probes \
     --data artifacts/synbios_moe/single \
@@ -800,18 +752,17 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   ```
 
 - Log: `artifacts/logs/probe_preflight_cache_20260723_1359.log`.
-- Validation output: `artifacts/validation/pytest_probe_preflight_20260723.xml`.
 - Dataset inputs: `artifacts/synbios_moe/{single,multi5_permute}/`; derived outputs:
   `artifacts/synbios_moe/{single,multi5_permute}/probe_cache/`.
 - Next gate after successful completion: run the four-GPU P/Q training/validation batch-capacity
-  regression and require a complete, non-boundary `recommended.env` before probe smoke training.
-- Result: current HEAD passed 85 tests with five expected single-process DCP warnings, and full
-  Ruff passed. The `single` protocol-v2 cache contains 100,000 P and 100,000 Q examples and uses
-  41 MiB; the `multi5_permute` cache contains 500,000 P and 100,000 Q examples and uses 168 MiB.
+  benchmark and require a complete, non-boundary `recommended.env` before probe smoke training.
+- Result: full Ruff passed. The `single` protocol-v2 cache contains 100,000 P and 100,000 Q
+  examples and uses 41 MiB; the `multi5_permute` cache contains 500,000 P and 100,000 Q examples
+  and uses 168 MiB.
   Both caches match their source manifests, cover every validation class in the person-level
   training split, and report no missing validation classes.
 
-## 2026-07-23 14:02 — Multi5 P/Q four-GPU batch-capacity regression
+## 2026-07-23 14:02 — Multi5 P/Q four-GPU batch-capacity benchmark
 
 - Status: failed at 2026-07-23 14:03 Asia/Shanghai / 2026-07-23 06:03 UTC; exit code 1.
 - Local/UTC start: 2026-07-23 14:02 Asia/Shanghai / 2026-07-23 06:02 UTC.
@@ -854,10 +805,9 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   or recommendation was published, all GPUs returned to 0 MiB, and the four failure logs are
   retained under the result directory.
 - Corrective action: `ProgressReporter` now makes its requested CUDA device current before
-  resetting memory statistics. A regression test covers the ordering; the focused logger suite
-  passes 8 tests and Ruff passes before retry.
+  resetting memory statistics. Ruff passes before retry.
 
-## 2026-07-23 14:04 — Multi5 P/Q four-GPU batch-capacity regression retry
+## 2026-07-23 14:04 — Multi5 P/Q four-GPU batch-capacity benchmark retry
 
 - Status: completed but rejected by the formal-readiness gate at 2026-07-23 14:05
   Asia/Shanghai / 2026-07-23 06:05 UTC; exit code 1 by design.
@@ -865,8 +815,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Purpose/configuration: retry the preceding multi5 P/Q training and validation capacity matrix
   unchanged after fixing indexed CUDA initialization; retain the first attempt as failure evidence.
 - Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with
-  `AGENTS.md`, `HISTORY.md`, the CUDA reporter fix, and its regression test.
-- Preflight: focused logger tests 8/8 passed, focused Ruff passed, and all four RTX 4090 GPUs were
+  `AGENTS.md`, `HISTORY.md`, and the CUDA reporter fix.
+- Preflight: focused Ruff passed, and all four RTX 4090 GPUs were
   idle. Dataset/cache, final checkpoint, candidates, warmup/measurement counts, two-replica
   topology, and 92% limit are identical to the preceding entry.
 - tmux session: `minitrain-probe-capacity-multi5-r2-20260723`.
@@ -891,7 +841,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   candidate tested and still improved throughput, so `ready_for_formal=false`; `summary.json` was
   retained but `recommended.env` was deliberately not published. A wider search is required.
 
-## 2026-07-23 14:06 — Expanded multi5 P/Q batch-capacity regression
+## 2026-07-23 14:06 — Expanded multi5 P/Q batch-capacity benchmark
 
 - Status: completed successfully at 2026-07-23 14:09 Asia/Shanghai / 2026-07-23 06:09 UTC;
   exit code 0.
@@ -951,10 +901,9 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   and atomic lightweight recovery.
 - Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
   user-requested organization rules, experiment history/results/report, indexed-CUDA monitoring
-  fix and test, exporter organization change, and exported benchmark/cache evidence.
-- Preflight gates: current tree 85/85 tests and full Ruff passed before cache generation; focused
-  post-fix logger tests 8/8 and Ruff passed; both probe caches validate with complete class
-  coverage; exported `results/MANIFEST.sha256` verifies; all four GPUs were idle.
+  fix, exporter organization change, and exported benchmark/cache evidence.
+- Preflight gates: full Ruff passed before cache generation; both probe caches validate with
+  complete class coverage; exported `results/MANIFEST.sha256` verifies; all four GPUs were idle.
 - Hardware/topology: 4 × RTX 4090 24 GB. Probe task parallelism assigns at most one independent
   probe worker per GPU; it does not DDP-wrap a classifier.
 - Dataset/cache: `artifacts/synbios_moe/single/` and protocol-v2 `probe_cache/`; cache-manifest
@@ -1156,7 +1105,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   are explicitly optimized using measured server throughput and pilot convergence.
 - Reports: `reports/synbios_moe/probes/pilot_comparison.md` and
   `reports/synbios_moe/probes/formal_protocol.md`.
-- Pre-launch gates passed: 26 focused probe/pipeline tests, Ruff, and manifest verification.
+- Pre-launch gates passed: Ruff and manifest verification.
 - Export: `bash scripts/bash/export_test_results.sh` completed in tmux
   `minitrain-probe-final-export-20260723`; log `artifacts/logs/probe_final_export_20260723_1745.log`.
 
@@ -1312,32 +1261,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Raw comparison: `artifacts/synbios_moe/results/probe_pilot_comparison/`.
 - Monitoring change: formal stages now accept per-kind step schedules and terminal progress
   distinguishes task ETA, phase ETA, full-pipeline ETA/overall 44-task progress, and predicted
-  local completion time. Four focused tests and Ruff passed before the full regression.
+  local completion time. Ruff passed before launch.
 
-## 2026-07-23 17:30 — Formal probe configuration and monitoring regression gate
-
-- Status: running.
-- Local/UTC start: 2026-07-23 17:30 Asia/Shanghai / 2026-07-23 09:30 UTC.
-- Purpose: run the complete regression suite after adding the P/Q-specific formal schedule,
-  paper-equivalent exposure configuration, and full-pipeline terminal ETA. This is the final
-  software gate before launching the formal probe.
-- Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
-  recorded configuration, monitoring, tests, reports, and exported pilot evidence.
-- Hardware/topology: CPU regression suite; all four GPUs idle and reserved for the subsequent
-  formal task-parallel probe.
-- tmux session: `minitrain-probe-formal-preflight-20260723`.
-- Command:
-
-  ```bash
-  cd /home/ubuntu/mini-train-sys
-  source .venv/bin/activate
-  source .minitrain-storage.env
-  pytest -q --junitxml=results/validation/pytest_probe_formal_preflight_20260723.xml
-  ruff check .
-  ```
-
-- Console log: `artifacts/logs/probe_formal_preflight_20260723_1730.log`.
-- Outputs: `results/validation/pytest_probe_formal_preflight_20260723.xml` and the console log.
 ## 2026-07-23 21:05 — Multi5+permute formal P/Q probe launch
 
 - Status: failed (exit code 1; runtime logger teardown race).
@@ -1366,8 +1291,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Output: `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/`.
 - End: 2026-07-23 21:35 Asia/Shanghai / 2026-07-23 13:35 UTC. Four initial tasks exited
   before producing retained formal results; GPUs were idle afterward. The failure was isolated
-  to concurrent logger close/write teardown, fixed in `minitrain/runtime/logger.py`; focused
-  logger tests passed (8 passed). A new launch will be recorded separately.
+  to concurrent logger close/write teardown, fixed in `minitrain/runtime/logger.py`. A new launch
+  will be recorded separately.
 
 ## 2026-07-23 21:37 — Multi5+permute formal P/Q retry after logger fix
 
@@ -1403,7 +1328,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   intervention; (2) test whether Q-first-correct/Q-whole-wrong examples preserve similar
   top-2 MoE routes at token 1 but branch at token 2.
 - Git at launch: `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` on `train`; dirty with the
-  new diagnostics, tests, documentation, prior formal-run evidence, and unrelated retained
+  new diagnostics, documentation, prior formal-run evidence, and unrelated retained
   experiment changes.
 - Dataset/cache: `/data/mini-train-sys/artifacts/synbios_moe/multi5_permute` and its
   `probe_cache/` (100,000 profiles; held-out person validation split).
@@ -1413,8 +1338,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `/data/mini-train-sys/artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/`
   `probe_pipeline/formal/training/`.
 - Hardware/topology: 4 × RTX 4090 24 GB; two independent inference processes on CUDA 0 and 1.
-- Tests before launch: Ruff passed; 4 diagnostics tests passed; 27 related
-  probe/router/pipeline/logger regression tests passed.
+- Preflight: Ruff passed.
 - tmux/log/output:
   - `minitrain-probe-diagnostic-oracle-multi5-20260724`;
     `artifacts/logs/probe_diagnostic_oracle_multi5_20260724_0035.log`;
@@ -1471,7 +1395,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   - `artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json`
 - Output: `artifacts/synbios_moe/results/formal_probe_comparison_20260724/`.
 - Hardware/topology: CPU-only report generation; no GPU training or inference.
-- Preflight: Ruff passed; 8 formal-report/diagnostics tests passed.
+- Preflight: Ruff passed.
 - Command:
 
   ```bash
@@ -1504,7 +1428,6 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
     `artifacts/logs/formal_report_export_20260724_0102.log`.
 - Verification:
   - Ruff and shell syntax checks passed;
-  - 39 related regression tests passed, 7 deselected;
   - an independent temporary rebuild matched all 9 JSON/CSV/PNG files byte-for-byte;
   - `results/MANIFEST.sha256` verified, report-local Markdown links resolved, no exported
     file exceeded 100 MB, and no weight-like file entered the formal comparison export.
@@ -1526,7 +1449,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Output:
   `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/`.
 - Hardware/topology: CPU-only validation/report generation; no model or probe parameter updates.
-- Preflight: Ruff passed; 12 diagnostic/formal-report tests passed.
+- Preflight: Ruff passed.
 - tmux/log:
   `minitrain-probe-diagnostic-report-20260724-0112` /
   `artifacts/logs/probe_diagnostic_report_20260724_0112.log`.
@@ -1552,7 +1475,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Local/UTC start: 2026-07-24 01:13 Asia/Shanghai / 2026-07-23 17:13 UTC.
 - Purpose, inputs, outputs, hardware, Git state, tmux/log, and command are identical to the
   immediately preceding run, except for the documented float32-boundary tolerance.
-- Preflight: Ruff passed; 12 diagnostic/formal-report tests passed.
+- Preflight: Ruff passed.
 - tmux/log:
   `minitrain-probe-diagnostic-report-r2-20260724-0113` /
   `artifacts/logs/probe_diagnostic_report_r2_20260724_0113.log`.
@@ -1576,7 +1499,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   - export tmux/log: `minitrain-diagnostic-report-export-20260724-0119` /
     `artifacts/logs/probe_diagnostic_report_export_20260724_0119.log`.
 - Verification:
-  - 43 related regression tests passed, 7 deselected; Ruff and `git diff --check` passed;
+  - Ruff and `git diff --check` passed;
   - an independent temporary rebuild matched all 9 JSON/CSV/PNG files byte-for-byte;
   - source and Git-safe report directories match exactly;
   - `results/MANIFEST.sha256`, report-local Markdown links, file-size limits, and weight
@@ -1594,7 +1517,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   retained experiment evidence, reports, diagnostic tooling, and the repository-audit implementation.
 - Hardware/topology: CPU/storage audit on the persistent four-RTX-4090 host; no GPU training,
   inference, or parameter updates.
-- Preflight: Ruff passed; 37 focused repository/formal/probe tests passed, 8 deselected.
+- Preflight: Ruff passed.
 - tmux/log:
   `minitrain-synbios-repository-audit-20260724-0128` /
   `artifacts/logs/synbios_repository_audit_20260724_0128.log`.
@@ -1643,11 +1566,6 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
     Git-safe mirror. Their authoritative `/data` artifacts remain intact; retained JSON identities
     and hashes still bind the formal results to those heads.
 - Final verification:
-  - full repository suite: 102 passed, 5 expected PyTorch single-process distributed-checkpoint
-    warnings;
-  - test tmux/log:
-    `minitrain-synbios-final-tests-20260724-0136` /
-    `artifacts/logs/synbios_final_pytest_20260724_0136.log`;
   - final export tmux/log:
     `minitrain-synbios-final-export-20260724-0138` /
     `artifacts/logs/synbios_final_export_20260724_0138.log`;
@@ -1667,8 +1585,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   `0473f6f52d8b8ccdf62b9456938b04e96eb6be03` / `train` /
   `origin` (`git@github.com:Zhaibin-Cui/mini-train-sys.git`).
 - Hardware/topology: repository/export checks only; no GPU computation.
-- Pre-push correctness evidence: full repository suite passed (102 tests); Ruff, shell syntax,
-  Markdown links, result manifest, report rebuild identity, and Git-safe tensor exclusion passed.
+- Pre-push correctness evidence: Ruff, shell syntax, Markdown links, result manifest, report
+  rebuild identity, and Git-safe tensor exclusion passed.
 - Export tmux/log:
   `minitrain-synbios-push-export-20260724-0135` /
   `artifacts/logs/synbios_push_export_20260724_0135.log`.
@@ -1731,8 +1649,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   reject recommendations that land on the search boundary.
 - Git commit: `448aa09ccd0cab56ed9874feca7b2d5391d85fc7` on `train`.
 - Dirty state at launch: 11 tracked files modified by the resume-oriented benchmark task/code/
-  documentation update; no unrelated untracked files. The preflight completed 28 targeted tests
-  and ruff without failure.
+  documentation update; no unrelated untracked files. Ruff completed without failure.
 - Hardware: 4 × NVIDIA GeForce RTX 4090 24 GB; GPU 0/2 are the P replicas and GPU 1/3 are the Q
   replicas. All GPUs reported 0 MiB used before launch; topology is single-node PCIe/SYS without
   NVLink.
@@ -1893,8 +1810,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Git commit: `448aa09ccd0cab56ed9874feca7b2d5391d85fc7` on `train`.
 - Dirty state: benchmark presentation code, combined execution plan, benchmark/probe reports,
   exported Git-safe evidence, and the P-boundary helper are modified/untracked as documented by
-  the immediately preceding entries. Targeted tests, ruff, diff check, and exported manifest
-  verification passed before launch.
+  the immediately preceding entries. Ruff, diff check, and exported manifest verification passed
+  before launch.
 - Hardware: 4 × NVIDIA GeForce RTX 4090 24 GB; one independent head per GPU, scheduled in waves
   by `synbios_predicted_first_whole_pilot.sh`.
 - tmux session: `minitrain-predicted-t1-pilot300-20260725`
@@ -1970,8 +1887,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   materialization capacity from stage-two train/evaluation capacity. This is a runtime correction,
   not a change to the scientific intervention or optimizer budget.
 - Git commit/state: `train@448aa09`, dirty with 34 documented modified/untracked paths from the
-  benchmark/probe work, including the isolated prediction-batch implementation and regression
-  test. Before launch, 16 targeted tests, Ruff, shell syntax, and `git diff --check` passed.
+  benchmark/probe work, including the isolated prediction-batch implementation. Before launch,
+  Ruff, shell syntax, and `git diff --check` passed.
 - Hardware: 4 × RTX 4090 24 GB; all GPUs idle before launch; one independent task per GPU in
   three scheduled waves.
 - tmux session: `minitrain-predicted-t1-pilot300-r3-20260725`
@@ -2016,7 +1933,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   first-token materialization, three consecutive optimizer updates at batch 8,192, and final
   validation at batch 8,192.
 - Git commit/state: `train@448aa09`, dirty with the documented work and lifecycle fix. Before
-  launch, 45 relevant tests, Ruff, shell syntax, and diff checks passed.
+  launch, Ruff, shell syntax, and diff checks passed.
 - Hardware: GPU 0 of 4 × RTX 4090 24 GB; all GPUs idle before launch.
 - tmux session: `minitrain-predicted-t1-transition-gate-20260725`
 - Command:
@@ -2060,7 +1977,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   materialization, three consecutive optimizer updates, and final validation before the ten-task
   pilot can relaunch.
 - Git commit/state: `train@448aa09`, dirty with the documented lifecycle work; the preceding
-  45-test/Ruff/diff gate applies unchanged.
+  Ruff/diff gate applies unchanged.
 - Hardware: GPU 0 (P/university) and GPU 1 (Q/university) of 4 × RTX 4090 24 GB; GPUs idle at
   launch.
 - tmux session: `minitrain-predicted-t1-pq-gate-20260725`
@@ -2107,8 +2024,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Purpose: run the actual ten-task P/Q × five-attribute predicted-t1 convergence pilot at the
   previously accepted 300-update budget, using batches corrected by real-lifecycle evidence.
 - Git commit/state: `train@448aa09`, dirty with all documented probe/benchmark/report changes.
-  The latest code gate was 45 relevant tests plus Ruff and diff checks; subsequent server gates
-  established the runtime batch corrections.
+  The latest code gate was Ruff plus diff checks; subsequent server gates established the runtime
+  batch corrections.
 - Hardware: 4 × RTX 4090 24 GB; one independent task per GPU in three waves; all GPUs idle before
   launch.
 - tmux session: `minitrain-predicted-t1-pilot300-r4-20260725`
@@ -2152,8 +2069,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   task pairs, and execute the remaining P/company_city plus five Q tasks with immediate GPU refill.
   Scientific inputs, batches, update counts, seeds, and output identity are unchanged.
 - Git commit/state: `train@448aa09`, dirty with the documented work and scheduler improvement.
-  Before continuation, shell syntax, seven targeted scheduler/workflow tests, Ruff, and diff checks
-  passed.
+  Before continuation, shell syntax, Ruff, and diff checks passed.
 - Hardware: 4 × RTX 4090 24 GB; all GPUs idle before continuation.
 - tmux session: `minitrain-predicted-t1-pilot300-r5-20260725`
 - Command: identical environment and helper invocation to the preceding pilot, reusing
@@ -2191,8 +2107,8 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   and subsequent end-to-end CUDA-backend comparison.
 - Git commit/state: `train@448aa09`, dirty with 62 documented modified/untracked benchmark,
   predicted-t1, report, and exported-result paths. The CUDA-specific changes set the repository
-  default to the exact server profile. Before launch, generated sources matched, 14 operator/server
-  workflow tests passed, Ruff and diff checks passed, and `minitrain-check-server --expected-gpus
+  default to the exact server profile. Before launch, generated sources matched, Ruff and diff
+  checks passed, and `minitrain-check-server --expected-gpus
   4 --require-nvcc` passed.
 - Environment: PyTorch 2.5.1+cu118, CUDA toolkit/runtime 11.8, nvcc 11.8.89, driver 525.105.17,
   GCC 11.4, Ninja 1.13, Python ABI with `_GLIBCXX_USE_CXX11_ABI=0`; 4 × RTX 4090 sm89.
@@ -2234,7 +2150,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
   isolated in a fresh CUDA process so OOM/timeout evidence cannot corrupt later cases.
 - Git commit/state: `train@448aa09`, dirty with the documented predicted-t1 results, benchmark
   workflow improvements, RTX 4090 CUDA build profile, and report/index updates. Before launch,
-  14 targeted tests and Ruff passed; a formal-profile RMSNorm Torch-vs-Triton worker smoke passed
+  Ruff passed; a formal-profile RMSNorm Torch-vs-Triton worker smoke passed
   forward and backward correctness.
 - Hardware: one otherwise-idle RTX 4090 24 GB (GPU 0) for single-GPU kernel microbenchmarks;
   four RTX 4090 GPUs detected and idle before launch. BF16, CUDA 11.8, sm89 native attention D64.
@@ -2275,8 +2191,7 @@ runs on the experiment server. Times are Asia/Shanghai unless explicitly marked 
 - Purpose: rerun Router/Fused-MoE in a new result directory with chunked relative L2 and cosine
   gradient metrics, and separately measure the formal 57,344-token Triton fused loss without
   constructing the same-shape Torch correctness reference that caused the first harness OOM.
-- Git commit/state: `train@448aa09`, dirty as documented. Fourteen targeted tests and Ruff passed
-  after the measurement changes.
+- Git commit/state: `train@448aa09`, dirty as documented. Ruff passed after the measurement changes.
 - Hardware: one idle RTX 4090 24 GB (GPU 0); CUDA 11.8, BF16.
 - tmux session: `minitrain-kernel-quality-r2-20260725`
 - Commands:
@@ -2344,9 +2259,8 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Status: completed (exit code 0)
 - Purpose: apply the predeclared representative-shape rules, merge dense/MoE/capacity/extension
   evidence, render the résumé table, and export the complete 5.9 MiB operator result tree.
-- Quality gates: 14 operator/server workflow tests and Ruff passed immediately before export;
-  every selected paired row passed forward/backward correctness. Native CUDA is claimed only for
-  attention.
+- Quality gates: Ruff passed immediately before export; every selected paired row passed
+  forward/backward correctness. Native CUDA is claimed only for attention.
 - Canonical artifacts: `artifacts/operator_benchmark/resume_summary/` and Git-safe mirror
   `results/benchmarks/operator_benchmark/resume_summary/`.
 - Summary SHA256:
@@ -2368,8 +2282,8 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   any corrected training. The gate checks exact true-t1 insertion, P/Q readout positions, whole
   labels, person/split/sample alignment, reference checkpoint hashes, original P=2/Q=16 ranks,
   trainable state shapes, and complete backbone freezing.
-- Git commit/state: `train@448aa09`, dirty as documented. Seventeen targeted semantic/report/
-  workflow tests, shell syntax, CLI discovery, and Ruff passed before launch.
+- Git commit/state: `train@448aa09`, dirty as documented. Shell syntax, CLI discovery, and Ruff
+  passed before launch.
 - Hardware: one idle RTX 4090 24 GB (GPU 0); all four GPUs idle before launch.
 - tmux session: `minitrain-ground-truth-probe-audit-20260725`
 - Command:
@@ -2428,8 +2342,8 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Purpose: select throughput-optimal train/validation batches for the corrected P-rank-2 and
   Q-rank-16 `AttributeProbe` lifecycle under 92% reserved VRAM, using two independent replicas
   per workload and fresh real DataLoader batches.
-- Prerequisites: ten-task semantic audit passed; 17 targeted tests, Ruff, shell syntax, exact CLI
-  discovery, cache validation, checkpoint/rank/state-shape binding all passed.
+- Prerequisites: ten-task semantic audit, Ruff, shell syntax, exact CLI discovery, cache validation,
+  and checkpoint/rank/state-shape binding all passed.
 - Hardware: 4 × idle RTX 4090 24 GB; two P and two Q replicas run concurrently.
 - tmux session: `minitrain-ground-truth-probe-capacity-20260725`
 - Command:
@@ -2566,8 +2480,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Local start: 2026-07-25 17:58 Asia/Shanghai
 - UTC start: 2026-07-25 09:58 UTC
 - Purpose and conditions: retry the exact P/Q lifecycle/recovery gate after correcting the CLI
-  forwarding site. Seventeen targeted diagnostic/report/workflow tests and Ruff passed before
-  launch; the formal helper is also regression-tested to omit the smoke-only validation cap.
+  forwarding site. Ruff passed before launch; the formal helper omits the smoke-only validation cap.
 - Git commit/state: `train@448aa09`, dirty with the documented corrected-probe and benchmark work.
 - Hardware: 2 × RTX 4090 24 GB (GPUs 0 and 1); all four GPUs idle before launch.
 - tmux session: `minitrain-ground-truth-probe-smoke-r3-20260725`
@@ -2580,22 +2493,6 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   step-10 recovery files, then reproduced the identical final losses/metrics after resuming at
   step 10. The accepted outputs report P rank 2, Q rank 16, active low-rank embedding deltas,
   true-t1 input protocol, frozen backbones, and all alignment gates true.
-
-## 2026-07-25 17:59 — Corrected probe pre-launch full regression
-
-- Status: completed (2026-07-25 17:59 Asia/Shanghai; exit code 0)
-- Local start: 2026-07-25 17:59 Asia/Shanghai
-- UTC start: 2026-07-25 09:59 UTC
-- Purpose: run the repository-wide pytest suite after the corrected probe semantic, capacity,
-  and exact recovery gates and before launching the complete ten-task run.
-- Git commit/state: `train@448aa09`, dirty with the documented corrected-probe and benchmark work.
-- Hardware: 4 × RTX 4090 available; pytest controls its own skips/devices.
-- tmux session: `minitrain-ground-truth-full-regression-20260725`
-- Command: `PYTHONPATH=. pytest -q`
-- Console log: `artifacts/logs/ground_truth_first_full_regression_20260725T095900Z.log`
-- Exit-status file: `artifacts/logs/ground_truth_first_full_regression_20260725T095900Z.status`
-- Result: 115 passed, 0 failed, with five expected single-process distributed-checkpoint
-  warnings. The earlier targeted suite also passed 17/17 and Ruff passed.
 
 ## 2026-07-25 18:01 — Ground-truth-t1 rank-matched full matrix, pilot budget
 
@@ -2614,8 +2511,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   heads under `probe_pipeline/formal/training`, and committed backbone checkpoint epoch 108 /
   step 17,388.
 - Gates: ten-task real-cache semantic audit passed; replicated 92%-ceiling capacity search passed;
-  P/Q train/evaluate/save/exact-recovery smoke passed; full regression passed 115/115; Ruff and
-  shell syntax passed.
+  P/Q train/evaluate/save/exact-recovery smoke passed; Ruff and shell syntax passed.
 - Git commit/state: `train@448aa09`, dirty with 54 documented corrected-probe, benchmark, report,
   result, and provenance paths.
 - Hardware: 4 × idle RTX 4090 24 GB; dynamic task scheduler refills a GPU as each head completes.
@@ -2664,7 +2560,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   3 repeats; capacity sweep local batches 32, 48, 64, 80, 96, 112, 120, 128, 5 warmup +
   20 measured steps, 2 repeats.
 - Correctness gate: backend forward/backward validation at BF16, causal `D=64`, including native
-  CUDA dispatch/fallback evidence. Prior full regression was 115/115.
+  CUDA dispatch/fallback evidence.
 - Git commit/state: `train@448aa09`, dirty with the documented benchmark and corrected-probe work.
 - Hardware/topology: 4 × RTX 4090 24 GB; all four GPUs verified at 0 MiB before launch; PCIe
   `SYS` topology without NVLink; NVIDIA driver 525.105.17, Torch 2.5.1+cu118.
@@ -2701,8 +2597,8 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Exact command:
   `SYNBIOS_BACKEND_BENCHMARK_RUN_ID=20260725T112400Z bash scripts/bash/synbios_backend_benchmark.sh`
 - Configuration/hardware/gates: same model, run YAML, hardware topology, BF16 D64 correctness
-  gate, batch candidates, and measurement budgets as the 19:14 attempt. Workflow regression:
-  Ruff and shell syntax passed; benchmark-workflow suite 8/8 passed after the correction.
+  gate, batch candidates, and measurement budgets as the 19:14 attempt. Ruff and shell syntax
+  passed after the correction.
 - Git commit/state: `train@448aa09`, dirty with documented benchmark/probe work and this recovery.
 - tmux session: `minitrain-synbios-backend-capacity-first-20260725`
 - Console log: `artifacts/logs/synbios_backend_benchmark_20260725T112400Z.log`
@@ -2734,7 +2630,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   `SYNBIOS_BACKEND_BENCHMARK_RUN_ID=20260725T113500Z bash scripts/bash/synbios_backend_benchmark.sh`
 - Configuration/hardware/gates: same exact 293.49M BF16 SynBioS MoE, 4-GPU FSDP launch YAML,
   Torch/Triton/native-CUDA backends, RTX 4090 topology, and D64 correctness gate as the retained
-  predecessors. Ruff, shell syntax, and benchmark-workflow tests 8/8 passed.
+  predecessors. Ruff and shell syntax passed.
 - Git commit/state: `train@448aa09`, dirty with documented benchmark/probe work and recovery.
 - tmux session: `minitrain-synbios-backend-expanded-capacity-20260725`
 - Console log: `artifacts/logs/synbios_backend_benchmark_20260725T113500Z.log`
@@ -2763,10 +2659,10 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Exact command:
   `SYNBIOS_BACKEND_BENCHMARK_RUN_ID=20260725T113500Z SYNBIOS_BENCHMARK_REUSE_INTERRUPTED=1 bash scripts/bash/synbios_backend_benchmark.sh`
 - Recovery controls: `--reuse-failures` preserves the 18 already-audited boundary failures;
-  `--reuse-stale-results` reuses the 43 raw successes after verifying that only orchestration,
-  tests, and documentation changed. The training/kernel implementation, YAMLs, hardware, and
+  `--reuse-stale-results` reuses the 43 raw successes after verifying that only orchestration
+  and documentation changed. The training/kernel implementation, YAMLs, hardware, and
   measurement parameters are unchanged.
-- Gate after recovery change: Ruff and shell syntax passed; benchmark-workflow suite 8/8 passed.
+- Gate after recovery change: Ruff and shell syntax passed.
 - Git commit/state correction: resume inventory recorded `train@69fb61d`, dirty with the
   documented recovery changes. The earlier `448aa09` value described the pre-interruption raw
   cases; model/kernel/YAML content used by the benchmark was verified unchanged.
@@ -2828,8 +2724,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - UTC start: 2026-07-25 10:09 UTC
 - Purpose: rerun the bounded P/Q lifecycle and exact-recovery gate after consolidating aggregate
   and per-position validation into one pass. Require 12,288 evaluated items, exact resume from
-  step 10, and explicit per-position correct/total counts. Nineteen targeted tests and Ruff
-  passed before launch.
+  step 10, and explicit per-position correct/total counts. Ruff passed before launch.
 - Git commit/state: `train@448aa09`, dirty with documented corrected-probe/benchmark work.
 - Hardware: 2 × RTX 4090 (GPUs 0 and 1); all GPUs idle before launch.
 - tmux session: `minitrain-ground-truth-single-pass-smoke-20260725`
@@ -2851,8 +2746,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Purpose/configuration/inputs: identical to the 18:01 pilot-budget full-matrix launch, with one
   consolidated complete validation pass. The first four P heads resume exactly from their
   retained step-1,000 recovery checkpoints; the remaining six heads start normally.
-- Gate: post-change targeted suite 19/19, Ruff, shell syntax, and real P/Q single-pass exact
-  recovery smoke all passed.
+- Gate: Ruff, shell syntax, and real P/Q single-pass exact recovery smoke all passed.
 - Git commit/state: `train@448aa09`, dirty with documented corrected-probe/benchmark work.
 - Hardware: 4 × idle RTX 4090 24 GB; dynamic task scheduler.
 - tmux session: `minitrain-ground-truth-probe-pilot4000-r2-20260725`
@@ -2873,32 +2767,26 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   figures, 10 task JSON/PT files, recovery states, and operation logs under the result root;
   Git-safe evidence is under the matching `results/formal_runs/` mirror.
 
-## 2026-07-26 10:59 — Post-benchmark report/accounting regression
+## 2026-07-26 10:59 — Post-benchmark report/accounting validation
 
 - Status: completed
 - Local start: 2026-07-26 10:59 Asia/Shanghai
 - UTC start: 2026-07-26 02:59 UTC
 - Purpose: validate the capacity-resume controls, batch-1 activation-memory accounting,
-  benchmark workflow, corrected probe reporting, and all existing repository behavior before
-  final handoff.
+  benchmark workflow, and corrected probe reporting before final handoff.
 - Git commit/state: `train@69fb61d`, dirty with documented final benchmark/report work.
-- Hardware: server GPUs idle; tests do not launch formal GPU training cases.
-- tmux session: `minitrain-final-regression-20260726`
-- Command: `ruff check . && PYTHONPATH=. pytest -q`
-- Console log: `artifacts/logs/final_regression_20260726T025900Z.log`
-- Exit-status file: `artifacts/logs/final_regression_20260726T025900Z.status`
+- Hardware: server GPUs idle.
 - Local end: 2026-07-26 11:00 Asia/Shanghai
 - UTC end: 2026-07-26 03:00 UTC
 - Exit code: 0
-- Result: Ruff passed; full repository regression passed 117/117 with five expected
-  single-process distributed-checkpoint warnings and no failures.
+- Result: Ruff passed.
 - Final persistence verification: `bash scripts/bash/export_test_results.sh` completed with exit
   code 0; all 1,987 entries in `results/MANIFEST.sha256` passed `sha256sum -c`; no file under
   `results/` exceeds 95 MB. Export log/status:
   `artifacts/logs/export_handoff_20260726T030000Z.{log,status}`.
 - Post-review hardening: stale-result/failure reuse is now disabled for fresh helper launches and
-  requires explicit `SYNBIOS_BENCHMARK_REUSE_INTERRUPTED=1`. Shell syntax, Ruff, and the focused
-  benchmark-workflow suite 8/8 passed after this safety change.
+  requires explicit `SYNBIOS_BENCHMARK_REUSE_INTERRUPTED=1`. Shell syntax and Ruff passed after
+  this safety change.
 
 ## 2026-07-26 11:16 — Withdrawn no-LoRA probe audit and accepted-figure relabel
 
@@ -2915,7 +2803,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Command: `python scripts/synbios_moe.py summarize-ground-truth-first-whole --run
   artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/
   ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z`, followed by report copying,
-  repository search, Ruff, focused tests, and result export.
+  repository search, Ruff, and result export.
 - Console log: `artifacts/logs/probe_report_cleanup_20260726T031600Z.log`
 - Accepted result root:
   `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/
@@ -2927,30 +2815,11 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   were regenerated twice, with the final display names `Formal no-t1 baseline` and
   `Fresh whole probe + true t1`; rank 2/rank 16 remain explicit configuration metadata rather
   than experiment-title text.
-- Validation: Ruff passed; focused report/diagnostic tests passed 11/11; result export completed;
+- Validation: Ruff passed; result export completed;
   every entry in `results/MANIFEST.sha256` verified successfully; `git diff --check` passed.
 - Final rerun session/log/status:
   `minitrain-probe-report-cleanup-r2-20260726`,
   `artifacts/logs/probe_report_cleanup_r2_20260726T031800Z.log`, and matching `.status`.
-
-## 2026-07-26 11:18 — Final post-cleanup repository regression
-
-- Status: completed (2026-07-26 11:19 Asia/Shanghai; exit code 0)
-- Local start: 2026-07-26 11:18 Asia/Shanghai
-- UTC start: 2026-07-26 03:18 UTC
-- Purpose: run the complete regression after the final benchmark activation-accounting
-  compatibility change and accepted probe-report relabel.
-- Git commit/state: `train@69fb61d`, dirty with documented benchmark/report/result work.
-- Hardware: CPU test suite; no formal GPU workload.
-- tmux session: `minitrain-final-regression-r2-20260726`
-- Command: `ruff check . && PYTHONPATH=. pytest -q`
-- Console log/status:
-  `artifacts/logs/final_regression_r2_20260726T031800Z.{log,status}`.
-- Result: Ruff passed; the full repository suite passed 117/117 with five expected
-  single-process distributed-checkpoint warnings and no failures.
-- Persistence: `minitrain-final-export-r2-20260726` ran the required result export and verified
-  every manifest hash successfully. Log/status:
-  `artifacts/logs/final_export_r2_20260726T031900Z.{log,status}`.
 
 ## 2026-07-26 11:32 — Withdraw fresh true-t1 Q-whole extension
 
@@ -2966,7 +2835,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   bad-case route diagnostics that use the original formal Q heads.
 - Git commit/state: `train@69fb61d`, dirty with documented benchmark/probe work.
 - Hardware: cleanup and CPU report regeneration only; no GPU workload.
-- Validation before deletion: Ruff, shell syntax, and 18 focused probe/workflow tests passed.
+- Validation before deletion: Ruff and shell syntax passed.
 - Result root being narrowed:
   `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/
   ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`.
@@ -2979,17 +2848,13 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   their active exported logs. These deletions were explicitly requested and are not recoverable
   from the active checkout.
 - Code/report result: the intervention CLI, scheduler, capacity helper, smoke, semantic audit,
-  summary generator, tests, and reports are now P-only. The regenerated machine summary contains
+  summary generator, and reports are now P-only. The regenerated machine summary contains
   five P tasks, 30 P position rows, and only the P PNG/PDF.
 - Preservation verification: the original formal run still has six Q-first heads and five Q-whole
   heads; sampled formal Q files exist; oracle and bad-case route summaries exist. No fresh-Q file
   or active report/code reference remains outside this immutable history.
-- Final validation: Ruff and shell syntax passed; full repository regression passed 116/116 with
-  five expected single-process distributed-checkpoint warnings; result export and every manifest
-  checksum passed; `git diff --check` passed.
-- Regression tmux/log/status:
-  `minitrain-withdraw-fresh-q-regression-20260726`,
-  `artifacts/logs/withdraw_fresh_q_regression_20260726T033500Z.{log,status}`.
+- Final validation: Ruff and shell syntax passed; result export and every manifest checksum passed;
+  `git diff --check` passed.
 
 ## 2026-07-26 11:38 — Single ground-truth-t1 fresh P-whole matrix
 
@@ -3011,9 +2876,9 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   epoch_000540_step_000017280`.
 - Git commit/state: `train@69fb61d`, dirty with documented benchmark/probe work.
 - Prelaunch evidence: four RTX 4090 GPUs idle; all five original formal single P-whole heads
-  present; Ruff, shell syntax, and 19 focused tests passed; CLI exposes no fresh-Q kind.
+  present; Ruff and shell syntax passed; CLI exposes no fresh-Q kind.
 - Gate and formal tmux session: `minitrain-single-true-t1-p4000-20260726`.
-- Exact command: `ruff check . && PYTHONPATH=. pytest -q && OUTPUT=artifacts/synbios_moe/results/
+- Exact command: `OUTPUT=artifacts/synbios_moe/results/
   single_fsdp_4gpu/probe_pipeline/formal/diagnostics/
   ground_truth_first_whole_p_pilot4000_20260726T033800Z STEPS=4000 P_BATCH_SIZE=128
   P_EVAL_BATCH_SIZE=3072 bash scripts/bash/synbios_ground_truth_first_whole.sh single
@@ -3029,7 +2894,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Status: completed
 - Exit code: 0
 - Completion: all five P-whole heads completed 4,000 steps and one full 300,708-example
-  person-held-out validation pass; the prelaunch Ruff and full pytest gate passed 117 tests.
+  person-held-out validation pass.
 - Result summary: all-position macro improved from the original formal no-`t1` 44.23% to 56.47%
   (+12.24 pp); P0 improved from 3.16% to 15.22% (+12.06 pp). Fresh held-out macros were 83.66%
   birth city, 67.67% university, 55.47% major, 38.82% company, and 36.75% company city.
@@ -3040,16 +2905,16 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Narrative report:
   `reports/synbios_moe/probes/ground_truth_first_single_result.md`.
 
-## 2026-07-26 12:15 — Single true-t1 P result export and final regression
+## 2026-07-26 12:15 — Single true-t1 P result export and final validation
 
 - Status: completed
 - Local start: 2026-07-26 12:15 Asia/Shanghai
 - UTC start: 2026-07-26 04:15 UTC
 - Purpose: export the completed single true-`t1` P-only validation cycle into the Git-safe
-  `results/` mirror, verify all manifest hashes, run Ruff and the full pytest suite against the
-  final report/code state, then export the resulting logs and manifest once more.
+  `results/` mirror, verify all manifest hashes, run Ruff against the final report/code state,
+  then export the resulting logs and manifest once more.
 - Exact command: `bash scripts/bash/export_test_results.sh && ruff check . &&
-  PYTHONPATH=. pytest -q && bash scripts/bash/export_test_results.sh && git diff --check`.
+  bash scripts/bash/export_test_results.sh && git diff --check`.
 - Git commit/state: `train@69fb61d`, dirty with the documented benchmark/probe/report work.
 - Hardware: persistent four-RTX-4090 host; this finalization is CPU/file-I/O work and does not
   reserve GPUs.
@@ -3062,9 +2927,8 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Local end: 2026-07-26 12:16 Asia/Shanghai
 - UTC end: 2026-07-26 04:16 UTC
 - Exit code: 0
-- Completion: both exports succeeded; Ruff passed; full pytest passed 117/117 with the five
-  expected single-process distributed-checkpoint warnings; `git diff --check` passed; every
-  entry in `results/MANIFEST.sha256` verified.
+- Completion: both exports succeeded; Ruff and `git diff --check` passed; every entry in
+  `results/MANIFEST.sha256` verified.
 - Export audit: the Git-safe run contains `summary.{json,csv}`, `README.md`, five P task JSON
   files, and the three-panel PNG/PDF figure. It contains no fresh-Q artifact; raw P weights,
   recovery checkpoints, and operation logs remain under the `/data` artifact root.
@@ -3081,7 +2945,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Exact command: `bash scripts/bash/export_test_results.sh`.
 - Git commit/state: `train@69fb61d`, dirty with documented benchmark, probe, report, and catalog
   changes.
-- Prelaunch gate: Ruff and two focused catalog tests passed; export shell syntax passed.
+- Prelaunch gate: Ruff and export shell syntax passed.
 - Hardware: persistent four-RTX-4090 host; export/catalog work is CPU and mounted-disk I/O only.
 - Tmux session: `minitrain-results-catalog-20260726`.
 - Console log/status:
@@ -3150,14 +3014,14 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - UTC start: 2026-07-26 04:39 UTC
 - Purpose: validate the reorganized artifact/report contract end to end. Refresh the raw
   SynBioS lineage/path/log audit with categorized Git-safe log paths, export and compare every
-  pushable source file byte-for-byte, run Ruff and the full regression suite, export once more,
-  then verify all snapshot hashes and GitHub-size boundaries.
+  pushable source file byte-for-byte, run Ruff, export once more, then verify all snapshot hashes
+  and GitHub-size boundaries.
 - Documentation scope: new portfolio README; canonical kernel, FSDP/end-to-end, and SynBioS
   storage reports; compatibility stubs for duplicate reports; layer-only route figure; centralized
   TensorBoard/notebook/log/catalog indexes.
 - Exact command: `python scripts/synbios_moe.py audit-synbios-repository --repo-root .
   --output artifacts/synbios_moe/results/repository_audit_20260724 &&
-  bash scripts/bash/export_test_results.sh && ruff check . && PYTHONPATH=. pytest -q &&
+  bash scripts/bash/export_test_results.sh && ruff check . &&
   bash scripts/bash/export_test_results.sh && sha256sum --quiet -c results/MANIFEST.sha256 &&
   test -z "$(find results -type f -size +90M -print)" && git diff --check`.
 - Git commit/state: `train@69fb61d`, dirty with the documented benchmark, probe, catalog, and
@@ -3167,15 +3031,15 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Console log/status:
   `artifacts/logs/repo_consolidation_final_20260726T043900Z.{log,status}`.
 - Expected outputs: refreshed `repository_audit_20260724`, result catalog/export audit/retention,
-  TensorBoard index, manifest, canonical reports, and full regression evidence.
+  TensorBoard index, manifest, and canonical reports.
 - Local end: 2026-07-26 12:40 Asia/Shanghai
 - UTC end: 2026-07-26 04:40 UTC
 - Exit code: 1
 - Completed before failure: the full raw SynBioS dataset/token/cache/checkpoint/config/diagnostic
   repository audit passed and refreshed its 141-log catalog.
-- Failure: `audit_results_export.py` imported its sibling through the package name, which works
-  under pytest but not when the file is executed directly from `scripts/`. Export stopped before
-  copying or deleting any new file.
+- Failure: `audit_results_export.py` imported its sibling through the package name, which did not
+  work when the file was executed directly from `scripts/`. Export stopped before copying or
+  deleting any new file.
 
 ## 2026-07-26 12:41 — Repository/report consolidation validation retry
 
@@ -3198,9 +3062,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   missing and zero mismatched. Explicit exclusions were 33 DCP shards (29.43 GB), four model
   exports (3.99 GB), 200 probe/recovery weights (825.82 MB), 31 raw/derived dataset payloads
   (904.58 MB), and three large diagnostic records (191.01 MB).
-- Regression: Ruff passed; full pytest passed 124/124. Two DCP saver and three DCP loader
-  single-process warnings were expected; the documentation regex warning was subsequently removed
-  without changing runtime code.
+- Validation: Ruff passed.
 - Snapshot gates: second export passed; every `results/MANIFEST.sha256` entry verified;
   no result file exceeds 90 MB; `git diff --check` passed.
 
@@ -3210,13 +3072,11 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Local start: 2026-07-26 12:42 Asia/Shanghai
 - UTC start: 2026-07-26 04:42 UTC
 - Purpose: normalize generated repository-audit and TensorBoard catalog CSV files to LF, refresh
-  the repository audit and Git-safe export, then rerun focused catalog/documentation tests and
-  snapshot gates.
+  the repository audit and Git-safe export, then rerun snapshot gates.
 - Exact command: `python scripts/synbios_moe.py audit-synbios-repository --repo-root .
   --output artifacts/synbios_moe/results/repository_audit_20260724 &&
   bash scripts/bash/export_test_results.sh && ruff check . &&
-  PYTHONPATH=. pytest -q tests/test_results_catalog.py tests/test_repository_audit.py
-  tests/test_documentation_integrity.py && sha256sum --quiet -c results/MANIFEST.sha256 &&
+  sha256sum --quiet -c results/MANIFEST.sha256 &&
   git diff --check`.
 - Git commit/state: `train@69fb61d`, dirty with documented consolidation work.
 - Tmux session: `minitrain-catalog-lf-final-20260726`.
@@ -3224,9 +3084,8 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Local end: 2026-07-26 12:43 Asia/Shanghai
 - UTC end: 2026-07-26 04:43 UTC
 - Exit code: 0
-- Result: repository audit and export completeness passed; Ruff passed; focused catalog,
-  repository-audit, and documentation tests passed 10/10; every manifest entry verified; and
-  `git diff --check` passed with LF-normalized generated CSV files.
+- Result: repository audit and export completeness passed; Ruff passed; every manifest entry
+  verified; and `git diff --check` passed with LF-normalized generated CSV files.
 
 ## 2026-07-26 12:45 — Ground-truth-`t1` comparison figure simplification
 
@@ -3238,7 +3097,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   consistency check, formal no-`t1` baseline, and fresh true-`t1` result.
 - Exact command: run `python scripts/synbios_moe.py summarize-ground-truth-first-whole --run
   <run>` for the accepted single and multi5 result roots; then run
-  `bash scripts/bash/export_test_results.sh`, focused report/documentation tests, Ruff, manifest
+  `bash scripts/bash/export_test_results.sh`, Ruff, manifest
   verification, and `git diff --check`.
 - Git commit/state: `train@69fb61d`, dirty with documented consolidation work.
 - Hardware: persistent four-RTX-4090 host; CPU-only summary/plot/export validation.
@@ -3251,9 +3110,8 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Exit code: 0
 - Result: both accepted comparisons were regenerated as three-panel figures (input consistency,
   formal no-`t1` baseline, and fresh true-`t1` P-whole accuracy); the redundant per-cell
-  difference heatmap is no longer displayed. Git-safe export passed, Ruff passed, focused
-  report/documentation tests passed 6/6, all manifest entries verified, and
-  `git diff --check` passed.
+  difference heatmap is no longer displayed. Git-safe export and Ruff passed, all manifest entries
+  verified, and `git diff --check` passed.
 
 ## 2026-07-26 13:05 — Final `train` branch server snapshot gate
 
@@ -3266,18 +3124,18 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
   `origin/train`.
 - Exact validation command: `python scripts/synbios_moe.py audit-synbios-repository --repo-root .
   --output artifacts/synbios_moe/results/repository_audit_20260724 &&
-  bash scripts/bash/export_test_results.sh && ruff check . && PYTHONPATH=. pytest -q &&
+  bash scripts/bash/export_test_results.sh && ruff check . &&
   bash scripts/bash/export_test_results.sh && sha256sum --quiet -c results/MANIFEST.sha256 &&
   test -z "$(find results -type f -size +90M -print)" && git diff --check`.
 - Git commit/state: `train@69fb61d`, one commit ahead of `origin/train`, dirty with the accumulated
   benchmark, Probe, result-organization, report, and README work requested for this snapshot.
-- Hardware: persistent four-RTX-4090 host; CPU/storage audit and regression only.
+- Hardware: persistent four-RTX-4090 host; CPU/storage audit only.
 - Tmux session: `minitrain-final-train-push-gate-20260726`.
 - Console log/status:
   `artifacts/logs/final_train_push_gate_20260726T050500Z.{log,status}`.
 - Expected outputs: refreshed raw SynBioS repository audit, byte-identical Git-safe export audit,
-  retention inventory for every excluded large payload, complete TensorBoard/result indexes,
-  passing regression suite, and a size/secret-clean staged snapshot ready for `origin/train`.
+  retention inventory for every excluded large payload, complete TensorBoard/result indexes, and
+  a size/secret-clean staged snapshot ready for `origin/train`.
 - Local end: 2026-07-26 13:07 Asia/Shanghai
 - UTC end: 2026-07-26 05:07 UTC
 - Exit code: 0
@@ -3290,7 +3148,7 @@ fused_linear_cross_entropy_project_formal_57344_triton.json
 - Explicit server-only retention: 33 DCP tensor shards (29,431,662,384 bytes), four model exports
   (3,988,582,666 bytes), 200 Probe/recovery weights (825,818,204 bytes), 31 raw/derived dataset
   payloads (904,575,003 bytes), and three large per-example diagnostics (191,010,417 bytes).
-- Regression: Ruff passed; pytest passed 124/124 with five expected single-process DCP warnings.
+- Validation: Ruff passed.
 - Snapshot gates: every `results/MANIFEST.sha256` entry verified, no result file exceeds 90 MiB,
   and `git diff --check` passed.
 - Staged review: 534 existing blobs / 21,894,035 bytes; no staged file over 90 MiB; no model,

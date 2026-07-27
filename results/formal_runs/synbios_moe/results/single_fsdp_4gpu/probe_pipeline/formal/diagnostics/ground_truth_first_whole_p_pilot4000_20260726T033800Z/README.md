@@ -14,6 +14,10 @@ after each biography prefix. It uses the same frozen backbone, whole-value class
 person split, seed, and cache. This run uses 4000 optimizer steps per head and P batch
 128.
 
+`t1` is taken from the original formal P-first probe cache, converted back to its exact GPT-2
+token, and round-trip checked before the frozen-backbone readout. It is not a prediction from the
+fresh whole-value head.
+
 ## Run/checkpoint and dataset identity
 
 - Backbone checkpoint: `/data/mini-train-sys/artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280`

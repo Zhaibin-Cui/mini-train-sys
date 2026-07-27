@@ -96,11 +96,7 @@ def _sha256(path: Path) -> str:
 
 
 def _task_files(directory: Path) -> dict[str, Path]:
-    return {
-        path.stem: path
-        for path in directory.glob("*.json")
-        if path.stem in EXPECTED_TASKS
-    }
+    return {path.stem: path for path in directory.glob("*.json") if path.stem in EXPECTED_TASKS}
 
 
 def load_formal_run(condition: str, root: str | Path) -> FormalRun:
@@ -160,7 +156,9 @@ def load_formal_run(condition: str, root: str | Path) -> FormalRun:
             ):
                 raise ValueError(f"{condition}/{task} uses the wrong probe cache")
         if validation_record.get("class_names") != training_record.get("class_names"):
-            raise ValueError(f"{condition}/{task} class mapping differs between train and validation")
+            raise ValueError(
+                f"{condition}/{task} class mapping differs between train and validation"
+            )
         expected_positions = 6 if kind == "p" else 1
         if len(validation_record.get("validation_accuracy", ())) != expected_positions:
             raise ValueError(f"{condition}/{task} has an invalid validation position count")
@@ -202,7 +200,9 @@ def validate_matched_runs(single: FormalRun, multi: FormalRun) -> None:
 
 def _training_examples(record: dict[str, object]) -> int:
     monitoring = record.get("monitoring", {})
-    train_evaluation = monitoring.get("train_evaluation", {}) if isinstance(monitoring, dict) else {}
+    train_evaluation = (
+        monitoring.get("train_evaluation", {}) if isinstance(monitoring, dict) else {}
+    )
     return int(train_evaluation.get("items_processed", 0))
 
 
@@ -282,24 +282,19 @@ def headline_metrics(rows: Sequence[dict[str, object]]) -> dict[str, object]:
     output: dict[str, object] = {}
     for condition in ("single", "multi5_permute"):
         p0_first_nondate = [
-            _accuracy(rows, condition, "p", "first", attribute, 0)
-            for attribute in ATTRIBUTES[1:]
+            _accuracy(rows, condition, "p", "first", attribute, 0) for attribute in ATTRIBUTES[1:]
         ]
         q_first = [
-            _accuracy(rows, condition, "q", "first", attribute, 0)
-            for attribute in ATTRIBUTES
+            _accuracy(rows, condition, "q", "first", attribute, 0) for attribute in ATTRIBUTES
         ]
         p0_whole = [
-            _accuracy(rows, condition, "p", "whole", attribute, 0)
-            for attribute in WHOLE_ATTRIBUTES
+            _accuracy(rows, condition, "p", "whole", attribute, 0) for attribute in WHOLE_ATTRIBUTES
         ]
         p5_whole = [
-            _accuracy(rows, condition, "p", "whole", attribute, 5)
-            for attribute in WHOLE_ATTRIBUTES
+            _accuracy(rows, condition, "p", "whole", attribute, 5) for attribute in WHOLE_ATTRIBUTES
         ]
         q_whole = [
-            _accuracy(rows, condition, "q", "whole", attribute, 0)
-            for attribute in WHOLE_ATTRIBUTES
+            _accuracy(rows, condition, "q", "whole", attribute, 0) for attribute in WHOLE_ATTRIBUTES
         ]
         diagonal_first = [
             _accuracy(rows, condition, "p", "first", attribute, index)
@@ -314,13 +309,11 @@ def headline_metrics(rows: Sequence[dict[str, object]]) -> dict[str, object]:
             "q_whole_five_attribute_macro_mean": _mean(q_whole),
         }
     output["delta_multi_minus_single"] = {
-        key: output["multi5_permute"][key] - output["single"][key]
-        for key in output["single"]
+        key: output["multi5_permute"][key] - output["single"][key] for key in output["single"]
     }
     output["allen_zhu_q_reference_macro_means"] = {
         condition: {
-            target: _mean([value / 100 for value in values])
-            for target, values in targets.items()
+            target: _mean([value / 100 for value in values]) for target, values in targets.items()
         }
         for condition, targets in ALLEN_ZHU_Q_REFERENCE.items()
         if condition != "source"
@@ -366,14 +359,23 @@ def _annotated_heatmap(
     image = axis.imshow(matrix, cmap=_paper_cmap(), vmin=0, vmax=100, aspect="auto")
     axis.set_xticks(range(len(xlabels)), xlabels)
     axis.set_yticks(range(len(ylabels)), ylabels)
-    axis.set_title(title, loc="left", fontsize=13, fontweight="bold", pad=12)
-    axis.tick_params(length=0)
+    axis.set_title(title, loc="left", fontsize=16, fontweight="bold", pad=15)
+    axis.tick_params(length=0, labelsize=12)
     for row in range(matrix.shape[0]):
         for column in range(matrix.shape[1]):
             value = matrix[row, column]
             color = "white" if value >= 68 else "#17343a"
             text = f"{value:.0f}" if value >= 99.95 else f"{value:.1f}"
-            axis.text(column, row, text, ha="center", va="center", fontsize=8.5, color=color)
+            axis.text(
+                column,
+                row,
+                text,
+                ha="center",
+                va="center",
+                fontsize=12,
+                fontweight="bold",
+                color=color,
+            )
     for spine in axis.spines.values():
         spine.set_visible(False)
     return image
@@ -383,6 +385,22 @@ def _save_figure(figure, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(destination.with_suffix(".png"), dpi=220, bbox_inches="tight", facecolor="white")
     figure.savefig(destination.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
+
+
+def _outline_fixed_attribute_positions(axis) -> None:
+    from matplotlib.patches import Rectangle
+
+    for row in range(len(WHOLE_ATTRIBUTES)):
+        axis.add_patch(
+            Rectangle(
+                (row + 0.5, row - 0.5),
+                1,
+                1,
+                fill=False,
+                edgecolor="#d29c62",
+                linewidth=4.5,
+            )
+        )
 
 
 def _matrix(
@@ -420,6 +438,8 @@ def plot_p_heatmaps(
         ("Single biography", "5× paraphrase + permutation"),
     ):
         matrix = _matrix(rows, condition, "p", target, attributes)
+        if target == "whole" and condition == "single":
+            label = "Single biography · fixed positions outlined"
         image = _annotated_heatmap(
             axis,
             matrix,
@@ -427,55 +447,58 @@ def plot_p_heatmaps(
             ylabels=[ATTRIBUTE_LABELS[value] for value in attributes],
             title=label,
         )
+        if target == "whole" and condition == "single":
+            _outline_fixed_attribute_positions(axis)
         axis.set_xlabel("Biography position (left → right)")
     label = "first-token" if target == "first" else "whole-attribute"
     figure.suptitle(
         f"P-probe · {label} held-out accuracy",
-        fontsize=17,
+        fontsize=21,
         fontweight="bold",
         x=0.5,
         ha="center",
     )
-    figure.colorbar(image, ax=axes, label="Accuracy (%)", fraction=0.025, pad=0.02)
+    colorbar = figure.colorbar(image, ax=axes, label="Accuracy (%)", fraction=0.025, pad=0.02)
+    colorbar.ax.tick_params(labelsize=11)
+    colorbar.set_label("Accuracy (%)", fontsize=12)
     _save_figure(figure, destination)
     plt.close(figure)
 
 
-def plot_q_table(rows: Sequence[dict[str, object]], destination: Path) -> None:
+def plot_q_table(rows: Sequence[dict[str, object]], *, target: str, destination: Path) -> None:
     import matplotlib.pyplot as plt
 
+    attributes = ATTRIBUTES if target == "first" else WHOLE_ATTRIBUTES
     values = []
     for condition in ("single", "multi5_permute"):
         values.append(
             [
-                *(
-                    100 * _accuracy(rows, condition, "q", "first", attribute, 0)
-                    for attribute in ATTRIBUTES
-                ),
-                *(
-                    100 * _accuracy(rows, condition, "q", "whole", attribute, 0)
-                    for attribute in WHOLE_ATTRIBUTES
-                ),
+                100 * _accuracy(rows, condition, "q", target, attribute, 0)
+                for attribute in attributes
             ]
         )
     matrix = np.asarray(values)
-    labels = [
-        *(f"{ATTRIBUTE_LABELS[value]}\nfirst" for value in ATTRIBUTES),
-        *(f"{ATTRIBUTE_LABELS[value]}\nwhole" for value in WHOLE_ATTRIBUTES),
-    ]
-    figure, axis = plt.subplots(figsize=(15.5, 3.6), constrained_layout=True)
+    label = "first-token" if target == "first" else "whole-attribute"
+    labels = [ATTRIBUTE_LABELS[value] for value in attributes]
+    figure, axis = plt.subplots(figsize=(8.2, 3.4), constrained_layout=True)
     image = _annotated_heatmap(
         axis,
         matrix,
         xlabels=labels,
-        ylabels=("Single biography", "5× paraphrase + permutation"),
-        title="Name-only Q-probe · person-held-out validation",
+        ylabels=("Single\nbiography", "5× paraphrase\n+ permutation"),
+        title="",
     )
-    axis.axvline(5.5, color="white", linewidth=5)
-    axis.text(2.5, -0.88, "FIRST TOKEN", ha="center", fontsize=10, color="#46636a")
-    axis.text(8.0, -0.88, "WHOLE ATTRIBUTE", ha="center", fontsize=10, color="#46636a")
-    axis.tick_params(axis="x", labelrotation=35)
-    figure.colorbar(image, ax=axis, label="Accuracy (%)", fraction=0.025, pad=0.02)
+    axis.tick_params(axis="x", labelrotation=25, labelsize=12)
+    for tick_label in axis.get_xticklabels():
+        tick_label.set_horizontalalignment("right")
+    colorbar = figure.colorbar(image, ax=axis, label="Accuracy (%)", fraction=0.025, pad=0.02)
+    colorbar.ax.tick_params(labelsize=11)
+    colorbar.set_label("Accuracy (%)", fontsize=12)
+    figure.suptitle(
+        f"Q-probe · {label} held-out accuracy",
+        fontsize=19,
+        fontweight="bold",
+    )
     _save_figure(figure, destination)
     plt.close(figure)
 
@@ -489,17 +512,20 @@ def plot_overview(
     import matplotlib.pyplot as plt
 
     colors = ("#9b6a50", "#138a82")
-    figure, axes = plt.subplots(1, 3, figsize=(16, 5.2), constrained_layout=True)
+    figure, axes = plt.subplots(1, 3, figsize=(18, 6.4), constrained_layout=True)
+    figure.patch.set_facecolor("#f7f9fc")
 
     conditions = ("single", "multi5_permute")
     condition_labels = ("Single", "5× + permute")
     cloze_values = [100 * float(cloze[name]["micro_field_accuracy"]) for name in conditions]
     axes[0].bar(condition_labels, cloze_values, color=colors, width=0.62)
     axes[0].set_ylim(99.85, 100.01)
-    axes[0].set_ylabel("Exact field accuracy (%)")
-    axes[0].set_title("A  Training-corpus source recall", loc="left", fontweight="bold")
+    axes[0].set_ylabel("Exact field accuracy (%)", fontsize=13)
+    axes[0].set_title("A  Cloze recall", loc="left", fontsize=16, fontweight="bold", pad=14)
     for index, value in enumerate(cloze_values):
-        axes[0].text(index, value + 0.006, f"{value:.3f}%", ha="center", fontsize=10)
+        axes[0].text(
+            index, value + 0.006, f"{value:.3f}%", ha="center", fontsize=14, fontweight="bold"
+        )
 
     attributes = ATTRIBUTES[1:]
     x = np.arange(len(attributes))
@@ -508,15 +534,27 @@ def plot_overview(
         (-width / 2, width / 2), conditions, condition_labels, colors
     ):
         values = [
-            100 * _accuracy(rows, condition, "p", "first", attribute, 0)
-            for attribute in attributes
+            100 * _accuracy(rows, condition, "p", "first", attribute, 0) for attribute in attributes
         ]
         axes[1].bar(x + offset, values, width, label=label, color=color)
-    axes[1].set_xticks(x, [ATTRIBUTE_LABELS[value] for value in attributes], rotation=30, ha="right")
-    axes[1].set_ylim(0, 105)
-    axes[1].set_ylabel("Held-out accuracy (%)")
-    axes[1].set_title("B  Earliest P-position · first token", loc="left", fontweight="bold")
-    axes[1].legend(frameon=False, loc="upper left")
+    axes[1].set_xticks(
+        x, [ATTRIBUTE_LABELS[value] for value in attributes], rotation=30, ha="right"
+    )
+    axes[1].set_ylim(0, 125)
+    axes[1].set_yticks(np.arange(0, 101, 20))
+    axes[1].set_ylabel("Held-out accuracy (%)", fontsize=13)
+    axes[1].set_title(
+        "B  P0 probe · first token", loc="left", fontsize=16, fontweight="bold", pad=14
+    )
+    axes[1].legend(
+        frameon=False,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.99),
+        ncol=2,
+        fontsize=12,
+    )
+    for container in axes[1].containers:
+        axes[1].bar_label(container, fmt="%.0f", padding=3, fontsize=11, fontweight="bold")
 
     first_means = [
         100
@@ -525,35 +563,26 @@ def plot_overview(
         )
         for condition in conditions
     ]
-    whole_means = [
-        100
-        * _mean(
-            [
-                _accuracy(rows, condition, "q", "whole", attribute, 0)
-                for attribute in WHOLE_ATTRIBUTES
-            ]
-        )
-        for condition in conditions
-    ]
     x2 = np.arange(2)
-    axes[2].bar(x2 - width / 2, first_means, width, label="First token", color="#297b86")
-    axes[2].bar(x2 + width / 2, whole_means, width, label="Whole attribute", color="#d29c62")
+    axes[2].bar(x2, first_means, 0.5, color="#297b86")
     axes[2].set_xticks(x2, condition_labels)
     axes[2].set_ylim(0, 105)
-    axes[2].set_ylabel("Macro held-out accuracy (%)")
-    axes[2].set_title("C  Name-only Q-probe", loc="left", fontweight="bold")
-    axes[2].legend(frameon=False, loc="upper left")
+    axes[2].set_ylabel("Macro held-out accuracy (%)", fontsize=13)
+    axes[2].set_title(
+        "C  Q probe · first token", loc="left", fontsize=16, fontweight="bold", pad=14
+    )
     for container in axes[2].containers:
-        axes[2].bar_label(container, fmt="%.1f", padding=3, fontsize=9)
+        axes[2].bar_label(container, fmt="%.1f", padding=4, fontsize=13, fontweight="bold")
 
     for axis in axes:
         axis.spines[["top", "right"]].set_visible(False)
         axis.grid(axis="y", alpha=0.18)
+        axis.tick_params(labelsize=12)
     figure.suptitle(
         "Knowledge augmentation changes where facts become linearly readable",
         x=0.01,
         ha="left",
-        fontsize=18,
+        fontsize=23,
         fontweight="bold",
     )
     _save_figure(figure, destination)
@@ -580,9 +609,10 @@ def build_formal_report_artifacts(
         "multi5_permute": _read_json(Path(multi_cloze).resolve()),
     }
     for condition, run in (("single", single), ("multi5_permute", multi)):
-        if Path(str(cloze[condition]["checkpoint"])).resolve() != Path(
-            str(run.identity["checkpoint"])
-        ).resolve():
+        if (
+            Path(str(cloze[condition]["checkpoint"])).resolve()
+            != Path(str(run.identity["checkpoint"])).resolve()
+        ):
             raise ValueError(f"{condition} cloze result uses the wrong checkpoint")
         if cloze[condition].get("protocol") != "progressive_original_biography_cloze_greedy":
             raise ValueError(f"{condition} cloze result uses the wrong validation protocol")
@@ -631,7 +661,8 @@ def build_formal_report_artifacts(
         target="whole",
         destination=figures / "formal_p_whole_heatmaps",
     )
-    plot_q_table(rows, figures / "formal_q_probe_table")
+    plot_q_table(rows, target="first", destination=figures / "formal_q_probe_table")
+    plot_q_table(rows, target="whole", destination=figures / "formal_q_whole_probe_table")
     plot_overview(rows, cloze=cloze, destination=figures / "formal_study_overview")
     summary = {
         "identity": identity,

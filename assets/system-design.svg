@@ -1,0 +1,80 @@
+<svg width="1200" height="430" viewBox="0 0 1200 430" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MiniTrainSys system design</title>
+  <desc id="desc">A folded pipeline from data through model, operators, parallel training, state, and analysis.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF"/>
+      <stop offset="0.55" stop-color="#FBF9FF"/>
+      <stop offset="1" stop-color="#F3FBF8"/>
+    </linearGradient>
+    <linearGradient id="heading" x1="390" y1="0" x2="810" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="0.5" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#0891B2"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#94A3B8"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-25%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="11" flood-color="#64748B" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="428" rx="24" fill="url(#bg)" stroke="#EEF2F7"/>
+  <text x="600" y="45" text-anchor="middle" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="1.6" fill="url(#heading)">SYSTEM DESIGN</text>
+  <text x="600" y="72" text-anchor="middle" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#64748B">Layered components, replaceable compute, reproducible state</text>
+
+  <g fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)">
+    <path d="M280 159H318"/>
+    <path d="M580 159H618"/>
+    <path d="M880 159H918"/>
+    <path d="M1050 218V250H900V278"/>
+    <path d="M770 339H730"/>
+    <path d="M470 339H430"/>
+  </g>
+
+  <g filter="url(#shadow)" font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <g>
+      <rect x="20" y="100" width="260" height="118" rx="18" fill="#FFFFFF" stroke="#E5EAF1"/>
+      <text x="150" y="140" text-anchor="middle" font-size="14" font-weight="700" fill="#2563EB">01 &#183; DATA</text>
+      <text x="150" y="176" text-anchor="middle" font-size="19" font-weight="700" fill="#1E3A8A">Documents &#8594; shards</text>
+      <text x="150" y="205" text-anchor="middle" font-size="14" fill="#475569">mmap dataset &#183; sampler &#183; loader</text>
+    </g>
+    <g>
+      <rect x="320" y="100" width="260" height="118" rx="18" fill="#FFFFFF" stroke="#E5EAF1"/>
+      <text x="450" y="140" text-anchor="middle" font-size="14" font-weight="700" fill="#7C3AED">02 &#183; MODEL</text>
+      <text x="450" y="176" text-anchor="middle" font-size="19" font-weight="700" fill="#5B21B6">Dense / MoE Transformer</text>
+      <text x="450" y="205" text-anchor="middle" font-size="14" fill="#475569">attention &#183; blocks &#183; router &#183; logits</text>
+    </g>
+    <g>
+      <rect x="620" y="100" width="260" height="118" rx="18" fill="#FFFFFF" stroke="#E5EAF1"/>
+      <text x="750" y="140" text-anchor="middle" font-size="14" font-weight="700" fill="#C2410C">03 &#183; OPS BACKEND</text>
+      <text x="750" y="176" text-anchor="middle" font-size="19" font-weight="700" fill="#9A3412">Torch / Triton / CUDA</text>
+      <text x="750" y="205" text-anchor="middle" font-size="14" fill="#475569">one interface &#183; shape fallback</text>
+    </g>
+    <g>
+      <rect x="920" y="100" width="260" height="118" rx="18" fill="#FFFFFF" stroke="#E5EAF1"/>
+      <text x="1050" y="140" text-anchor="middle" font-size="14" font-weight="700" fill="#059669">04 &#183; PARALLELISM</text>
+      <text x="1050" y="176" text-anchor="middle" font-size="19" font-weight="700" fill="#065F46">Single / DDP / FSDP</text>
+      <text x="1050" y="205" text-anchor="middle" font-size="14" fill="#475569">strategy adapter &#183; wrapping</text>
+    </g>
+    <g>
+      <rect x="770" y="280" width="260" height="118" rx="18" fill="#FFFFFF" stroke="#E5EAF1"/>
+      <text x="900" y="320" text-anchor="middle" font-size="14" font-weight="700" fill="#0F766E">05 &#183; TRAINING LOOP</text>
+      <text x="900" y="356" text-anchor="middle" font-size="19" font-weight="700" fill="#115E59">Trainer &#183; AdamW &#183; LR</text>
+      <text x="900" y="385" text-anchor="middle" font-size="14" fill="#475569">AMP &#183; clipping &#183; metrics</text>
+    </g>
+    <g>
+      <rect x="470" y="280" width="260" height="118" rx="18" fill="#FFFFFF" stroke="#E5EAF1"/>
+      <text x="600" y="320" text-anchor="middle" font-size="14" font-weight="700" fill="#C2410C">06 &#183; CHECKPOINTING</text>
+      <text x="600" y="356" text-anchor="middle" font-size="19" font-weight="700" fill="#9A3412">DCP save / resume</text>
+      <text x="600" y="385" text-anchor="middle" font-size="14" fill="#475569">model &#183; optimizer &#183; RNG</text>
+    </g>
+    <g>
+      <rect x="170" y="280" width="260" height="118" rx="18" fill="#FFFFFF" stroke="#E5EAF1"/>
+      <text x="300" y="320" text-anchor="middle" font-size="14" font-weight="700" fill="#E11D48">07 &#183; ANALYSIS</text>
+      <text x="300" y="356" text-anchor="middle" font-size="19" font-weight="700" fill="#9F1239">P/Q probes &#183; routes</text>
+      <text x="300" y="385" text-anchor="middle" font-size="14" fill="#475569">storage &#183; extraction &#183; manipulation</text>
+    </g>
+  </g>
+</svg>

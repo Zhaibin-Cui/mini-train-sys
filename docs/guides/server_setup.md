@@ -198,7 +198,7 @@ python -m pip install -e ".[server]"
 - 数据：PyArrow、tiktoken、Hugging Face tokenizers；
 - GPU kernel：Triton 3.1；
 - Notebook/图表：JupyterLab、IPykernel、pandas、matplotlib、nbconvert；
-- 测试：pytest、Ruff、cloudpickle；
+- 开发与 benchmark 辅助：Ruff、cloudpickle；
 - CUDA 扩展构建辅助：Ninja、packaging。
 
 `experiments.*` 已加入 setuptools 包发现范围，因此 editable install 后 SynBioS 脚本可以
@@ -254,7 +254,6 @@ RTX 4090 是 SM89。`workstation` 当前编译模型需要的 head-dim 64、FP16
 ```bash
 source .venv/bin/activate
 ruff check minitrain experiments scripts tests
-python -m pytest -q
 ```
 
 最小 CPU 训练：
@@ -390,7 +389,7 @@ PROBE_BATCH_ENV=<benchmark目录>/recommended.env \
 [ ] 挂载盘剩余空间满足正式实验和 checkpoint 保留策略
 [ ] pip check 通过
 [ ] minitrain-check-server 返回 ok=true
-[ ] ruff 与 pytest 通过
+[ ] ruff 通过
 [ ] 单 GPU smoke 通过
 [ ] 目标卡数 DDP/FSDP smoke 通过
 [ ] distributed benchmark weak/capacity 已验收

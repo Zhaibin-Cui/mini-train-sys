@@ -2,7 +2,7 @@
 
 The duplicated combined narrative is now centralized in:
 
-- [Storage/readout study](../storage_story.md)
+- [Storage/readout interpretation](../../../README.md#model-interpretability)
 - [Q-whole diagnostic evidence index](diagnostics/README.md)
 - [Layer-wise route branching](diagnostics/bad_case_routes.md)
 

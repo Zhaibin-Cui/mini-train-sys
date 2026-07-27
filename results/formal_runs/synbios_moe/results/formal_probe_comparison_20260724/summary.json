@@ -41,6 +41,7 @@
       "figures/formal_p_first_heatmaps.png",
       "figures/formal_p_whole_heatmaps.png",
       "figures/formal_q_probe_table.png",
+      "figures/formal_q_whole_probe_table.png",
       "figures/formal_study_overview.png"
     ],
     "tidy_metrics": "formal_probe_metrics.csv"

@@ -35,8 +35,6 @@ Q-whole 线性头一定能读出完整属性。
 
 ## 主要指标
 
-![Route 彩色结果表](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_branching_table.png)
-
 | 配对组 | `t1` route overlap | `t2` route overlap | branching score |
 |---|---:|---:|---:|
 | Same-`t2` control | 0.530 | 0.580 | −0.051 |
@@ -49,7 +47,7 @@ descriptive effect size，不给伪精确的独立样本显著性。
 
 ## 全属性、全层结果
 
-![诊断总览](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/diagnostic_study_overview.png)
+![属性×层 DiD](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png)
 
 按 layer 汇总的 difference-in-differences 为：
 

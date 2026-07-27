@@ -97,7 +97,7 @@ router。不要在主模型尚未学会 biography 时直接解释 probe 或 expe
 - [flash_attention_pretraining_plan.md](../design-notes/flash_attention_pretraining_plan.md)：FlashAttention 接入历史方案。
 - [subsession_plan.md](../design-notes/subsession_plan.md)：早期训练阶段规划。
 
-如果历史 plan 与代码不一致，以当前代码、typed config、pytest 和当前手册为准。
+如果历史 plan 与代码不一致，以当前代码、typed config 和当前手册为准。
 
 ## 八、这轮重点更新的文档怎么读
 

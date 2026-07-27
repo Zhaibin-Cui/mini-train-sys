@@ -648,6 +648,86 @@ def present_backend(args: argparse.Namespace) -> None:
     print(json.dumps(result, indent=2))
 
 
+def render_backend_capacity(
+    selected_rows: list[dict[str, object]],
+    output: Path,
+    *,
+    memory_limit_percent: float,
+) -> Path:
+    """Render the README-facing equal-memory backend comparison."""
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter
+
+    names = [str(row["ops_backend"]).title() for row in selected_rows]
+    batches = [int(row["local_batch_size"]) for row in selected_rows]
+    throughputs = [float(row["throughput_tokens_per_sec_mean"]) for row in selected_rows]
+    speedups = [float(row["throughput_speedup_vs_torch"]) for row in selected_rows]
+    reserved = [float(row["peak_reserved_percent_max"]) for row in selected_rows]
+    colors = ["#475569", "#15808D", "#7357CF"]
+    positions = list(range(len(names)))
+
+    figure, axes = plt.subplots(1, 2, figsize=(16, 7.5))
+    figure.patch.set_facecolor("#F7F9FC")
+    for axis in axes:
+        axis.set_facecolor("#FFFFFF")
+        axis.spines[["top", "right", "left"]].set_visible(False)
+        axis.grid(axis="y", color="#E8EDF4", linewidth=1)
+        axis.set_axisbelow(True)
+        axis.tick_params(axis="x", length=0, labelsize=13, colors="#1E293B")
+        axis.tick_params(axis="y", labelsize=11, colors="#64748B")
+
+    throughput_bars = axes[0].bar(positions, throughputs, color=colors, width=0.62, zorder=3)
+    axes[0].set_xticks(positions, [f"{name}\nlocal batch {batch}" for name, batch in zip(names, batches)])
+    axes[0].set_ylim(0, max(throughputs) * 1.25)
+    axes[0].yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value / 1000:.0f}k"))
+    axes[0].set_title("Training throughput", loc="left", fontsize=20, fontweight="bold", pad=27, color="#0F172A")
+    axes[0].text(0, 1.02, "Selected safe batch for each backend", transform=axes[0].transAxes, fontsize=12.5, color="#64748B")
+    axes[0].set_ylabel("tokens / second", fontsize=12, color="#475569", labelpad=12)
+    for bar, value, speedup in zip(throughput_bars, throughputs, speedups):
+        axes[0].text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + max(throughputs) * 0.03,
+            f"{value / 1000:.0f}k\n{speedup:.3f}\u00d7",
+            ha="center",
+            va="bottom",
+            fontsize=13,
+            fontweight="bold",
+            color="#0F172A",
+        )
+
+    memory_bars = axes[1].bar(positions, reserved, color=colors, width=0.62, zorder=3)
+    axes[1].set_xticks(positions, names)
+    axes[1].set_ylim(0, 105)
+    axes[1].axhline(memory_limit_percent, color="#E11D48", linestyle="--", linewidth=2, zorder=2)
+    axes[1].text(2.38, memory_limit_percent + 1.6, f"{memory_limit_percent:.0f}% safety ceiling", ha="right", fontsize=11, color="#BE123C")
+    axes[1].set_title("Peak reserved VRAM", loc="left", fontsize=20, fontweight="bold", pad=27, color="#0F172A")
+    axes[1].text(0, 1.02, "Per GPU \u00b7 selected runs remain below the ceiling", transform=axes[1].transAxes, fontsize=12.5, color="#64748B")
+    axes[1].set_ylabel("GPU memory (%)", fontsize=12, color="#475569", labelpad=12)
+    for bar, value in zip(memory_bars, reserved):
+        axes[1].text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 2.0,
+            f"{value:.1f}%",
+            ha="center",
+            va="bottom",
+            fontsize=13,
+            fontweight="bold",
+            color="#0F172A",
+        )
+
+    figure.suptitle("End-to-end backend comparison", x=0.07, y=0.99, ha="left", fontsize=27, fontweight="bold", color="#0F172A")
+    figure.text(0.07, 0.89, "293M MoE training  \u00b7  4\u00d7 RTX 4090 24 GB  \u00b7  forward, backward, optimizer, logging, and synchronization", ha="left", fontsize=13, color="#475569")
+    figure.text(0.07, 0.025, "Throughput is measured at each backend's highest-throughput configuration below the fixed 92% reserved-VRAM limit.", ha="left", fontsize=10.5, color="#64748B")
+    figure.subplots_adjust(left=0.08, right=0.97, top=0.76, bottom=0.14, wspace=0.20)
+    figure.savefig(output, dpi=220, facecolor=figure.get_facecolor())
+    plt.close(figure)
+    return output
+
+
 def present_backend_capacity(args: argparse.Namespace) -> None:
     """Select each backend's fastest repeated case under one reserved-VRAM cap."""
 
@@ -851,30 +931,12 @@ def present_backend_capacity(args: argparse.Namespace) -> None:
             writer.writeheader()
             writer.writerows(values)
 
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    labels = [str(row["ops_backend"]).title() for row in selected_rows]
-    throughputs = [
-        float(row["throughput_tokens_per_sec_mean"]) for row in selected_rows
-    ]
-    reserved = [float(row["peak_reserved_percent_max"]) for row in selected_rows]
-    colors = ["#3B6EA8", "#E87722", "#2E8B57"]
-    figure, axes = plt.subplots(1, 2, figsize=(10.5, 4.3), constrained_layout=True)
-    axes[0].bar(labels, throughputs, color=colors)
-    axes[0].set_title("Best throughput under fixed VRAM cap")
-    axes[0].set_ylabel("tokens/s")
-    axes[1].bar(labels, reserved, color=colors)
-    axes[1].axhline(args.memory_limit_percent, color="#b91c1c", linestyle="--")
-    axes[1].set_title("Peak reserved VRAM")
-    axes[1].set_ylabel("% per GPU")
-    for axis in axes:
-        axis.spines[["top", "right"]].set_visible(False)
     figure_path = output / "capacity_backend_comparison.png"
-    figure.savefig(figure_path, dpi=180, bbox_inches="tight")
-    plt.close(figure)
+    render_backend_capacity(
+        selected_rows,
+        figure_path,
+        memory_limit_percent=args.memory_limit_percent,
+    )
 
     result = {
         "schema_version": 1,

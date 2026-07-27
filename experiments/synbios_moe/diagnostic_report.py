@@ -146,9 +146,7 @@ def _oracle_rows(
         raise ValueError("oracle summary has no attribute rows")
     by_attribute = {str(row["attribute"]): row for row in attributes}
     csv_by_attribute = {row["attribute"]: row for row in csv_rows}
-    if set(by_attribute) != set(WHOLE_ATTRIBUTES) or set(csv_by_attribute) != set(
-        WHOLE_ATTRIBUTES
-    ):
+    if set(by_attribute) != set(WHOLE_ATTRIBUTES) or set(csv_by_attribute) != set(WHOLE_ATTRIBUTES):
         raise ValueError("oracle result does not cover the exact five whole attributes")
 
     rows: list[dict[str, object]] = []
@@ -166,9 +164,7 @@ def _oracle_rows(
         expected_examples = int(formal.validation[f"q_{attribute}_whole"]["examples"])
         if examples != expected_examples:
             raise ValueError(f"oracle sample count differs from formal validation for {attribute}")
-        formal_accuracy = float(
-            formal.validation[f"q_{attribute}_whole"]["validation_accuracy"][0]
-        )
+        formal_accuracy = float(formal.validation[f"q_{attribute}_whole"]["validation_accuracy"][0])
         before = baseline_correct / examples
         after = (baseline_correct - harmed + recovered) / examples
         recovery = recovered / baseline_errors
@@ -318,12 +314,8 @@ def _route_rows(
                     - float(same["branching_score"]),
                     "same_t2_pair_count": int(same["pair_count"]),
                     "different_t2_pair_count": int(different["pair_count"]),
-                    "t1_top1_token_nmi": float(
-                        nmi_by_key[(attribute, layer)]["t1_top1_token_nmi"]
-                    ),
-                    "t2_top1_token_nmi": float(
-                        nmi_by_key[(attribute, layer)]["t2_top1_token_nmi"]
-                    ),
+                    "t1_top1_token_nmi": float(nmi_by_key[(attribute, layer)]["t1_top1_token_nmi"]),
+                    "t2_top1_token_nmi": float(nmi_by_key[(attribute, layer)]["t2_top1_token_nmi"]),
                 }
             )
     for layer in range(12):
@@ -349,8 +341,7 @@ def _route_rows(
         grouped_headline[group] = {
             "pair_count": total,
             **{
-                field: sum(float(row[field]) * int(row["pair_count"]) for row in selected)
-                / total
+                field: sum(float(row[field]) * int(row["pair_count"]) for row in selected) / total
                 for field in ("t1_route_overlap", "t2_route_overlap", "branching_score")
             },
         }
@@ -366,17 +357,13 @@ def _route_rows(
         ),
         "max_t1_nmi_by_attribute": {
             attribute: max(
-                float(row["t1_top1_token_nmi"])
-                for row in nmi_rows
-                if row["attribute"] == attribute
+                float(row["t1_top1_token_nmi"]) for row in nmi_rows if row["attribute"] == attribute
             )
             for attribute in WHOLE_ATTRIBUTES
         },
         "max_t2_nmi_by_attribute": {
             attribute: max(
-                float(row["t2_top1_token_nmi"])
-                for row in nmi_rows
-                if row["attribute"] == attribute
+                float(row["t2_top1_token_nmi"]) for row in nmi_rows if row["attribute"] == attribute
             )
             for attribute in WHOLE_ATTRIBUTES
         },
@@ -427,11 +414,7 @@ def load_diagnostic_evidence(
 
 
 def _formal_whole_rows(single: FormalRun, multi: FormalRun) -> list[dict[str, object]]:
-    return [
-        row
-        for row in tidy_rows((single, multi))
-        if row["target"] == "whole"
-    ]
+    return [row for row in tidy_rows((single, multi)) if row["target"] == "whole"]
 
 
 def _save_figure(figure, destination: Path) -> None:
@@ -545,124 +528,14 @@ def _plot_oracle_table(rows: Sequence[dict[str, object]], destination: Path) -> 
     plt.close(figure)
 
 
-def _plot_route_table(headline: dict[str, object], destination: Path) -> None:
-    import matplotlib.pyplot as plt
-    from matplotlib import colors
-
-    groups = headline["groups"]
-    same = groups["same_t2"]
-    different = groups["different_t2"]
-    values = np.array(
-        [
-            [
-                float(same["t1_route_overlap"]),
-                float(same["t2_route_overlap"]),
-                float(same["branching_score"]),
-            ],
-            [
-                float(different["t1_route_overlap"]),
-                float(different["t2_route_overlap"]),
-                float(different["branching_score"]),
-            ],
-            [np.nan, np.nan, float(headline["difference_in_differences"])],
-        ]
-    )
-    labels = ("SAME t2 CONTROL", "DIFFERENT t2 BRANCH", "DIFFERENCE-IN-DIFFERENCES")
-    headers = ("t1 ROUTE\nOVERLAP", "t2 ROUTE\nOVERLAP", "BRANCHING\nSCORE")
-    figure, axis = plt.subplots(figsize=(10.8, 4.7))
-    axis.axis("off")
-    texts = [
-        ["" if np.isnan(value) else f"{value:+.3f}" if column == 2 else f"{value:.3f}"
-         for column, value in enumerate(row)]
-        for row in values
-    ]
-    table = axis.table(
-        cellText=texts,
-        rowLabels=labels,
-        colLabels=headers,
-        cellLoc="center",
-        rowLoc="center",
-        bbox=[0.22, 0.12, 0.72, 0.66],
-    )
-    table.auto_set_font_size(False)
-    table.set_fontsize(11)
-    overlap_map = plt.get_cmap("GnBu")
-    branch_map = plt.get_cmap("RdBu_r")
-    overlap_norm = colors.Normalize(0, 1)
-    branch_norm = colors.TwoSlopeNorm(vmin=-0.25, vcenter=0, vmax=0.25)
-    for row_index, row in enumerate(values, start=1):
-        for column_index, value in enumerate(row):
-            cell = table[(row_index, column_index)]
-            cell.set_edgecolor("white")
-            if np.isnan(value):
-                cell.set_facecolor("#f2f4f4")
-                continue
-            face = (
-                overlap_map(overlap_norm(value))
-                if column_index < 2
-                else branch_map(branch_norm(value))
-            )
-            cell.set_facecolor(face)
-            cell.get_text().set_color(_text_color(face))
-            if row_index == len(values):
-                cell.get_text().set_weight("bold")
-        label_cell = table[(row_index, -1)]
-        label_cell.set_facecolor("#e9f3f3" if row_index < len(values) else "#c9e2e3")
-        label_cell.set_edgecolor("white")
-        label_cell.get_text().set_weight("bold" if row_index == len(values) else "normal")
-    for column_index in range(len(headers)):
-        cell = table[(0, column_index)]
-        cell.set_facecolor("#123b43")
-        cell.set_edgecolor("white")
-        cell.get_text().set_color("white")
-        cell.get_text().set_weight("bold")
-    figure.text(
-        0.5,
-        0.93,
-        "BAD-CASE MoE ROUTE BRANCHING",
-        ha="center",
-        fontsize=19,
-        fontweight="bold",
-        color="#123b43",
-    )
-    figure.text(
-        0.5,
-        0.87,
-        "Q-first correct · Q-whole wrong · top-2 expert-set Jaccard · pair-count weighted",
-        ha="center",
-        fontsize=10.5,
-        color="#4b6064",
-    )
-    figure.text(
-        0.11,
-        0.035,
-        "Branching score = t1 overlap − t2 overlap. Positive DiD is descriptive evidence "
-        "of route divergence after t2; sampled pairs are not independent trials.",
-        fontsize=9.2,
-        color="#52666a",
-    )
-    _save_figure(figure, destination)
-    plt.close(figure)
-
-
-def _plot_diagnostic_overview(
-    oracle_rows: Sequence[dict[str, object]],
-    layer_rows: Sequence[dict[str, object]],
-    attribute_layer_rows: Sequence[dict[str, object]],
-    route_headline: dict[str, object],
-    destination: Path,
+def _plot_route_did_heatmap(
+    attribute_layer_rows: Sequence[dict[str, object]], destination: Path
 ) -> None:
     import matplotlib.pyplot as plt
     from matplotlib import colors
 
-    attribute_rows = [row for row in oracle_rows if row["attribute"] != "micro_overall"]
-    labels = [ATTRIBUTE_LABELS[str(row["attribute"])] for row in attribute_rows]
-    deltas = [100 * float(row["accuracy_delta"]) for row in attribute_rows]
-    recovery = [100 * float(row["recovery_rate"]) for row in attribute_rows]
-    harm = [100 * float(row["harm_rate"]) for row in attribute_rows]
-    layers = [int(row["layer"]) for row in layer_rows]
-    did = [float(row["difference_in_differences"]) for row in layer_rows]
     attributes = list(WHOLE_ATTRIBUTES)
+    layers = sorted({int(row["layer"]) for row in attribute_layer_rows})
     matrix = np.array(
         [
             [
@@ -676,147 +549,45 @@ def _plot_diagnostic_overview(
             for attribute in attributes
         ]
     )
-
-    figure = plt.figure(figsize=(15.5, 10.2), facecolor="#f7faf9")
-    grid = figure.add_gridspec(
-        2,
-        2,
-        left=0.07,
-        right=0.96,
-        bottom=0.08,
-        top=0.78,
-        hspace=0.35,
-        wspace=0.25,
-    )
-    axis_delta = figure.add_subplot(grid[0, 0])
-    axis_rates = figure.add_subplot(grid[0, 1])
-    axis_layer = figure.add_subplot(grid[1, 0])
-    axis_heat = figure.add_subplot(grid[1, 1])
-    for axis in (axis_delta, axis_rates, axis_layer, axis_heat):
-        axis.set_facecolor("white")
-
-    y = np.arange(len(labels))
-    colors_delta = ["#bb3e4a" if value < 0 else "#168a8c" for value in deltas]
-    axis_delta.barh(y, deltas, color=colors_delta, height=0.62)
-    axis_delta.axvline(0, color="#42575a", linewidth=1)
-    axis_delta.set_yticks(y, labels)
-    axis_delta.invert_yaxis()
-    axis_delta.set_xlabel("Accuracy change (percentage points)")
-    axis_delta.set_title("A  Oracle intervention effect", loc="left", fontweight="bold")
-    limit = max(abs(min(deltas)), abs(max(deltas))) + 2
-    axis_delta.set_xlim(-limit, limit)
-    for index, value in enumerate(deltas):
-        axis_delta.text(
-            value + (0.25 if value >= 0 else -0.25),
-            index,
-            f"{value:+.2f}",
-            va="center",
-            ha="left" if value >= 0 else "right",
-            fontweight="bold",
-            color="#18383d",
-        )
-    axis_delta.grid(axis="x", alpha=0.15)
-
-    width = 0.36
-    axis_rates.bar(y - width / 2, recovery, width, label="errors recovered", color="#2a9d8f")
-    axis_rates.bar(y + width / 2, harm, width, label="correct harmed", color="#e76f51")
-    axis_rates.set_xticks(y, labels, rotation=24, ha="right")
-    axis_rates.set_ylabel("Conditional rate (%)")
-    axis_rates.set_title("B  Recovery–harm trade-off", loc="left", fontweight="bold")
-    axis_rates.set_ylim(0, max([*recovery, *harm]) * 1.22)
-    axis_rates.legend(frameon=False, ncols=2, loc="upper left")
-    axis_rates.grid(axis="y", alpha=0.15)
-
-    axis_layer.plot(layers, did, color="#0f7c80", marker="o", linewidth=2.4)
-    axis_layer.fill_between(layers, 0, did, color="#5ab4ac", alpha=0.25)
-    axis_layer.axhline(0, color="#42575a", linewidth=1)
-    axis_layer.axvspan(-0.35, 3.35, color="#f4a261", alpha=0.12)
-    axis_layer.text(1.5, max(did) * 0.91, "strongest early-layer signal", ha="center", fontsize=9)
-    axis_layer.set_xticks(layers)
-    axis_layer.set_xlabel("MoE layer")
-    axis_layer.set_ylabel("Difference-in-differences")
-    axis_layer.set_title("C  Route branching by layer", loc="left", fontweight="bold")
-    axis_layer.grid(alpha=0.15)
-
     bound = max(abs(float(matrix.min())), abs(float(matrix.max())))
-    image = axis_heat.imshow(
+    figure, axis = plt.subplots(figsize=(13.5, 5.2), constrained_layout=True)
+    image = axis.imshow(
         matrix,
         aspect="auto",
         cmap="RdBu_r",
         norm=colors.TwoSlopeNorm(vmin=-bound, vcenter=0, vmax=bound),
     )
-    axis_heat.set_xticks(range(len(layers)), layers)
-    axis_heat.set_yticks(
+    axis.set_xticks(range(len(layers)), layers)
+    axis.set_yticks(
         range(len(attributes)),
         [ATTRIBUTE_LABELS[attribute] for attribute in attributes],
     )
-    axis_heat.set_xlabel("MoE layer")
-    axis_heat.set_title("D  Controlled branching contrast", loc="left", fontweight="bold")
+    axis.set_xlabel("MoE layer", fontsize=12)
+    axis.set_title(
+        "Token-conditioned route branching · attribute × layer",
+        loc="left",
+        fontsize=18,
+        fontweight="bold",
+        pad=14,
+    )
+    axis.tick_params(length=0, labelsize=11)
     for row_index in range(matrix.shape[0]):
         for column_index in range(matrix.shape[1]):
             value = matrix[row_index, column_index]
             face = image.cmap(image.norm(value))
-            axis_heat.text(
+            axis.text(
                 column_index,
                 row_index,
                 f"{value:.2f}",
                 ha="center",
                 va="center",
-                fontsize=7.3,
+                fontsize=10,
+                fontweight="bold",
                 color=_text_color(face),
             )
-
-    overall = next(row for row in oracle_rows if row["attribute"] == "micro_overall")
-    figure.text(
-        0.07,
-        0.95,
-        "Q-WHOLE DIAGNOSTIC STUDY",
-        fontsize=23,
-        fontweight="bold",
-        color="#123b43",
-    )
-    figure.text(
-        0.07,
-        0.91,
-        "Two inference-only tests of token-conditioned readout and MoE route structure",
-        fontsize=12,
-        color="#4b6064",
-    )
-    figure.text(
-        0.07,
-        0.815,
-        f"ORACLE NET  {100 * float(overall['accuracy_delta']):+.2f} pp",
-        fontsize=12,
-        fontweight="bold",
-        color="#9b2f3b",
-        bbox={"boxstyle": "round,pad=0.45", "facecolor": "#f8e5e7", "edgecolor": "none"},
-    )
-    figure.text(
-        0.38,
-        0.815,
-        f"BAD CASES  {int(route_headline['bad_case_examples']):,}",
-        fontsize=12,
-        fontweight="bold",
-        color="#155d62",
-        bbox={"boxstyle": "round,pad=0.45", "facecolor": "#dff0ef", "edgecolor": "none"},
-    )
-    figure.text(
-        0.69,
-        0.815,
-        f"ROUTE DiD  {float(route_headline['difference_in_differences']):+.3f}",
-        fontsize=12,
-        fontweight="bold",
-        color="#155d62",
-        bbox={"boxstyle": "round,pad=0.45", "facecolor": "#dff0ef", "edgecolor": "none"},
-    )
-    figure.text(
-        0.07,
-        0.025,
-        "Scope: multi5+permute formal · 50,118 held-out people per attribute · unchanged probes. "
-        "Route contrasts are descriptive and conditioned on Q-first-correct/Q-whole-wrong cases.",
-        fontsize=9.2,
-        color="#52666a",
-    )
+    colorbar = figure.colorbar(image, ax=axis, fraction=0.025, pad=0.02)
+    colorbar.set_label("Difference-in-differences", fontsize=12)
+    colorbar.ax.tick_params(labelsize=10)
     _save_figure(figure, destination)
     plt.close(figure)
 
@@ -1029,13 +800,9 @@ def build_diagnostic_report_artifacts(
     _atomic_csv(output / "route_attribute_layer_metrics.csv", attribute_layer_rows)
     _atomic_csv(output / "formal_whole_metrics.csv", whole_rows)
     _plot_oracle_table(oracle_rows, figures / "oracle_intervention_table")
-    _plot_route_table(route_headline, figures / "route_branching_table")
-    _plot_diagnostic_overview(
-        oracle_rows,
-        layer_rows,
+    _plot_route_did_heatmap(
         attribute_layer_rows,
-        route_headline,
-        figures / "diagnostic_study_overview",
+        figures / "route_attribute_layer_did_heatmap",
     )
     _plot_full_whole_comparison(
         whole_rows,

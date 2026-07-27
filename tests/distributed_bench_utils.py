@@ -232,8 +232,21 @@ class BenchmarkReport:
 
         rows = aggregate_rows(self.data)
         if self.suite == "weak":
-            figure, axes = plt.subplots(2, 2, figsize=(13, 9), constrained_layout=True)
+            from matplotlib.ticker import PercentFormatter
+
+            figure, axes = plt.subplots(2, 2, figsize=(16, 10))
+            figure.patch.set_facecolor("#F7F9FC")
+            palette = ["#15808D", "#7357CF", "#E26D3D", "#2563EB"]
+            for axis in axes.flat:
+                axis.set_facecolor("#FFFFFF")
+                axis.spines[["top", "right", "left"]].set_visible(False)
+                axis.grid(axis="y", color="#E8EDF4", linewidth=1)
+                axis.set_axisbelow(True)
+                axis.tick_params(axis="x", labelsize=12, colors="#1E293B")
+                axis.tick_params(axis="y", labelsize=11, colors="#64748B")
+
             for strategy in sorted({row["strategy"] for row in rows}):
+                color = palette[sorted({row["strategy"] for row in rows}).index(strategy)]
                 selected = sorted(
                     (row for row in rows if row["strategy"] == strategy),
                     key=lambda row: row["world_size"],
@@ -242,51 +255,79 @@ class BenchmarkReport:
                 axes[0, 0].plot(
                     worlds,
                     [row["throughput_tokens_per_sec"] for row in selected],
-                    marker="o",
-                    label=strategy.upper(),
+                    marker="o", markersize=9, linewidth=3, color=color,
                 )
                 efficiencies = [
                     row.get("weak_scaling_efficiency_percent", 100.0) for row in selected
                 ]
                 axes[0, 1].plot(
-                    worlds, efficiencies, marker="o", label=strategy.upper()
+                    worlds, efficiencies, marker="o", markersize=9, linewidth=3, color=color,
                 )
                 axes[1, 0].plot(
                     worlds,
                     [row["step_time_ms_p50"] for row in selected],
-                    marker="o",
-                    label=strategy.upper(),
+                    marker="o", markersize=9, linewidth=3, color=color,
                 )
                 axes[1, 1].plot(
                     worlds,
                     [row["memory_utilization_percent"] for row in selected],
-                    marker="o",
-                    label=f"{strategy.upper()} memory",
+                    marker="o", markersize=9, linewidth=3, color=color,
                 )
-                axes[1, 1].plot(
-                    worlds,
-                    [row["data_stall_percent"] for row in selected],
-                    marker="x",
-                    linestyle="--",
-                    label=f"{strategy.upper()} data stall",
-                )
-            axes[0, 0].set_title("Global throughput")
-            axes[0, 0].set_ylabel("tokens/s")
-            axes[0, 1].set_title("Weak-scaling efficiency")
-            axes[0, 1].set_ylabel("percent")
-            axes[0, 1].axhline(80, color="tab:red", linestyle="--", label="80% gate")
-            axes[1, 0].set_title("Step latency P50")
-            axes[1, 0].set_ylabel("ms")
-            axes[1, 1].set_title("Memory utilization and data stall")
-            axes[1, 1].set_ylabel("percent")
-            axes[1, 1].axhline(90, color="tab:red", linestyle=":", label="90% memory")
-            axes[1, 1].axhline(5, color="tab:orange", linestyle=":", label="5% stall")
+
+                for world, row, efficiency in zip(worlds, selected, efficiencies):
+                    axes[0, 0].annotate(
+                        f"{float(row['throughput_tokens_per_sec']) / 1000:.0f}k",
+                        (world, float(row["throughput_tokens_per_sec"])),
+                        xytext=(0, 12), textcoords="offset points", ha="center",
+                        fontsize=12, fontweight="bold", color="#0F172A",
+                    )
+                    axes[0, 1].annotate(
+                        f"{efficiency:.1f}%", (world, efficiency), xytext=(0, 12),
+                        textcoords="offset points", ha="center", fontsize=12,
+                        fontweight="bold", color="#0F172A",
+                    )
+                    axes[1, 0].annotate(
+                        f"{float(row['step_time_ms_p50']):.1f} ms",
+                        (world, float(row["step_time_ms_p50"])), xytext=(0, 12),
+                        textcoords="offset points", ha="center", fontsize=12,
+                        fontweight="bold", color="#0F172A",
+                    )
+                    axes[1, 1].annotate(
+                        f"{float(row['memory_utilization_percent']):.1f}%\nwait {float(row['data_stall_percent']):.2f}%",
+                        (world, float(row["memory_utilization_percent"])), xytext=(0, 12),
+                        textcoords="offset points", ha="center", fontsize=11.5,
+                        fontweight="bold", color="#0F172A",
+                    )
+
+            axes[0, 0].set_title("Global throughput", loc="left", fontsize=20, fontweight="bold", pad=26, color="#0F172A")
+            axes[0, 0].text(0, 1.02, "All GPUs combined", transform=axes[0, 0].transAxes, fontsize=11, color="#64748B")
+            axes[0, 0].set_ylabel("tokens / second", fontsize=12, color="#475569")
+            axes[0, 1].set_title("Weak-scaling efficiency", loc="left", fontsize=20, fontweight="bold", pad=26, color="#0F172A")
+            axes[0, 1].text(0, 1.02, "Relative to the 1-GPU baseline", transform=axes[0, 1].transAxes, fontsize=11, color="#64748B")
+            axes[0, 1].set_ylabel("efficiency", fontsize=12, color="#475569")
+            axes[0, 1].yaxis.set_major_formatter(PercentFormatter(100))
+            axes[0, 1].set_ylim(79, 103)
+            axes[0, 1].axhline(80, color="#E11D48", linestyle="--", linewidth=2)
+            axes[0, 1].text(3.96, 80.8, "80% gate", ha="right", fontsize=10.5, color="#BE123C")
+            axes[1, 0].set_title("Step latency P50", loc="left", fontsize=20, fontweight="bold", pad=26, color="#0F172A")
+            axes[1, 0].text(0, 1.02, "One optimizer step", transform=axes[1, 0].transAxes, fontsize=11, color="#64748B")
+            axes[1, 0].set_ylabel("milliseconds", fontsize=12, color="#475569")
+            latency_values = [float(row["step_time_ms_p50"]) for row in rows]
+            axes[1, 0].set_ylim(min(latency_values) - 5, max(latency_values) + 5)
+            axes[1, 1].set_title("Per-GPU memory and data wait", loc="left", fontsize=20, fontweight="bold", pad=26, color="#0F172A")
+            axes[1, 1].text(0, 1.02, "Labels include data-loader wait", transform=axes[1, 1].transAxes, fontsize=11, color="#64748B")
+            axes[1, 1].set_ylabel("GPU memory (%)", fontsize=12, color="#475569")
+            axes[1, 1].yaxis.set_major_formatter(PercentFormatter(100))
+            axes[1, 1].axhline(90, color="#E11D48", linestyle="--", linewidth=2)
+            axes[1, 1].text(3.96, 90.8, "90% ceiling", ha="right", fontsize=10.5, color="#BE123C")
             for axis in axes.flat:
-                axis.set_xlabel("world size")
+                axis.set_xlabel("GPU count", fontsize=12, color="#475569", labelpad=10)
                 axis.set_xticks(sorted({row["world_size"] for row in rows}))
-                axis.grid(alpha=0.25)
-                axis.legend()
-            figure.suptitle("DDP/FSDP weak scaling", fontsize=15)
+                axis.set_xlim(0.85, max(row["world_size"] for row in rows) + 0.15)
+            figure.suptitle("FSDP weak scaling", x=0.07, y=0.99, ha="left", fontsize=27, fontweight="bold", color="#0F172A")
+            figure.text(0.07, 0.89, "293M MoE  \u00b7  BF16  \u00b7  local batch 64 per GPU  \u00b7  4\u00d7 RTX 4090 24 GB", ha="left", fontsize=13, color="#475569")
+            figure.text(0.07, 0.02, "Weak scaling keeps local work fixed as GPU count increases. Lines show the measured FSDP runs after quality gates.", ha="left", fontsize=10.5, color="#64748B")
+            figure.subplots_adjust(left=0.08, right=0.97, top=0.76, bottom=0.11, hspace=0.43, wspace=0.18)
             return figure
 
         figure, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)

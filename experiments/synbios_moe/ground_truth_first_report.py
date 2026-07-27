@@ -160,29 +160,29 @@ def _condition(reference: dict[str, object]) -> str:
     raise ValueError(f"cannot identify dataset condition from {data_root}")
 
 
-def _plot(
-    rows: Sequence[dict[str, object]], output_dir: Path, condition: str
-) -> list[str]:
+def _plot(rows: Sequence[dict[str, object]], output_dir: Path, condition: str) -> list[str]:
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
+    from matplotlib.colors import LinearSegmentedColormap
+    from matplotlib.patches import Rectangle
 
     figures = output_dir / "figures"
     figures.mkdir(parents=True, exist_ok=True)
 
-    has_baseline = all(row["original_whole_accuracy"] is not None for row in rows)
+    if not all(row["original_whole_accuracy"] is not None for row in rows):
+        raise ValueError("ground-truth-first figure requires the formal no-t1 baseline")
     p_rows = [row for row in rows if row["kind"] == "p"]
     metrics = [
-        ("first_accuracy", "Ground-truth t1 supplied"),
-        *(
-            [("original_whole_accuracy", "Formal no-t1 baseline")]
-            if has_baseline
-            else []
-        ),
+        ("original_whole_accuracy", "Formal no-t1 baseline"),
         ("whole_accuracy", "Fresh whole probe + true t1"),
     ]
+    cmap = LinearSegmentedColormap.from_list(
+        "paper_teal",
+        ["#f6f3ed", "#d9ece6", "#8bc7b8", "#2a968a", "#075c63"],
+    )
     figure, axes = plt.subplots(
         1,
         len(metrics),
@@ -210,14 +210,30 @@ def _plot(
             matrix * 100,
             vmin=0,
             vmax=100,
-            cmap="Blues",
+            cmap=cmap,
             aspect="auto",
         )
         axis.set_xticks(range(6))
         axis.set_xticklabels(POSITION_LABELS, rotation=28, ha="right")
         axis.set_yticks(range(5))
         axis.set_yticklabels([value.replace("_", " ") for value in ATTRIBUTES])
-        axis.set_title(title)
+        marks_fixed_positions = condition == "single" and metric in {
+            "original_whole_accuracy",
+            "whole_accuracy",
+        }
+        axis.set_title(f"{title}\nfixed positions outlined" if marks_fixed_positions else title)
+        if marks_fixed_positions:
+            for row_index in range(len(ATTRIBUTES)):
+                axis.add_patch(
+                    Rectangle(
+                        (row_index + 0.5, row_index - 0.5),
+                        1,
+                        1,
+                        fill=False,
+                        edgecolor="#d29c62",
+                        linewidth=4.5,
+                    )
+                )
         for row_index in range(5):
             for column in range(6):
                 value = matrix[row_index, column] * 100
@@ -228,11 +244,7 @@ def _plot(
                     ha="center",
                     va="center",
                     fontsize=8,
-                    color=(
-                        "white"
-                        if value >= 55
-                        else "#1a202c"
-                    ),
+                    color=("white" if value >= 55 else "#1a202c"),
                 )
         figure.colorbar(
             image,
@@ -241,7 +253,11 @@ def _plot(
             fraction=0.046,
             pad=0.02,
         )
-    figure.suptitle(f"Fresh whole P probe + true t1 · {condition}", fontsize=15)
+    figure.suptitle(
+        f"Whole-value P readout · {condition}",
+        fontsize=16,
+        fontweight="bold",
+    )
     p_path = figures / "ground_truth_first_p_overview"
     figure.savefig(p_path.with_suffix(".png"), dpi=200, bbox_inches="tight")
     figure.savefig(p_path.with_suffix(".pdf"), bbox_inches="tight")
@@ -296,12 +312,16 @@ after each biography prefix. It uses the same frozen backbone, whole-value class
 person split, seed, and cache. This run uses {step_text} optimizer steps per head and P batch
 {p_batch}.
 
+`t1` is taken from the original formal P-first probe cache, converted back to its exact GPT-2
+token, and round-trip checked before the frozen-backbone readout. It is not a prediction from the
+fresh whole-value head.
+
 ## Run/checkpoint and dataset identity
 
-- Backbone checkpoint: `{reference['checkpoint']}`
-- Probe cache: `{reference['probe_cache']}`
-- Probe-cache manifest SHA256: `{reference['probe_cache_manifest_sha256']}`
-- Baseline summary: `{baseline_path if baseline_path is not None else 'unavailable'}`
+- Backbone checkpoint: `{reference["checkpoint"]}`
+- Probe cache: `{reference["probe_cache"]}`
+- Probe-cache manifest SHA256: `{reference["probe_cache_manifest_sha256"]}`
+- Baseline summary: `{baseline_path if baseline_path is not None else "unavailable"}`
 - Evaluation: complete person-held-out probe validation; these people were seen during backbone
   pretraining, so this is representation readout rather than unseen-person generalization.
 
@@ -309,8 +329,8 @@ person split, seed, and cache. This run uses {step_text} optimizer steps per hea
 
 | Endpoint | Formal no-`t1` baseline | Fresh whole probe + true `t1` | Delta |
 |---|---:|---:|---:|
-| P, all six source positions × five attributes | {_percent(_mean(p_rows, 'original_whole_accuracy'))} | {_percent(_mean(p_rows, 'whole_accuracy'))} | {_points(_mean(p_rows, 'delta_vs_original_whole'))} |
-| P0, five attributes | {_percent(_mean(p0_rows, 'original_whole_accuracy'))} | {_percent(_mean(p0_rows, 'whole_accuracy'))} | {_points(_mean(p0_rows, 'delta_vs_original_whole'))} |
+| P, all six source positions × five attributes | {_percent(_mean(p_rows, "original_whole_accuracy"))} | {_percent(_mean(p_rows, "whole_accuracy"))} | {_points(_mean(p_rows, "delta_vs_original_whole"))} |
+| P0, five attributes | {_percent(_mean(p0_rows, "original_whole_accuracy"))} | {_percent(_mean(p0_rows, "whole_accuracy"))} | {_points(_mean(p0_rows, "delta_vs_original_whole"))} |
 
 ## Supporting artifacts
 

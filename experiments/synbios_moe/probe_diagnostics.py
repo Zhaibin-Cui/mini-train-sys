@@ -23,7 +23,6 @@ import csv
 import hashlib
 import heapq
 import json
-import math
 import random
 from collections import defaultdict
 from contextlib import contextmanager
@@ -336,9 +335,7 @@ def evaluate_ground_truth_first_whole_by_source_position(
             )
     return {
         "accuracy": sum(correct) / max(sum(total), 1),
-        "accuracy_by_position": [
-            hits / max(count, 1) for hits, count in zip(correct, total)
-        ],
+        "accuracy_by_position": [hits / max(count, 1) for hits, count in zip(correct, total)],
         "correct_by_position": correct,
         "total_by_position": total,
         "monitoring": progress.summary() if progress is not None else {},
@@ -454,15 +451,9 @@ def train_ground_truth_first_whole_probe(
             "first_token_text": {str(token_id): text for token_id, text in token_entries},
             "ground_truth_first_token": True,
             "ground_truth_first_accuracy_by_position": [1.0] * 6,
-            "whole_accuracy_validation_by_source_position": validation[
-                "accuracy_by_position"
-            ],
-            "whole_correct_validation_by_source_position": validation[
-                "correct_by_position"
-            ],
-            "whole_total_validation_by_source_position": validation[
-                "total_by_position"
-            ],
+            "whole_accuracy_validation_by_source_position": validation["accuracy_by_position"],
+            "whole_correct_validation_by_source_position": validation["correct_by_position"],
+            "whole_total_validation_by_source_position": validation["total_by_position"],
             "validation_examples_total": len(validation_data),
             "validation_examples_evaluated": len(validation_for_training),
             "input_protocol": (
@@ -570,8 +561,7 @@ def prepare_ground_truth_first_whole_data(
         raise ValueError("reference whole probe cache manifest mismatch")
     if (
         backbone_checkpoint is not None
-        and Path(str(metadata.get("checkpoint"))).resolve()
-        != Path(backbone_checkpoint).resolve()
+        and Path(str(metadata.get("checkpoint"))).resolve() != Path(backbone_checkpoint).resolve()
     ):
         raise ValueError("reference whole probe backbone checkpoint mismatch")
     rank = int(metadata["rank"])
@@ -592,9 +582,7 @@ def prepare_ground_truth_first_whole_data(
         key: tuple(state[key].shape) if key in state else None for key in expected_shapes
     }
     if actual_shapes != expected_shapes:
-        raise ValueError(
-            f"reference whole probe trainable architecture mismatch: {actual_shapes}"
-        )
+        raise ValueError(f"reference whole probe trainable architecture mismatch: {actual_shapes}")
     token_ids = [token_id for token_id, _ in token_entries]
     train_data = GroundTruthFirstWholeDataset(
         first_data=first_train,
@@ -1004,121 +992,6 @@ def pairwise_route_summary(
     return rows
 
 
-def _plot_route_overlap(rows: Sequence[dict[str, object]], output: Path) -> None:
-    import matplotlib.pyplot as plt
-
-    figure, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=True, constrained_layout=True)
-    for axis, group in zip(axes, ("same_t2", "different_t2")):
-        selected = [row for row in rows if row["pair_group"] == group]
-        layers = sorted({int(row["layer"]) for row in selected})
-        if not layers:
-            axis.text(
-                0.5,
-                0.5,
-                "No eligible pairs",
-                ha="center",
-                va="center",
-                transform=axis.transAxes,
-            )
-        for token, field, style in (
-            ("t1", "t1_route_overlap", "-"),
-            ("t2", "t2_route_overlap", "--"),
-        ):
-            means = [
-                sum(float(row[field]) for row in selected if int(row["layer"]) == layer)
-                / max(
-                    sum(int(row["layer"]) == layer for row in selected),
-                    1,
-                )
-                for layer in layers
-            ]
-            axis.plot(layers, means, style, marker="o", label=token)
-        axis.set_title(group.replace("_", " "))
-        axis.set_xlabel("MoE layer")
-        axis.set_ylim(0, 1)
-        axis.grid(alpha=0.25)
-        axis.legend()
-    axes[0].set_ylabel("Mean top-2 expert-set Jaccard")
-    figure.savefig(output, dpi=180)
-    plt.close(figure)
-
-
-def _plot_branching_heatmap(rows: Sequence[dict[str, object]], output: Path) -> None:
-    import matplotlib.pyplot as plt
-
-    selected = [row for row in rows if row["pair_group"] == "different_t2"]
-    attributes = sorted({str(row["attribute"]) for row in selected})
-    layers = sorted({int(row["layer"]) for row in selected})
-    matrix = [
-        [
-            next(
-                (
-                    float(row["branching_score"])
-                    for row in selected
-                    if row["attribute"] == attribute and int(row["layer"]) == layer
-                ),
-                math.nan,
-            )
-            for layer in layers
-        ]
-        for attribute in attributes
-    ]
-    figure, axis = plt.subplots(figsize=(12, 4.5), constrained_layout=True)
-    if not attributes or not layers:
-        axis.text(0.5, 0.5, "No same-t1/different-t2 pairs", ha="center", va="center")
-        axis.set_axis_off()
-        figure.savefig(output, dpi=180)
-        plt.close(figure)
-        return
-    image = axis.imshow(matrix, aspect="auto", cmap="coolwarm", vmin=-1, vmax=1)
-    axis.set_xticks(range(len(layers)), layers)
-    axis.set_yticks(range(len(attributes)), attributes)
-    axis.set_xlabel("MoE layer")
-    axis.set_title("Branching score: t1 overlap − t2 overlap (same t1, different t2)")
-    figure.colorbar(image, ax=axis, label="Branching score")
-    figure.savefig(output, dpi=180)
-    plt.close(figure)
-
-
-def _plot_expert_heatmaps(
-    route_rows: Sequence[dict[str, object]], output: Path, num_experts: int
-) -> None:
-    import matplotlib.pyplot as plt
-
-    layers = sorted({int(row["layer"]) for row in route_rows})
-    if not layers:
-        figure, axis = plt.subplots(figsize=(8, 4), constrained_layout=True)
-        axis.text(0.5, 0.5, "No eligible bad cases", ha="center", va="center")
-        axis.set_axis_off()
-        figure.savefig(output, dpi=180)
-        plt.close(figure)
-        return
-    matrices = []
-    for token in ("t1", "t2"):
-        matrix = []
-        for layer in layers:
-            counts = [0] * num_experts
-            for row in route_rows:
-                if int(row["layer"]) != layer:
-                    continue
-                counts[int(row[f"{token}_expert_0"])] += 1
-                counts[int(row[f"{token}_expert_1"])] += 1
-            total = sum(counts)
-            matrix.append([count / total if total else 0.0 for count in counts])
-        matrices.append(matrix)
-    figure, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
-    for axis, token, matrix in zip(axes, ("t1", "t2"), matrices):
-        image = axis.imshow(matrix, aspect="auto", cmap="viridis", vmin=0)
-        axis.set_title(f"Bad-case {token} route load")
-        axis.set_xlabel("Expert")
-        axis.set_ylabel("Layer")
-        axis.set_xticks(range(num_experts))
-        axis.set_yticks(range(len(layers)), layers)
-        figure.colorbar(image, ax=axis, label="Route fraction")
-    figure.savefig(output, dpi=180)
-    plt.close(figure)
-
-
 @torch.no_grad()
 def bad_case_route_validation(
     *,
@@ -1346,13 +1219,4 @@ def bad_case_route_validation(
         ],
     )
     _write_json(output / "summary.json", summary)
-    figures = output / "figures"
-    figures.mkdir(exist_ok=True)
-    _plot_route_overlap(pair_rows, figures / "route_overlap_by_layer.png")
-    _plot_branching_heatmap(pair_rows, figures / "branching_heatmap.png")
-    _plot_expert_heatmaps(
-        route_rows,
-        figures / "expert_load_t1_vs_t2.png",
-        backbone.cfg.num_experts,
-    )
     return summary

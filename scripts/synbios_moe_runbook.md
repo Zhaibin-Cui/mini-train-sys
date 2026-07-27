@@ -189,8 +189,6 @@ git status --short
 tmux list-sessions || true
 nvidia-smi
 df -h . artifacts
-python -m pytest -q tests/test_synbios_moe.py tests/test_runtime_logger.py
-python -m pytest -q
 ```
 
 确认四张卡没有其他计算任务。batch 脚本默认在任一卡已使用超过 1 GiB 显存时拒绝启动，

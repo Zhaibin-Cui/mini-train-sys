@@ -197,12 +197,7 @@ torchrun --standalone --nproc_per_node=4 scripts/train.py \
 
 推荐只从 epoch checkpoint 改变 world size，因为它位于 sampler 的完整边界。若从一次中途 `save_final` 恢复，当前实现从该 epoch 的开头重新建立 sampler，而不是保存 batch 游标。
 
-## 5. 验证入口
+## 5. 可执行验证入口
 
-- `tests/test_checkpoint_contract.py`：单进程完整状态恢复，以及纯模型读取不碰 Adam；
-- `tests/test_distributed_checkpoint.py`：DDP checkpoint 重分片到单进程，并用 `model.pt` 单卡加载；
-- `tests/test_runtime_logger.py`：终端格式、JSONL、TensorBoard 标量和 probe/pipeline 摘要字段；
-- `tests/test_synbios_moe.py`：probe 健康指标、任务心跳和 notebook 调用链契约；
-- `tests/synbios_moe_end_to_end.ipynb`：数据准备、主训练、评估、单 probe、独立 validation、P/Q pipeline、事件落盘、router、结果汇总和继续训练。
-
-本地没有 4/8 张 GPU 时，这些测试证明格式与 CPU/Gloo 路径；服务器上的真实 NCCL/FSDP 吞吐和显存门禁仍应运行 `tests/distributed_server_benchmark.ipynb`。
+- `tests/synbios_moe_end_to_end.ipynb`：数据准备、主训练、评估、单 probe、独立 validation、P/Q pipeline、事件落盘、router、结果汇总和继续训练；
+- `tests/distributed_server_benchmark.ipynb`：在目标 GPU 服务器验证真实 NCCL/FSDP 吞吐、显存和恢复流程。

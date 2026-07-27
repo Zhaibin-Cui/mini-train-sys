@@ -1,29 +1,4 @@
-# 测试与 Notebook
-
-## 自动测试
-
-先安装 `pip install -e ".[data,dev]"`；`dev` 已包含 pytest、Jupyter、pandas 和 matplotlib，
-`data` 提供 SynBioS 使用的 tiktoken。
-
-```bash
-python -m pytest -q
-python -m ruff check minitrain scripts tests
-```
-
-`test_*.py` 验证数据边界、配置、DDP/FSDP 包装契约、DCP 恢复、日志和 SynBioS。
-Linux CI 可运行多进程 Gloo 测试；真实 NCCL/FSDP 性能只能在目标 GPU 服务器验收。
-
-`test_distributed_bench_utils.py` 使用合成报告验证服务器 benchmark 的命令构造、重复聚合、
-quality gates、capacity frontier、Notebook 高层调用，以及 CSV/JSON/PNG 展示产物落盘；
-它不伪造真实 GPU 性能结果。
-
-其中 `test_model_training_metrics.py` 验证 Dense/MoE loss 拆分、每层专家分布和兼容接口；
-`test_runtime_logger.py` 验证 TensorBoard 标量、专家 ratio histogram、固定色标 heatmap，以及
-probe 训练健康指标和 pipeline 终端格式；`test_synbios_moe.py` 验证 probe 的逐位置准确率、
-全局梯度范数、DataLoader 等待指标、任务 started/heartbeat/finished 事件，并检查端到端
-notebook 始终覆盖独立 validation、smoke/pilot/formal 和后处理入口。
-它还检查 pipeline identity 会绑定所有正式输入、重复任务配置被拒绝、返回成功但未落盘的
-子进程被判失败、summary 的磁盘 JSON 包含 comparison，以及服务器一键入口没有绕过三阶段 gate。
+# Notebook 与 Benchmark 工具
 
 ## 教学与端到端 Notebook
 

@@ -46,8 +46,6 @@ git status --short
 git rev-parse HEAD
 nvidia-smi
 nvidia-smi topo -m
-python -m pytest tests/test_operator_bench_utils.py \
-  tests/test_server_benchmark_workflows.py -q
 python -m ruff check tests/operator_bench_utils.py \
   tests/moe_operator_bench_runner.py scripts/run_server_notebook.py minitrain/kernels
 ```

@@ -4666,13 +4666,25 @@
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_probe_table.pdf",
       "scope": "synbios_moe",
-      "size_bytes": 30355
+      "size_bytes": 28866
     },
     {
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_probe_table.png",
       "scope": "synbios_moe",
-      "size_bytes": 158075
+      "size_bytes": 113262
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_whole_probe_table.pdf",
+      "scope": "synbios_moe",
+      "size_bytes": 28334
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_whole_probe_table.png",
+      "scope": "synbios_moe",
+      "size_bytes": 106623
     },
     {
       "category": "formal_runs",
@@ -4787,24 +4799,6 @@
       "path": "formal_runs/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json",
       "scope": "synbios_moe",
       "size_bytes": 36865
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/bad_case_routes/figures/branching_heatmap.png",
-      "scope": "synbios_moe",
-      "size_bytes": 67558
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/bad_case_routes/figures/expert_load_t1_vs_t2.png",
-      "scope": "synbios_moe",
-      "size_bytes": 68082
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/bad_case_routes/figures/route_overlap_by_layer.png",
-      "scope": "synbios_moe",
-      "size_bytes": 120147
     },
     {
       "category": "formal_runs",
@@ -5054,18 +5048,6 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/diagnostic_study_overview.pdf",
-      "scope": "synbios_moe",
-      "size_bytes": 43357
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/diagnostic_study_overview.png",
-      "scope": "synbios_moe",
-      "size_bytes": 388382
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/oracle_intervention_table.pdf",
       "scope": "synbios_moe",
       "size_bytes": 32624
@@ -5078,27 +5060,15 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_branching_table.pdf",
+      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.pdf",
       "scope": "synbios_moe",
-      "size_bytes": 28084
+      "size_bytes": 32036
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_branching_table.png",
+      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png",
       "scope": "synbios_moe",
-      "size_bytes": 118965
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_layer_did_portfolio.pdf",
-      "scope": "synbios_moe",
-      "size_bytes": 15400
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_layer_did_portfolio.png",
-      "scope": "synbios_moe",
-      "size_bytes": 68294
+      "size_bytes": 149911
     },
     {
       "category": "formal_runs",
@@ -5128,7 +5098,7 @@
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/summary.json",
       "scope": "synbios_moe",
-      "size_bytes": 3735
+      "size_bytes": 3700
     },
     {
       "category": "formal_runs",
@@ -11602,9 +11572,9 @@
     },
     {
       "category": "formal_runs",
-      "files": 1034,
+      "files": 1029,
       "scope": "synbios_moe",
-      "size_bytes": 172572751
+      "size_bytes": 171947233
     },
     {
       "category": "logs",

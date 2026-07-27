@@ -9,7 +9,7 @@ under [`results/`](../results/); commands and run lifecycle live in [`HISTORY.md
 |---|---|---|
 | ⚡ Kernels | [Design + isolated benchmark](engineering/kernels.md) | 1.22–6.51× speedup; up to 94% lower allocation |
 | 🚀 Distributed | [FSDP + end-to-end](engineering/distributed_training.md) | 92.24% FSDP4 efficiency; 2.20× at equal VRAM |
-| 🧠 Research | [SynBioS storage story](synbios_moe/storage_story.md) | Allen-Zhu first-token mechanism reproduced; MoE whole readout explained |
+| 🧠 Research | [SynBioS mechanism analysis](../README.md#model-interpretability) | P/Q readout, route branching, and true-`t1` intervention |
 | 🧬 Experiment index | [SynBioS report map](synbios_moe/README.md) | Dataset → training → probes → route → true-`t1` |
 
 ## Research detail

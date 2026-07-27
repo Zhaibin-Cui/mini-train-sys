@@ -12,7 +12,7 @@ This is the deterministic index of the Git-safe server snapshot. Paths are relat
 | `datasets` | `README.md` | 1 | 445.00 B |
 | `datasets` | `synbios_moe` | 17 | 122.00 KiB |
 | `environment` | `inventory` | 1 | 2.65 KiB |
-| `formal_runs` | `synbios_moe` | 1,034 | 164.58 MiB |
+| `formal_runs` | `synbios_moe` | 1,029 | 163.98 MiB |
 | `logs` | `README.md` | 1 | 672.00 B |
 | `logs` | `benchmarks` | 28 | 328.22 KiB |
 | `logs` | `experiments` | 76 | 5.04 MiB |
