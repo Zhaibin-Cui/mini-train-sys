@@ -5,7 +5,6 @@ copy, validated after execution, and cause a non-zero exit. A successful result
 is published with an atomic rename so interrupted runs cannot look complete.
 """
 
-from __future__ import annotations
 
 import argparse
 import json

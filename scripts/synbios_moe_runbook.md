@@ -176,7 +176,7 @@ Adam 状态恢复到不同的数据上。需要重建时，应先人工归档对
 
 下面是四张4090、4卡FSDP预训练 checkpoint 的正式顺序。不要直接从 formal 开始，也不要
 使用配置文件中的占位 batch。每个耗时步骤都在独立 `tmux` 中运行，并把外层输出同时写入
-`artifacts/logs/`；启动和结束时按仓库根目录 `AGENTS.md` 追加 `HISTORY.md`。
+`artifacts/logs/`；启动和结束时按仓库根目录 the local operating guidance 追加 the retained run records。
 
 ### 3.1 登录后的只读检查
 

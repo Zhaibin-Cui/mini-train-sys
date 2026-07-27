@@ -53,7 +53,7 @@ macro 从 45.28% 提升到 96.38%，P0 从 32.59% 提升到 95.62%。
 - Machine-readable aggregate: run root `summary.json`
 - Position-level table: run root `summary.csv`
 - Five task JSON/PT files、loss curves、recovery checkpoints 和 operation logs：同一 run root
-- Lifecycle and exact command: `HISTORY.md` 的
+- Lifecycle and exact command: the retained run records 的
   “2026-07-26 11:38 — Single ground-truth-t1 fresh P-whole matrix”
 
 图的左栏只确认输入中的 ground-truth `t1` 与缓存标签一致，固定为 100%，不是 whole

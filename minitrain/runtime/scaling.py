@@ -1,6 +1,5 @@
 """Resolve no-accumulation batch-size scaling from a reference experiment."""
 
-from __future__ import annotations
 
 from dataclasses import dataclass, replace
 

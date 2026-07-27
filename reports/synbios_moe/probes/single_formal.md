@@ -19,7 +19,7 @@ P first 的 position-0（排除 birth_date）仍为 5.2%–11.2%，而末位置�
 - 验证 JSON：`/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/validation/`
 - 临时总图：`/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/summary/single_formal_probe_overview.png`
 - TensorBoard 日志：`/data/mini-train-sys/artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal`
-- 运行 provenance：`HISTORY.md` 中 2026-07-23 17:57 的 formal single 条目。
+- 运行 provenance：the retained run records 中 2026-07-23 17:57 的 formal single 条目。
 
 ## 解读、限制与下一步
 

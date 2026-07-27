@@ -1,6 +1,5 @@
 """Paper-style P/Q probes for facts stored by the synthetic biographies."""
 
-from __future__ import annotations
 
 import json
 import time

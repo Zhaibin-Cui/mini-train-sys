@@ -1,6 +1,5 @@
 """Capacity and throughput regression for paper-style probe batches."""
 
-from __future__ import annotations
 
 import json
 import time

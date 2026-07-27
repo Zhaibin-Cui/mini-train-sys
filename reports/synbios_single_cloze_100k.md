@@ -102,4 +102,4 @@ was already 100%, and every fuzzy score was consequently 1.0.
 - Pilot JSON: `artifacts/synbios_moe/results/single_cloze_eval/pilot_1000.json`
 - Exact checkpoint: `artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`
 - Full execution history, including rejected pilot/scoring attempts and duplicate-range protection:
-  `HISTORY.md`
+  the retained run records

@@ -22,7 +22,7 @@ the user-selected 4,000-step pilot budget, batch 128, and held-out batch 3,072.
   pretraining, so this measures representation readout rather than unseen-person generalization.
 - Run ID/root:
   `ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z`.
-- Lifecycle: `HISTORY.md`, 2026-07-25 18:11 entry.
+- Lifecycle: the retained run records, 2026-07-25 18:11 entry.
 
 ## Primary metrics
 

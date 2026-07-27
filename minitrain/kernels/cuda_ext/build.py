@@ -21,7 +21,6 @@ Environment variables ``MINITRAIN_CUDA_HEAD_DIMS`` and
 ``MINITRAIN_CUDA_DTYPES`` override the profile matrix explicitly.
 """
 
-from __future__ import annotations
 
 import hashlib
 import os

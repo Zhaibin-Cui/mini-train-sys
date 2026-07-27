@@ -1,6 +1,5 @@
 """Progressively fill facts removed from each original SynBioS biography."""
 
-from __future__ import annotations
 
 import json
 import math

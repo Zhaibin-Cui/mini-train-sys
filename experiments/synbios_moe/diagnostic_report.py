@@ -6,7 +6,6 @@ pipeline, reconstructs their aggregate metrics, and renders deterministic
 publication-quality tables and figures.
 """
 
-from __future__ import annotations
 
 import csv
 import hashlib

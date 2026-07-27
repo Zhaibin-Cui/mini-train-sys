@@ -20,7 +20,6 @@ specialization compiles out Philox state, random-number generation, and the
 dropout mask rather than paying for a runtime branch in the hot loop.
 """
 
-from __future__ import annotations
 
 import argparse
 import itertools

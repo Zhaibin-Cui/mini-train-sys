@@ -1,6 +1,5 @@
 """Teacher-forced token accuracy restricted to the six synthetic facts."""
 
-from __future__ import annotations
 
 import json
 import math

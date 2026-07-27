@@ -9,7 +9,6 @@ Shards are storage boundaries, while ``documents.idx`` preserves logical
 document spans for epoch-level document repacking in the DataLoader.
 """
 
-from __future__ import annotations
 
 import hashlib
 import json

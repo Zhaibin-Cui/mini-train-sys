@@ -1,6 +1,5 @@
 """Pre-tokenized, memory-mapped datasets shared by every SynBioS probe task."""
 
-from __future__ import annotations
 
 import json
 import os

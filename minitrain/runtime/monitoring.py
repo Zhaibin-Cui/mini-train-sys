@@ -1,6 +1,5 @@
 """Shared progress, throughput, memory, and distributed metric utilities."""
 
-from __future__ import annotations
 
 import math
 import threading

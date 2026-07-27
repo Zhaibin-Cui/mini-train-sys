@@ -6,7 +6,6 @@ templates and sentence orders.  Attribute character spans are retained for
 later token-level evaluation and probing.
 """
 
-from __future__ import annotations
 
 import hashlib
 import json

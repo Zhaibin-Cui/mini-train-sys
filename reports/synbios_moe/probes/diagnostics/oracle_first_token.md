@@ -28,7 +28,7 @@ formal float32 值在 `1e-7` 内一致。
   `acd78360d0daa7cf0d2c557fc9f68f07431bc3063cee1145daa3f14c320a232f`。
 - Split：person-held-out probe validation。人物对 probe-head training 是 held out，
   但 backbone 预训练见过这些人物，不能称为预训练 held-out generalization。
-- 生命周期与原命令：`HISTORY.md` 的
+- 生命周期与原命令：the retained run records 的
   “2026-07-24 00:35 — Multi5+permute Q-whole inference diagnostics”。
 
 ## 主要指标

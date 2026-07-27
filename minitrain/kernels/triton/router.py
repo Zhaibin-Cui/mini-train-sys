@@ -5,7 +5,6 @@ softmax, Top-K selection, selected-weight normalization, and training
 statistics that would otherwise reread the full logits tensor several times.
 """
 
-from __future__ import annotations
 
 import torch
 

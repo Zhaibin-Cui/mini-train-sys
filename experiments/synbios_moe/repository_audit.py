@@ -1,6 +1,5 @@
 """End-to-end path, lineage, and retained-evidence audit for SynBioS."""
 
-from __future__ import annotations
 
 import csv
 import hashlib

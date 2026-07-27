@@ -40,5 +40,5 @@ gap with a path-dependent readout model.
   database.
 
 Run identity, failures, exact commands, checkpoints, and dirty-state provenance are append-only in
-[`HISTORY.md`](../../HISTORY.md). Dataset/cache lineage is under
+the retained run records. Dataset/cache lineage is under
 [`results/datasets/synbios_moe/`](../../results/datasets/synbios_moe/).

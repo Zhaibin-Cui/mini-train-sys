@@ -6,7 +6,6 @@ trusting a potentially stale aggregate, and rejects mismatched run identities
 before producing comparison artifacts.
 """
 
-from __future__ import annotations
 
 import csv
 import hashlib

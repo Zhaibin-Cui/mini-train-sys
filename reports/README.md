@@ -1,7 +1,7 @@
 # 📊 Reports
 
 Only selected, auditable conclusions belong here. Raw JSON/CSV/TensorBoard/JUnit evidence lives
-under [`results/`](../results/); commands and run lifecycle live in [`HISTORY.md`](../HISTORY.md).
+under [`results/`](../results/); commands and run lifecycle live in the retained run records.
 
 ## Canonical reports
 

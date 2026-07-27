@@ -35,7 +35,7 @@ and formal probe stages.
   `results/benchmarks/synbios_moe/probe_batch_benchmark/multi5_permute/20260723T060430Z/`
 - Formal expanded matrix and recommendation:
   `results/benchmarks/synbios_moe/probe_batch_benchmark/multi5_permute/20260723T060600Z/`
-- Commands, lifecycle, failure diagnosis, and correction: repository-root `HISTORY.md`.
+- Commands, lifecycle, failure diagnosis, and correction: repository-root the retained run records.
 
 The conservative matrix verified paper-default P=50 and Q=200 training batches on both replicas.
 The expanded matrix begins at the earlier right boundary, so its

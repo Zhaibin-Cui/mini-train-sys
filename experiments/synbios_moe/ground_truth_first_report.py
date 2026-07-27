@@ -1,6 +1,5 @@
 """Reporting for the ground-truth-t1 rank-matched whole-probe run."""
 
-from __future__ import annotations
 
 import csv
 import hashlib
@@ -177,7 +176,7 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path, condition: str) -
     p_rows = [row for row in rows if row["kind"] == "p"]
     metrics = [
         ("original_whole_accuracy", "Formal no-t1 baseline"),
-        ("whole_accuracy", "Fresh whole probe + true t1"),
+        ("whole_accuracy", "Fresh whole probe + P-first output"),
     ]
     cmap = LinearSegmentedColormap.from_list(
         "paper_teal",
@@ -217,11 +216,18 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path, condition: str) -
         axis.set_xticklabels(POSITION_LABELS, rotation=28, ha="right")
         axis.set_yticks(range(5))
         axis.set_yticklabels([value.replace("_", " ") for value in ATTRIBUTES])
+        axis.tick_params(length=0, labelsize=12)
         marks_fixed_positions = condition == "single" and metric in {
             "original_whole_accuracy",
             "whole_accuracy",
         }
-        axis.set_title(f"{title}\nfixed positions outlined" if marks_fixed_positions else title)
+        axis.set_title(
+            f"{title}\nfixed positions outlined" if marks_fixed_positions else title,
+            loc="left",
+            fontsize=16,
+            fontweight="bold",
+            pad=15,
+        )
         if marks_fixed_positions:
             for row_index in range(len(ATTRIBUTES)):
                 axis.add_patch(
@@ -243,24 +249,27 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path, condition: str) -
                     f"{value:.1f}",
                     ha="center",
                     va="center",
-                    fontsize=8,
+                    fontsize=12,
+                    fontweight="bold",
                     color=("white" if value >= 55 else "#1a202c"),
                 )
-        figure.colorbar(
+        colorbar = figure.colorbar(
             image,
             ax=axis,
             label="Held-out accuracy (%)",
             fraction=0.046,
             pad=0.02,
         )
+        colorbar.ax.tick_params(labelsize=11)
+        colorbar.set_label("Held-out accuracy (%)", fontsize=12)
     figure.suptitle(
         f"Whole-value P readout · {condition}",
-        fontsize=16,
+        fontsize=21,
         fontweight="bold",
     )
     p_path = figures / "ground_truth_first_p_overview"
-    figure.savefig(p_path.with_suffix(".png"), dpi=200, bbox_inches="tight")
-    figure.savefig(p_path.with_suffix(".pdf"), bbox_inches="tight")
+    figure.savefig(p_path.with_suffix(".png"), dpi=220, bbox_inches="tight", facecolor="white")
+    figure.savefig(p_path.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
     plt.close(figure)
 
     return [
@@ -296,25 +305,25 @@ def _write_report(
     p_batch = next(row["batch_size"] for row in rows if row["kind"] == "p")
     steps = sorted({int(row["steps"]) for row in rows})
     step_text = ", ".join(str(value) for value in steps)
-    text = f"""# Fresh whole probes with ground-truth `t1`
+    text = f"""# Fresh whole probes with P-first-classifier `t1`
 
 ## Question or hypothesis
 
-After the correct first attribute token is supplied, can a fresh rank-matched whole-value probe
+After the P-first classifier supplies the first attribute token, can a fresh rank-matched whole-value probe
 read the remaining value more accurately from the frozen `{condition}` MoE than the original
 formal whole probe without that token?
 
 ## Exact compared conditions
 
 The baseline is the original formal whole probe. The intervention trains a fresh
-P `AttributeProbe` with the same rank-2 low-rank input delta and reads the inserted true `t1`
+P `AttributeProbe` with the same rank-2 low-rank input delta and reads the inserted classifier-generated `t1`
 after each biography prefix. It uses the same frozen backbone, whole-value class mappings,
 person split, seed, and cache. This run uses {step_text} optimizer steps per head and P batch
 {p_batch}.
 
-`t1` is taken from the original formal P-first probe cache, converted back to its exact GPT-2
-token, and round-trip checked before the frozen-backbone readout. It is not a prediction from the
-fresh whole-value head.
+`t1` is the output of the original formal P-first classifier, decoded to its exact GPT-2 token
+and round-trip checked before the frozen-backbone readout. It is not produced by the fresh
+whole-value head.
 
 ## Run/checkpoint and dataset identity
 
@@ -327,7 +336,7 @@ fresh whole-value head.
 
 ## Primary metrics
 
-| Endpoint | Formal no-`t1` baseline | Fresh whole probe + true `t1` | Delta |
+| Endpoint | Formal no-`t1` baseline | Fresh whole probe + P-first classifier `t1` | Delta |
 |---|---:|---:|---:|
 | P, all six source positions × five attributes | {_percent(_mean(p_rows, "original_whole_accuracy"))} | {_percent(_mean(p_rows, "whole_accuracy"))} | {_points(_mean(p_rows, "delta_vs_original_whole"))} |
 | P0, five attributes | {_percent(_mean(p0_rows, "original_whole_accuracy"))} | {_percent(_mean(p0_rows, "whole_accuracy"))} | {_points(_mean(p0_rows, "delta_vs_original_whole"))} |
@@ -338,12 +347,11 @@ fresh whole-value head.
 - Position-level table: `summary.csv`
 - P formal-baseline-vs-intervention heatmap: `figures/ground_truth_first_p_overview.png`
 - Individual task JSON/PT, loss curves, recovery checkpoints, and operation logs are retained in
-  this run directory; lifecycle and failed/stopped predecessors are in repository-root
-  `HISTORY.md`.
+  this run directory.
 
 ## Interpretation
 
-An increase shows that the complete value is more linearly extractable after true `t1` changes
+An increase shows that the complete value is more linearly extractable after classifier-generated `t1` changes
 the context and a matched fresh head is trained. It does not show that the unchanged original
 head was causally unlocked, and it does not by itself locate the value in a particular MoE
 expert.
@@ -358,8 +366,8 @@ information. The intervention also changes sequence length and readout coordinat
 
 ## Next decision/action
 
-Use these complete held-out curves and tables to decide whether the qualitative baseline-vs-true
-`t1` contrast is stable. If only P remains optimization-limited, extend P alone with the same
+Use these complete held-out curves and tables to decide whether the qualitative baseline-vs-classifier-`t1`
+contrast is stable. If only P remains optimization-limited, extend P alone with the same
 protocol and report the extension separately; do not silently replace this pilot-budget result.
 """
     _atomic_text(output / "README.md", text)

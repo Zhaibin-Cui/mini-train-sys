@@ -41,7 +41,7 @@ fresh whole-value head.
 - P formal-baseline-vs-intervention heatmap: `figures/ground_truth_first_p_overview.png`
 - Individual task JSON/PT, loss curves, recovery checkpoints, and operation logs are retained in
   this run directory; lifecycle and failed/stopped predecessors are in repository-root
-  `HISTORY.md`.
+  the retained run records.
 
 ## Interpretation
 

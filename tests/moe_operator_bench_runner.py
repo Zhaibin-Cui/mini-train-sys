@@ -5,7 +5,6 @@ timeouts therefore become retained case failures instead of poisoning the
 Jupyter kernel and every later cell.
 """
 
-from __future__ import annotations
 
 import argparse
 import csv

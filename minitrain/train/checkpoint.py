@@ -5,7 +5,6 @@ therefore remain sharded on save/load and can be resharded when world size
 changes.  Small runtime and RNG files sit beside the DCP payload.
 """
 
-from __future__ import annotations
 
 import random
 import re

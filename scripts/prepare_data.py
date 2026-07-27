@@ -2,7 +2,6 @@
 
 # ruff: noqa: E402 -- the repository root must be importable for direct CLI use.
 
-from __future__ import annotations
 
 import argparse
 import json

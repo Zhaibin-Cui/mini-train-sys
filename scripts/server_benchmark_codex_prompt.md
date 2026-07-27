@@ -10,8 +10,8 @@
 
 ---
 
-你现在位于 `mini-train-sys` 仓库。先完整阅读根目录 `AGENTS.md`，严格遵守 tmux、挂载盘、
-日志、`HISTORY.md` 和结果导出规则。机器预期为 4 × RTX 4090 24 GB。
+你现在位于 `mini-train-sys` 仓库。先完整阅读根目录 the local operating guidance，严格遵守 tmux、挂载盘、
+日志、the retained run records 和结果导出规则。机器预期为 4 × RTX 4090 24 GB。
 
 ## 总规则
 
@@ -21,7 +21,7 @@
 2. 每阶段启动前只做一次必要预检，然后给出准确命令、预计耗时和北京时间。得到明确同意
    后启动；阶段完成后停下来汇报，不要自动进入下一阶段。
 3. 长任务必须在独立 tmux 中运行，stdout/stderr 写入
-   `artifacts/logs/<timestamp>.log`。启动时写 `HISTORY.md`，结束后补全状态和结果。
+   `artifacts/logs/<timestamp>.log`。启动时写 the retained run records，结束后补全状态和结果。
 4. 不得隐藏 OOM、timeout、fallback、正确性失败或慢结果。所有正式对比必须使用相同
    shape、dtype、warmup、measure steps 和重复次数。
 5. 每阶段结束后运行 `bash scripts/bash/export_test_results.sh`。原始 JSON/CSV/log、
@@ -316,7 +316,7 @@ reports/engineering/distributed_training.md
    和显存节省比例；
 4. 固定 92% reserved-memory 上限下各 backend 的最佳 batch、吞吐和相对 Torch 提升；
 5. 已有 1→4 GPU scaling 作为补充；
-6. 原始 JSON/CSV、图片、日志、executed notebook 和 `HISTORY.md` 链接；
+6. 原始 JSON/CSV、图片、日志、executed notebook 和 the retained run records 链接；
 7. 限制：单机 PCIe、单一模型尺寸、CUDA 原生实现当前只覆盖 attention。
 
 最终给出两条“可写进简历”的候选表述，但必须等真实数字产生后填写，不得预先编造或只挑

@@ -113,4 +113,4 @@ whether paper-equivalent sample exposure closes the whole-task gaps.
   `results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/`
 - Git-exported multi5 pilot:
   `results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/pilot/`
-- Lifecycle, exact commands, Git state, sessions, and logs: repository-root `HISTORY.md`.
+- Lifecycle, exact commands, Git state, sessions, and logs: repository-root the retained run records.

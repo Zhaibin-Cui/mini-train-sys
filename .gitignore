@@ -91,3 +91,8 @@ reports/**/*.py[cod]
 
 # temp for ignored: docs
 # .docs/
+
+# Local operating notes and run journal
+AGENT.md
+AGENTS.md
+HISTORY.md

@@ -1,6 +1,5 @@
 """Observe MoE routing load and its correlation with biography labels."""
 
-from __future__ import annotations
 
 import math
 from collections import Counter

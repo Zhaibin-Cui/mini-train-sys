@@ -132,4 +132,4 @@ uniform random permutation of all 500,000 documents.
 - Shards: `artifacts/synbios_moe/results/multi5_permute_cloze_eval/full_500k/shard_{0,1,2,3}.json`
 - Exact checkpoint: `artifacts/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388/`
 - Training events: `artifacts/synbios_moe/runs/synbios_moe_multi5_permute_fsdp_4gpu/20260721-144408/events.jsonl`
-- Full operational history: `HISTORY.md`
+- Full operational history: the retained run records

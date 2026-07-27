@@ -17,7 +17,6 @@ Raw per-example evidence, tidy aggregates, and plots are deliberately kept
 separate so conclusions remain auditable.
 """
 
-from __future__ import annotations
 
 import csv
 import hashlib

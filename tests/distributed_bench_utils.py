@@ -6,7 +6,6 @@ repeat aggregation, quality gates, and display live here so the same workflow
 can also be driven from a plain Python session on the target server.
 """
 
-from __future__ import annotations
 
 import csv
 import json

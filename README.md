@@ -18,9 +18,14 @@
 
 ## 🧭 Overview
 
-MiniTrainSys is a compact, layered LLM training system. It keeps data preparation, Transformer
-structure, operator backends, distributed execution, and training state separate, so each layer can
-be changed and validated without turning the rest of the stack into a black box.
+MiniTrainSys is a **from-source LLM training system**. It is not a wrapper around a ready-made
+trainer: this repository implements the data path, Transformer and MoE blocks, operator dispatch,
+training loop, distributed lifecycle, checkpoint contract, benchmarks, and analysis protocol. PyTorch
+provides the tensor and distributed primitives; the training system built on top is owned here.
+
+Its layered design keeps data preparation, Transformer structure, operator backends, distributed
+execution, and training state separate, so each can be changed and validated without turning the
+rest of the stack into a black box.
 
 It trains Dense and 293M-parameter sparse MoE models through PyTorch, Triton, and native CUDA
 paths. The same system supports a controlled study of how factual knowledge becomes readable in
@@ -44,6 +49,7 @@ repository.
 | [🚄 Training Performance](#training-performance) | [🧠 Model Interpretability](#interpretability) | [🚀 Quick Start](#quick-start) |
 | [📊 Reproducibility](#reproducibility) | [🗂️ Project Structure](#project-structure) | [📦 Data and Configuration](#data-and-configuration) |
 | [🛠️ Training Workflows](#training-workflows) | [🛡️ Reliability](#reliability) | [📚 Documentation](#documentation) |
+<!-- | [📖 References](#references) |  |  | -->
 
 <a id="benchmarks"></a>
 
@@ -96,8 +102,8 @@ How to read the table:
 
 - **Speedup** is elapsed-time improvement over PyTorch at the same shape; `2.00×` means half the time.
 - **Peak allocation reduction** is the reduction in PyTorch-reported peak allocated GPU memory.
-- If PyTorch cannot fit the formal shape, speed is measured at the largest shape both paths can run.
-  A larger fused-only shape is reported separately as a **capacity** result, never as a speedup.
+<!-- - If PyTorch cannot fit the formal shape, speed is measured at the largest shape both paths can run.
+  A larger fused-only shape is reported separately as a **capacity** result, never as a speedup. -->
 
 The representative workload uses BF16 with hidden size 768, 8 experts, top-2 routing, vocabulary
 size 50,257, and up to 57,344 tokens per rank. Each case runs in a fresh CUDA process with warmup,
@@ -129,11 +135,12 @@ before they are benchmarked.
 <details>
 <summary><strong>RMSNorm</strong> — Speed: <strong>6.51×</strong> · Peak allocation: <strong>−78.7%</strong></summary>
 
-For each hidden row `x ∈ Rᴴ`, the forward pass is
+For each hidden row $x \in \mathbb{R}^{H}$, the forward pass is
 
-```text
-r = 1 / sqrt(mean(x²) + ε)          y = x ⊙ r ⊙ γ
-```
+$$
+r = \frac{1}{\sqrt{\operatorname{mean}(x^2) + \varepsilon}},
+\qquad y = x \odot r \odot \gamma.
+$$
 
 One Triton program owns one row (or packs short rows), reduces `sum(x²)` in FP32, and writes `y`
 once. It saves `r` per row. Backward reads `x`, `γ`, `r`, and `dy` to form `dx` and `dγ`; it does
@@ -145,11 +152,12 @@ program.
 <details>
 <summary><strong>RoPE</strong> — Speed: <strong>2.57×</strong> · Peak allocation: <strong>−14.3%</strong></summary>
 
-For every rotary pair `(a, b)` at position `t`, forward applies
+For every rotary pair $(a,b)$ at position $t$, forward applies
 
-```text
-a′ = a cos(t) − b sin(t)            b′ = a sin(t) + b cos(t)
-```
+$$
+a' = a\cos(t) - b\sin(t),
+\qquad b' = a\sin(t) + b\cos(t).
+$$
 
 One program owns one `(batch, token)` position and lays out all Q/K heads and rotary pairs as a
 tile. `sin(t)` and `cos(t)` are loaded once for that position and shared across heads; there is no
@@ -161,30 +169,33 @@ tile. The gain is mostly fewer launches and less temporary traffic.
 <details>
 <summary><strong>SwiGLU</strong> — Speed: <strong>1.42×</strong> · Peak allocation: <strong>−20.0%</strong></summary>
 
-With gate projection `g` and up projection `u`, forward is
+With gate projection $g$ and up projection $u$, forward is
 
-```text
-y = SiLU(g) ⊙ u,        SiLU(g) = g · σ(g)
-```
+$$
+y = \operatorname{SiLU}(g) \odot u,
+\qquad \operatorname{SiLU}(g) = g\,\sigma(g).
+$$
 
 Each program covers a tile of the activation. It loads `g` and `u`, evaluates the gate and product
-in registers, then stores only `y`. Backward uses `dy` to form `du = dy ⊙ SiLU(g)` and
-`dg = dy ⊙ u ⊙ dSiLU(g)` in the same tiled layout. **20.0% lower peak allocation.**
+in registers, then stores only `y`. Backward uses $dy$ to form
+$du = dy \odot \operatorname{SiLU}(g)$ and
+$dg = dy \odot u \odot \operatorname{SiLU}'(g)$ in the same tiled layout. **20.0% lower peak allocation.**
 
 </details>
 
 <details>
 <summary><strong>Cross Entropy</strong> — Speed: <strong>4.54×</strong> · Peak allocation: <strong>−83.3%</strong></summary>
 
-For a target class `c` and logits `z`, forward evaluates
+For a target class $c$ and logits $z$, forward evaluates
 
-```text
-L = −z[c] + log Σᵥ exp(z[v])
-```
+$$
+L = -z_c + \log\!\sum_v \exp(z_v),
+\qquad
+\frac{\partial L}{\partial z_v} = \frac{\operatorname{softmax}(z)_v - \mathbf{1}[v=c]}{N_{\mathrm{valid}}}.
+$$
 
 The vocabulary is read in blocks. Online log-sum-exp retains only a running maximum and running
-sum, rather than a full probability vector. Backward writes the same blockwise gradient
-`dz[v] = (softmax(z)[v] − 1[v=c]) / N_valid`. A program owns one token row while lanes cover a
+sum, rather than a full probability vector. A program owns one token row while lanes cover a
 vocabulary block. **83.3% lower peak allocation** at the largest common shape.
 
 </details>
@@ -192,22 +203,24 @@ vocabulary block. **83.3% lower peak allocation** at the largest common shape.
 <details>
 <summary><strong>Fused Linear Cross Entropy</strong> — Speed: <strong>1.39×</strong> · Peak allocation: <strong>−94.0%</strong></summary>
 
-The LM head and CE are fused across token chunks:
+The LM head and CE are fused across token chunks. For a chunk $C$:
 
-```text
-x_chunk @ Wᵀ → online CE → reuse logits buffer as dlogits → accumulate dx and dW
-```
+$$
+Z_C = X_C W^\top,
+\qquad
+\frac{\partial L}{\partial X_C} = \frac{\partial L}{\partial Z_C}W,
+\qquad
+\frac{\partial L}{\partial W} \mathrel{+}= \left(\frac{\partial L}{\partial Z_C}\right)^\top X_C.
+$$
 
 **Forward.** Choose the largest power-of-two number of tokens whose temporary
-`[chunk_tokens, vocab]` logits buffer fits the 64 MiB workspace budget. For one chunk, compute
-`z = x_chunk @ Wᵀ`, add its online CE loss to the running scalar, then reuse the same `z` buffer for
-`dlogits`. Compute its gradients and reuse the buffer for the next chunk—there is never a
-`[all_tokens, vocab]` logits matrix.
+`[chunk_tokens, vocab]` logits buffer fits the 64 MiB workspace budget. For one chunk, it adds the
+online CE loss to a running scalar, overwrites `Z_C` with `∂L/∂Z_C`, computes the gradients above,
+then reuses that workspace for the next chunk—there is never an `[all_tokens, vocab]` logits matrix.
 
-**Backward.** Before the chunk is released, it computes
-`dx_chunk = dlogits @ W` and `dW += dlogitsᵀ @ x_chunk`. Thus the custom autograd forward already
-materializes gradients; autograd backward normally returns saved `dx` and `dW`, only scaling them
-when the upstream loss gradient is not one. At 57,344 tokens, the fused path adds 356 MiB while the
+**Backward.** The custom autograd forward has already materialized the chunk gradients, so backward
+normally returns saved `dX` and `dW`, only scaling them when the upstream loss gradient is not one.
+At 57,344 tokens, the fused path adds 356 MiB while the
 explicit-logits baseline does not fit (**94.0% lower peak allocation**).
 
 </details>
@@ -215,15 +228,39 @@ explicit-logits baseline does not fit (**94.0% lower peak allocation**).
 <details>
 <summary><strong>FlashAttention</strong> — Triton (Speed: <strong>1.22×</strong>; Peak allocation: <strong>−44.1%</strong>) · CUDA (Speed: <strong>1.15×</strong>; Peak allocation: <strong>−22.1%</strong>)</summary>
 
-Forward computes `O = softmax(QKᵀ / √d)V` without storing the `S × S` score matrix. A program owns
+Forward computes $O = \operatorname{softmax}(QK^\top / \sqrt{d})V$ without storing the
+$S \times S$ score matrix. A program owns
 one `(batch, head, query-tile)` and streams successive K/V tiles. It carries online softmax
 statistics `(m, l)` for the query tile and updates `O` as each K/V tile arrives; heads are
 independent programs.
 
-Backward replays those Q/K/V tiles and the saved row statistics to produce `dQ`, `dK`, and `dV`,
-again without materializing attention probabilities. Query and K/V tile sizes are selected per
+Backward first runs a small preprocess kernel for each query row:
+
+$$
+D_i = \sum_d O_{id}\,dO_{id}.
+$$
+
+`D` is one FP32 scalar per row (named `Delta` in the code). The two tiled backward paths then
+recompute $P = \exp(QK^\top / \sqrt{d} - \mathrm{LSE})$ from Q/K and the saved row LSE, rather
+than reading a saved probability matrix. For each tile:
+
+$$
+dP = dO\,V^\top,
+\qquad dS = P \odot (dP - D),
+$$
+
+$$
+dV = P^\top dO,
+\qquad dK = \frac{dS^\top Q}{\sqrt{d}},
+\qquad dQ = \frac{dS K}{\sqrt{d}}.
+$$
+
+The K/V-tile kernel scans query tiles and accumulates $dK$ and $dV$; the Q-tile kernel scans K/V
+tiles and accumulates $dQ$.
+Thus `dQ` is written by its owning query tile, while `dK` and `dV` are written by their owning K/V
+tile—no atomic accumulation and no $S \times S$ score/probability tensor. Tile sizes are selected per
 shape. The baseline is PyTorch Flash-SDPA (`aten::_scaled_dot_product_flash_attention`), not naive
-`QKᵀ → softmax → V`: Triton reduces allocation by **44.1%**; the native CUDA path reduces it by
+$QK^\top \rightarrow \operatorname{softmax} \rightarrow V$: Triton reduces allocation by **44.1%**; the native CUDA path reduces it by
 **22.1%**. See [raw dispatch evidence](results/benchmarks/operator_benchmark/resume_summary/torch_attention_backend.json).
 
 </details>
@@ -231,12 +268,12 @@ shape. The baseline is PyTorch Flash-SDPA (`aten::_scaled_dot_product_flash_atte
 <details>
 <summary><strong>Router postprocess</strong> — Speed: <strong>2.43×</strong> · Peak allocation: <strong>−65.2%</strong></summary>
 
-For router logits `rₜ`, the forward pass computes `pₜ = softmax(rₜ)`, selects `topk(pₜ)`, and
-optionally renormalizes the selected weights:
+For router logits $r_t$, the forward pass computes $p_t = \operatorname{softmax}(r_t)$, selects
+$\operatorname{topk}(p_t)$, and optionally renormalizes the selected weights:
 
-```text
-wₜⱼ = pₜ,eⱼ / Σⱼ pₜ,eⱼ
-```
+$$
+w_{tj} = \frac{p_{t,e_j}}{\sum_{j' \in \operatorname{topk}(p_t)} p_{t,e_{j'}}}.
+$$
 
 The same pass accumulates mean expert probability, z-loss, and entropy statistics. A program covers
 a small block of token rows and all experts for those rows, writing only `k` weights and indices per
@@ -249,12 +286,14 @@ expert indices are non-differentiable. **65.2% lower peak allocation.**
 <details>
 <summary><strong>Fused MoE</strong> — Speed: <strong>1.46×</strong> · Peak allocation: <strong>−5.3%</strong></summary>
 
-For selected expert `eⱼ` and routing weight `wₜⱼ`, forward is
+For selected expert $e_j$ and routing weight $w_{tj}$, forward is
 
-```text
-hₜⱼ = SiLU(xₜ Wgate,eⱼᵀ) ⊙ (xₜ Wup,eⱼᵀ)
-yₜ   = Σⱼ wₜⱼ · (hₜⱼ Wdown,eⱼᵀ)
-```
+$$
+h_{tj} = \operatorname{SiLU}(x_t W_{\mathrm{gate},e_j}^\top)
+         \odot (x_t W_{\mathrm{up},e_j}^\top),
+\qquad
+y_t = \sum_j w_{tj}\,h_{tj}W_{\mathrm{down},e_j}^\top.
+$$
 
 It first builds expert counts, prefix sums, and scatter indices, then groups the `T × k` routed
 copies into expert-contiguous tiles. Each expert tile runs fused gate/up projection plus SwiGLU,
@@ -292,7 +331,7 @@ The largest safe batch is not automatically the fastest. Capacity sweeps therefo
 highest measured throughput below the accepted memory ceiling rather than simply selecting the
 largest runnable allocation.
 
-### FSDP scaling
+### 📈 FSDP scaling
 
 ![FSDP weak scaling](results/benchmarks/synbios_moe_fsdp4/weak_b64/presentation/weak_overview.png)
 
@@ -310,6 +349,10 @@ backbones use the same 12-layer, hidden-768, 8-expert top-2 MoE: 293.49M total p
 123.62M token-active parameters. Formal pretraining uses BF16 and four-GPU FSDP. The complete
 training budgets are:
 
+<div align="center">
+  <code>two data layouts</code> &nbsp;→&nbsp; <code>cloze recall</code> &nbsp;→&nbsp; <code>frozen P/Q readout</code> &nbsp;→&nbsp; <code>route DiD + t1 intervention</code>
+</div>
+
 | Dataset | People | Biographies / person | Documents | Epochs | Optimizer steps | Total scheduled tokens |
 |---|---:|---:|---:|---:|---:|---:|
 | `single` | 100,000 | 1, fixed field order | 100,000 | 540 | 17,280 | 3,963,617,280 |
@@ -321,7 +364,7 @@ seed 1337, and global batch 448. Only biography presentation and the epoch count
 budgets differ by 24,772,608 tokens (0.62%); both are approximately 4B-token runs. Their
 `profiles.jsonl` files are byte-identical, ensuring that only presentation differs.
 
-### Two pretraining conditions and cloze recall
+### 🧪 Two pretraining conditions and cloze recall
 
 | Recall metric | `single` | `multi5_permute` |
 |---|---:|---:|
@@ -334,15 +377,11 @@ them greedily in source-text order. Earlier predictions are inserted back into t
 later fields are generated. No parameters are trained in this stage; it checks source-corpus recall
 before any representation analysis.
 
-The augmented model misses only 254 of 3,000,000 strict fields. Both models therefore complete the
-cloze/source-recall check before probing begins. These are training-corpus recall results, not
+The augmented model misses only 254 of 3,000,000 strict fields. **Both models pass the
+cloze/source-recall gate before probing begins.** These are training-corpus recall results, not
 held-out generalization results.
 
-An early run with peak LR `4.667e-3` became unstable after loss initially fell. The failed run is
-preserved in `HISTORY.md`; formal training was relaunched with peak LR `1e-3` after a 64-step
-preflight.
-
-### P and Q probes for knowledge storage
+### 🔎 P and Q probes for knowledge storage
 
 We then ask where the learned facts can be read from the frozen MoE. The P/Q setup follows the
 distinction in [Allen-Zhu and Li, *Physics of Language Models: Part 3.1*](https://arxiv.org/abs/2309.14316):
@@ -353,16 +392,43 @@ P reads a biography-prefix state; Q reads only the final state of `[EOS, full_na
 | P | Biography prefix, hidden state before the attribute | First BPE token | Complete attribute class |
 | Q | `[EOS, full_name, EOS]`, read at the final EOS | First BPE token | Complete attribute class |
 
-The pretrained backbone is frozen for every P/Q task. The probe trains a low-rank input-embedding
-delta
+The read positions are easiest to see on one generated `single` biography. This is person 0 from
+the seed-1337 corpus; each bracketed preposition is the token whose final-layer state P reads:
 
 ```text
-Δe(token) = B · A[token]
+Jonah15 Blair13 Carter36 entered the world [P0: on] October 24, 2046.
+He was born [P1: in] Tacoma9, NC.
+He received mentorship [P2: at] Chicago8 University.
+He specialized [P3: in] Political Science2.
+He was employed [P4: by] Brooks9 Group.
+He was professionally based [P5: in] Albany3, GA.
+
+P-company: [biography start → ... → "employed" → P4: " by"] → predict " Brooks9 Group"
+Q-company: [EOS] → Jonah15 Blair13 Carter36 → |Q: EOS| → predict " Brooks9 Group"
 ```
 
-plus a normalizer and one linear classifier. This is not LoRA on Transformer weights: the delta is
-added only to token embeddings while all attention, MoE, normalization, and LM-head parameters stay
-fixed.
+Thus P asks what is readable immediately before an attribute in its source biography; Q asks what
+is readable from the name alone, with no biography facts in the input.
+
+The pretrained backbone is frozen for every P/Q task. Let the frozen embedding table be
+$E \in \mathbb{R}^{V \times H}$. The probe learns $A \in \mathbb{R}^{V \times r}$ and
+$B \in \mathbb{R}^{r \times H}$:
+
+$$
+E' = E + AB, \qquad e'_t = e_t + A_tB.
+$$
+
+Here $t$ is a token ID and $A_t$ is its rank-$r$ row. $B$ starts at zero, so the probe begins with
+the exact pretrained embeddings. At its chosen read position, it applies a normalizer and linear
+head:
+
+$$
+\operatorname{logits} = W_{\mathrm{cls}}\,\operatorname{Norm}(h_L[\mathrm{position}]) + b_{\mathrm{cls}}.
+$$
+
+This is not LoRA on Transformer weights: only `A`, `B`, the normalizer, and classifier train; all
+attention, MoE, backbone normalization, and LM-head parameters stay fixed. With `V = 50,257` and
+`H = 768`, the rank-2 P delta has 102,050 parameters; the rank-16 Q delta has 816,400.
 
 | Probe | Input and readout position | Trainable probe | Rank | First / whole budget |
 |---|---|---|---:|---:|
@@ -379,11 +445,10 @@ complete value treated as one class. Birth date uses its month as the first-toke
 whole-value task. Each attribute/target pair has an independent classifier.
 
 Probe heads train on 49,882 people and validate in `eval()` mode on the other 50,118. Those people
-are held out from probe training, but not from backbone pretraining: the result measures
-cross-person linear readability, not generalization to unseen people. P validation batches are 512;
+are held out from probe training, but not from backbone pretraining. P validation batches are 512;
 Q validation batches are 6,144.
 
-#### First-token retrieval
+#### 🟢 First-token retrieval
 
 ![Knowledge augmentation changes where facts become linearly readable](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_study_overview.png)
 
@@ -392,22 +457,8 @@ Q validation batches are 6,144.
 | P0-first | 6.76% | **98.63%** |
 | Q-first macro | 12.83% | **98.79%** |
 
-This is initial evidence for two different retrieval layouts—not a claim that one expert physically
-stores one fact:
-
-```text
-single:          name → att₁ → att₂ → …
-augmentation:
-                  ┌→ att₁
-                  ├→ att₂
-           name ──┼→ att₃
-                  ├→ …
-                  └→ attᵢ
-```
-
-In `single`, a fact is most readable near its original position in the fixed biography. With
-rewrites and field permutation, each attribute's first token becomes nearly linearly readable from
-the name alone.
+**In `single`, a fact is most readable near its original position; with rewrites and field
+permutation, its first token becomes nearly linearly readable from the name alone.**
 
 ![P-first position heatmap](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_first_heatmaps.png)
 
@@ -415,22 +466,28 @@ the name alone.
   <img src="results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_probe_table.png" alt="Q-first results" width="64%" />
 </div>
 
-#### Whole-value retrieval
+#### 🧾 Whole-value retrieval
 
-Whole-value accuracy rises much less than first-token accuracy. This is where the present sparse
-MoE differs from the dense-model result: the name often exposes the first token directly, while
-later tokens remain conditioned on the path already taken.
+The first difference is the whole-value gap. Allen-Zhu's augmented dense model reports **92.58%**
+Q-whole accuracy; this MoE reaches **98.79%** on Q-first but only **33.15%** on Q-whole. In other
+words, **augmentation makes a name a strong linear cue for the first token, not for the entire
+value as one linear readout in MoE architecture.**
 
-| Five-attribute macro | `single` | `multi5_permute` | Allen-Zhu `multi5+permute` |
+| Five-attribute macro | `single` MoE | `multi5_permute` MoE | Dense `multi5+permute` |
 |---|---:|---:|---:|
-| P0-whole | 3.16% | **32.59%** | ≤3.5% |
+| P1-whole | 13.92% | **39.66%** | **93.56%** |
 | Q-whole | 3.18% | **33.15%** | **92.58%** |
 
-The augmented Q-whole heads reach 74.51–98.18% on their probe-training split but only 8.48–51.04%
-on person-held-out validation. The remaining gap is therefore not just failed optimization: whole
-values are less consistent across people as one linear direction than their first tokens.
+<sub>Dense references use `bioS multi5+permute`: P1-whole is the Figure 13(c) rank-2 macro of
+96.4, 76.0, 96.0, 99.7, and 99.7; Q-whole is the Figure 7 macro of 96.1, 72.6, 94.9, 99.6, and
+99.7. Both are from [Allen-Zhu and Li](https://arxiv.org/pdf/2309.14316).</sub>
 
-In `single` P-whole figures, warm-gold outlines mark each attribute's fixed source position.
+The augmented Q-whole heads reach 74.51–98.18% on their probe-training split but only 8.48–51.04%
+on person-held-out validation. **The remaining gap is therefore not just failed optimization:
+whole values are less consistent across people as one linear direction than their first tokens.**
+
+In the fixed-order `single` heatmap, a warm-gold outline marks the P position immediately before
+that attribute's own source sentence.
 
 ![P-whole position heatmap](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_whole_heatmaps.png)
 
@@ -438,30 +495,51 @@ In `single` P-whole figures, warm-gold outlines mark each attribute's fixed sour
   <img src="results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_whole_probe_table.png" alt="Q-whole results" width="64%" />
 </div>
 
-### Mechanism diagnostics
+> **Two results need explaining.** First, augmentation makes first tokens almost perfectly readable
+> from a name in this MoE, yet complete values remain far below the dense reference. Second, within
+> the MoE P-whole matrix, only company and company-city rise sharply as P moves through the
+> biography; birth city, university, and major barely move.
 
-#### Related facts follow exposure position
+### 🔬 Mechanism diagnostics
 
-This is a derived analysis of the completed augmented P-whole matrix; it trains no model or probe.
-For each `Pj`, the measured company/company-city accuracy is fitted against the probability that
-either related field has already appeared in a random six-field permutation:
+#### 📐 Related facts follow exposure position
 
-```text
-P(either related field seen before Pj) = 1 − C(4, j) / C(6, j)
-```
+The second pattern is relation-specific: company and company-city become readable as the biography
+advances, while the other three whole attributes stay nearly flat. This analysis trains no new model
+or probe; it fits the completed held-out P-whole measurements.
 
-| Target | Fitted baseline | Saturation | RMSE | R² |
+The relationship is built into the profile generator. There are 263 company candidates and 200
+company-city candidates. Every company has one fixed city; 171 cities have one candidate company,
+28 have two, and New York has 36. Thus a company identifies its city exactly, while a city narrows
+the company to an average of 1.315 candidates (and is much less specific for New York). Each person
+samples a company uniformly, then receives that company's city.
+
+The six biography sentences are independently permuted. At P position $j$, the probability that at
+least one of the two related fields has already appeared is:
+
+$$
+\Pr(\text{either related field appears before } P_j)
+= 1 - \frac{\binom{4}{j}}{\binom{6}{j}}.
+$$
+
+For P0 through P5, this is $0,\;1/3,\;3/5,\;4/5,\;14/15,\;1$. We fit each observed curve against
+that probability.
+
+| Target | Fitted baseline | Saturation | RMSE | $R^2$ |
 |---|---:|---:|---:|---:|
 | Company | 45.06% | 94.59% | 0.311 pp | **0.99968** |
 | Company city | 48.44% | 99.72% | 0.097 pp | **0.99997** |
 
 ![Company and company-city position fit](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/company_pair_position_fit.png)
 
-The fit reconstructs all six positions within 0.1–0.3 percentage points. It points to a relation
-between the two fields, not merely an absolute-position effect: a company determines its city,
-while several companies can share the same city.
+Company rises from 45.13% to 95.09%, and company-city from 48.56% to 99.86%. The paired-field fit
+reconstructs all six positions within 0.1–0.3 percentage points ($R^2=0.99968$ and $0.99997$).
+**These readouts track whether the biography has already exposed one side of the company–city
+relation, rather than simply benefiting from a later position. In representation, the two fields
+behave as a bidirectional association: seeing either makes the other easier to read out. This does
+not establish a fixed causal direction for any individual example.**
 
-#### Token-conditioned MoE routes
+#### 🧭 Token-conditioned MoE routes
 
 This is inference-only: the backbone is frozen, no probe embedding delta is applied, and no
 classifier is trained. From the person-held-out split it selects 162,044 augmented cases where
@@ -478,15 +556,19 @@ the early layers.
 At each MoE layer, a token route is the set of its top-2 selected experts. For a pair of examples,
 route overlap is their expert-set Jaccard similarity:
 
-```text
-J_g(t) = mean_pairs |Eₐ(t) ∩ Eᵦ(t)| / |Eₐ(t) ∪ Eᵦ(t)|
+$$
+J_g(t) = \operatorname*{mean}_{(a,b)}
+\frac{\lvert E_a(t) \cap E_b(t) \rvert}{\lvert E_a(t) \cup E_b(t) \rvert},
+\qquad
+\operatorname{branching}_g = J_g(t_1) - J_g(t_2).
+$$
 
-branching_g = J_g(t1) − J_g(t2)
-
-DiD = branching_different-t2 − branching_same-t2
-    = [J_different(t1) − J_different(t2)]
-      − [J_same(t1) − J_same(t2)]
-```
+$$
+\operatorname{DiD} = \operatorname{branching}_{\mathrm{different}\ t_2}
+- \operatorname{branching}_{\mathrm{same}\ t_2}
+= [J_{\mathrm{different}}(t_1) - J_{\mathrm{different}}(t_2)]
+  - [J_{\mathrm{same}}(t_1) - J_{\mathrm{same}}(t_2)].
+$$
 
 The same-`t2` group controls for route changes that occur even when the next token is unchanged. A
 positive DiD means that examples with different `t2` values lose more route overlap after `t2` than
@@ -495,44 +577,86 @@ layer-level summaries are pair-count weighted across attributes.
 
 ![Attribute-by-layer route branching DiD](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png)
 
-This supports token-conditioned routing after a shared first-token entry point. It does not show
-that experts are literal fact stores, and the route analysis currently has no matched `single`
-condition.
+**This is where the dense and MoE extraction layouts begin to differ.** In the augmented dense
+reference, a name-only state makes the complete attribute nearly linearly readable. Here, the name
+opens a shared first-token entry, but it does not expose the complete biography fact in one readout;
+after `t1`, different `t2` values take measurably different top-2 routes. The resulting picture is
+more conditional: a shared entry can be followed by token-specific retrieval branches.
 
-### Ground-truth first-token intervention
+**This is consistent with a more finely factorized form of knowledge storage and extraction:** a
+common prefix can be reused while many continuations remain separate. That gives the MoE a larger
+conditional storage/extraction space than a single flat name-to-value direction. This is an
+interpretation of the route and probe results—not a direct measurement of compression, nor evidence
+that an individual expert physically stores one fact.
 
-For each P0–P5 source position, the original biography is truncated through its pre-attribute
-readout position. `t1` comes from the aligned **original formal P-first probe cache** (not from a
-new head), is converted back to its exact leading-space GPT-2 token, round-trip checked, and appended
-to that prefix. The frozen backbone is run again and the classifier reads the final-layer hidden state
-of the inserted `t1` itself.
+### 🧷 P-first token intervention
+
+This asks a simple follow-up question: once the earlier P-first classifier has produced `t1`, does
+that token make the rest of the value easier to read? For every P0–P5 prefix, we take the aligned
+P-first classifier output from the formal cache, decode it to its leading-space GPT-2 token, check
+the round trip, and append it to the same prefix. The backbone stays frozen; the new P-whole probe
+reads the hidden state at the appended `t1`.
+
+For the same profile above, one `multi5_permute` biography ends with the company city:
+
+```text
+In particular, Jonah15 Blair13 Carter36 studied at Chicago8 University.
+Historically, He had a professional role at Brooks9 Group.
+Public records show He grew up in Tacoma9, NC.
+Biographical notes say He was born on October 24, 2046.
+Notably, He majored in Political Science2.
+He worked in Albany3, GA.
+
+ordinary P-whole
+prefix ending in "He worked in" ──> [read before " Albany3, GA"] ──> fresh whole-value classifier
+
+P-first-token P-whole
+the same prefix ──> [P-first classifier outputs " Albany3"] ──> [append and read that token]
+                ──> fresh whole-value classifier
+```
+
+<!-- A new P-whole head is trained after the intervention. It is separate from the earlier P-first
+classifier; that classifier is not reused as the whole-value readout. -->
 
 A fresh P-whole probe then trains on that state using the same rank-2 embedding-delta + LayerNorm +
 classifier architecture, person split, whole-value class mapping, and seed 1337. Each of the five
 whole attributes uses 4,000 steps with batch 128; validation uses batch 3,072. The formal no-`t1`
-baseline used the original pre-attribute state and a 12,000-step rank-2 head. No fresh Q task is
-included. The augmented model changes from **45.28% to 96.38%** whole-value accuracy; `single`
-improves more modestly and remains position-dependent.
+baseline used the original pre-attribute state and a 12,000-step rank-2 head.
 
-| Dataset | Formal no-`t1`, 30-cell macro | Fresh P-whole + true `t1` | P0 + true `t1` |
-|---|---:|---:|---:|
-| `single` | 44.23% | **56.47%** | 15.22% |
-| `multi5_permute` | 45.28% | **96.38%** | **95.62%** |
+**The recovery follows the retrieval layout, not a generic single-versus-augmentation comparison.**
+In fixed-order `single`, the useful states are the five diagonal positions immediately before each
+attribute's own sentence; that diagonal recovers from **51.21% to 94.09%**. In
+`multi5_permute`, the first-token entry works at every source position, so the complete 30-cell
+P-whole matrix recovers from **45.28% to 96.38%**.
 
-Each figure compares the original formal no-`t1` whole probe with its fresh true-`t1` counterpart.
-The cache/token round-trip check is part of the protocol; it is not shown as a third accuracy panel.
+| Layout | Readout region | Formal no-`t1` | P-whole after P-first `t1` |
+|---|---|---:|---:|
+| `single` | Five fixed source positions (diagonal) | 51.21% | **94.09%** |
+| `multi5_permute` | All 30 position × attribute cells | 45.28% | **96.38%** |
+
+Each figure compares the original formal whole probe with a fresh probe after P-first `t1` is
+appended. In `single`, read the diagonal; in `multi5_permute`, read the full matrix.
 
 #### `single`
 
-![Single true-t1 P-whole](results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
+![Single P-first-token P-whole](results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
 
 #### `multi5_permute`
 
-![Multi5 true-t1 P-whole](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.png)
+![Multi5 P-first-token P-whole](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.png)
 
-#### Attribute-token retrieval structure
+#### 🧩 Attribute-token retrieval structure
 
-The true-`t1` intervention makes the difference between the two layouts clearer:
+The P-first-token intervention closes the mechanism picture for this setting. The P/Q readouts
+show **what** is linearly available at each point; the route analysis shows that the continuation
+changes with the next token; and this intervention shows that supplying the classifier-produced
+first token restores the corresponding whole-value readout. Together, they identify a complete
+retrieval sequence: a shared entry into an attribute, followed by token-conditioned extraction of
+the remaining value.
+
+That is more structured than the dense reference, where the augmented name state can make an
+entire value linearly readable in one step. Here, the name reliably opens the first-token entry,
+but later tokens are recovered through their own conditional continuations:
 
 ```text
 single:
@@ -546,10 +670,10 @@ augmentation (`multi5_permute`):
                   └→ attᵢ: t₁ → t₂ → …
 ```
 
-The arrows summarize where attribute tokens become readable; they are not literal memory pointers
-or evidence that one expert stores one fact.
+The arrows summarize the retrieval sequence observed by the probes. They are not literal memory
+pointers or evidence that one expert stores one fact.
 
-#### Pretraining implication: teach components, not only templates
+#### 🧬 Pretraining implication: teach components, not only templates
 
 A pattern that always appears as one fixed sequence may be learned as one conditioned retrieval
 path. For example, suppose the pretraining corpus repeatedly contains only:
@@ -572,23 +696,29 @@ score = normalize(measurement)
 ```
 
 Allen-Zhu's dense-model result made some complete attributes directly readable from a name-only
-state. In this MoE, augmentation makes the attribute's first token directly readable, while the
-remaining tokens become much clearer only after the model enters that token-conditioned branch.
-The evidence therefore suggests a representation spread across a retrieval chain rather than one
-flat, locally readable attribute vector.
+state. Here, augmentation makes the first token directly readable, but not the whole value.
+Geometrically, the distinction is **not** a tensor-product hidden space: dense and MoE both carry
+states in the same hidden dimension. The difference is computational. The dense readout can use one
+shared, high-dimensional name-to-value direction; this MoE instead uses a routed sequence of local
+retrieval maps. The name state opens `t1`, and the token reached at `t1` conditions the route used to
+recover `t2` and the remaining value.
+
+The route DiD provides the corresponding evidence: after matched examples share `t1`, their top-2
+routes separate more for different `t2` values than for the same-`t2` control. In that sense, the
+MoE behaves like a gated chain of retrieval operators rather than a flat whole-value readout at the
+name state.
 
 That structure can support flexible, conditional reuse and distribute knowledge across sparse
-capacity. It also makes data design more important: any capability that must be independently
-addressable should appear decomposed, substituted, and recombined during pretraining. Architecture
-and routing choices must preserve those entry points instead of assuming that repeated end-to-end
-templates will automatically yield reusable parts.
+capacity. **Any capability that must be independently addressable should appear decomposed,
+substituted, and recombined during pretraining.** Architecture and routing choices must preserve
+those entry points instead of assuming that repeated end-to-end templates will automatically yield
+reusable parts.
 
-Taken together, the results indicate that rewrites and field permutation create direct
-name-to-attribute first-token entry points. Complete values are not consistently readable as one
-flat direction at the name position; they become readable after the model enters the corresponding
-token-conditioned branch. This matches the Allen-Zhu first-token mechanism, but does **not** show
-that an individual expert stores a fact or that probe validation measures generalization to people
-unseen during pretraining.
+**Taken together, rewrites and field permutation create direct name-to-attribute first-token entry
+points, but complete values are not consistently readable as one flat direction at the name
+position.** The route DiD is compatible with a token-conditioned continuation after that entry point;
+it does **not** show that an individual expert stores a fact or that probe validation measures
+generalization to people unseen during pretraining.
 
 <a id="quick-start"></a>
 
@@ -647,7 +777,7 @@ results/                                       Git-safe evidence
 └── MANIFEST.sha256                           snapshot integrity
 
 reports/                                       long-form engineering and research reports
-HISTORY.md                                     append-only command and run lifecycle
+the retained run records                                     append-only command and run lifecycle
 ```
 
 Raw biographies, token caches, model weights, optimizer/DCP shards, and large per-example route
@@ -663,7 +793,7 @@ sha256sum --quiet -c results/MANIFEST.sha256
 
 Cross-experiment headline metrics live in
 [`results/BENCHMARK_SUMMARY.md`](results/BENCHMARK_SUMMARY.md). Exact commands and lifecycle records,
-including failed and stopped runs, are appended to [`HISTORY.md`](HISTORY.md).
+including failed and stopped runs, are appended to the retained run records.
 
 <a id="project-structure"></a>
 
@@ -930,6 +1060,31 @@ For deeper implementation and evidence:
 - [SynBioS evidence map](reports/synbios_moe/README.md)
 - [Artifact layout contract](docs/guides/artifact_layout.md)
 - [Project walkthrough](docs/guides/project_walkthrough.md)
+
+<a id="references"></a>
+
+## 📖 References and upstream work
+
+MiniTrainSys is written and integrated in this repository, but it is deliberately explicit about the
+projects, implementations, and research that informed it. “Adapted” below means source-derived code
+is present in this repository; license notices are retained beside that code.
+
+| Reference | Relationship to MiniTrainSys |
+|---|---|
+| [PyTorch](https://pytorch.org/) · [FSDP](https://docs.pytorch.org/docs/stable/fsdp.html) · [Distributed Checkpoint](https://docs.pytorch.org/docs/stable/distributed.checkpoint.html) | Tensor/autograd runtime, distributed primitives, FSDP, and DCP APIs. |
+| [OpenAI Triton](https://triton-lang.org/) · [Fused Attention tutorial](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html) · [Fused Softmax tutorial](https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html) | Triton language and the main algorithmic references for the local attention and row-reduction kernels. |
+| [FlashAttention](https://github.com/Dao-AILab/flash-attention) · [FlashAttention-2](https://arxiv.org/abs/2307.08691) · [CUTLASS](https://github.com/NVIDIA/cutlass) | The native CUDA attention extension adapts the upstream FlashAttention 2.8.4 source and builds against CUTLASS; their notices are retained under `minitrain/kernels/cuda_ext/csrc/third_party/`. |
+| [Liger Kernel](https://github.com/linkedin/Liger-Kernel) | The fused MoE implementation is adapted from Liger Kernel under BSD-2-Clause; see `minitrain/kernels/triton/THIRD_PARTY_NOTICES`. Its RMSNorm, RoPE, SwiGLU, and fused-loss work also informed operator design. |
+| [nanoGPT](https://github.com/karpathy/nanoGPT) · [nanochat](https://github.com/karpathy/nanochat) | Compact, script-first training-system references. |
+| [TorchTitan](https://github.com/pytorch/torchtitan) · [Megatron-LM](https://github.com/NVIDIA/Megatron-LM) · [DeepSpeed](https://github.com/microsoft/DeepSpeed) | References for separating model code, runtime/configuration, distributed execution, optimizer state, and low-level extensions. |
+| [Megatron-Core MoE](https://docs.nvidia.com/megatron-core/developer-guide/latest/api-guide/moe.html) · [vLLM](https://github.com/vllm-project/vllm) · [SGLang](https://github.com/sgl-project/sglang) | References for treating Top-K selection, token dispatch, grouped expert execution, and combination as distinct stages. |
+| [NCCL documentation](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/index.html) | Collective-communication semantics and operational tuning reference. |
+| [FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) · [tiktoken](https://github.com/openai/tiktoken) | References for corpus/tokenization workflow and recorded tokenizer identity. |
+| [Allen-Zhu & Li, *Physics of Language Models: Part 3.1*](https://arxiv.org/abs/2309.14316) · [project page](https://physics.allen-zhu.com/part-3-knowledge/part-3-1) | The SynBioS factual-recall setup and the P/Q probing distinction. This repository studies the corresponding mechanism in sparse MoE; it is not a claim of a strict dense-model reproduction. |
+
+The repository-level [reference map](docs/references/reference_map.md) records how the system-level
+references influenced individual boundaries; [references.md](docs/references/references.md) is the
+shorter source index.
 
 ## 📄 License
 

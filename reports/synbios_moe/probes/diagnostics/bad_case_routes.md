@@ -30,7 +30,7 @@ Q-whole 线性头一定能读出完整属性。
 - MoE topology：12 layers、8 experts、top-2 routing。
 - Bad cases：162,044。
 - Split：person-held-out probe validation。
-- 原始运行与命令：`HISTORY.md` 的
+- 原始运行与命令：the retained run records 的
   “2026-07-24 00:35 — Multi5+permute Q-whole inference diagnostics”。
 
 ## 主要指标

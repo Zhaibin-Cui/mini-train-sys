@@ -15,7 +15,6 @@ head_dim <= 128. Unsupported cases fall back to PyTorch SDPA in the backend
 facade.
 """
 
-from __future__ import annotations
 
 import math
 

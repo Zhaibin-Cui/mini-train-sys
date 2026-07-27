@@ -1,6 +1,5 @@
 """Fit mechanistic position curves for the company/company-city P-whole probes."""
 
-from __future__ import annotations
 
 import argparse
 import csv

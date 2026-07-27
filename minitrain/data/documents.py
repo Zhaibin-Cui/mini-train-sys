@@ -8,7 +8,6 @@ Tokenization happens later.  Keeping this boundary explicit makes cleaning and
 split decisions auditable without involving tokenizer-dependent behavior.
 """
 
-from __future__ import annotations
 
 import hashlib
 import json

@@ -14,7 +14,7 @@ E=8, K=2. Mixtral-class scans are retained in raw artifacts as an appendix.
 
 ## Run and workload identity
 
-The lifecycle and commands are recorded in `HISTORY.md` entries “RTX 4090 industrial per-kernel
+The lifecycle and commands are recorded in the retained run records entries “RTX 4090 industrial per-kernel
 benchmark”, “MoE relative-gradient gate and fused-loss capacity follow-up”, and “Industrial
 kernel scan boundary extensions”. This is an operator benchmark and has no train/validation
 dataset split.

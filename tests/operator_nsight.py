@@ -1,6 +1,5 @@
 """Reusable one-line Nsight Compute profiling for notebook benchmarks."""
 
-from __future__ import annotations
 
 import argparse
 import contextlib

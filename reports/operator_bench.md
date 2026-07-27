@@ -2,4 +2,4 @@
 
 The duplicated benchmark narrative has been consolidated into
 [`engineering/kernels.md`](engineering/kernels.md). This compatibility page preserves historical
-links from design notes and `HISTORY.md`.
+links from design notes and the retained run records.

@@ -8,7 +8,6 @@ The fingerprint is part of the data contract: token shards record it and the
 training loader can reject a vocabulary/runtime mismatch before optimization.
 """
 
-from __future__ import annotations
 
 import hashlib
 import importlib.metadata

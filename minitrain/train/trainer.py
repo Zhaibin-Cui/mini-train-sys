@@ -1,6 +1,5 @@
 """One optimizer-step engine shared by single-device, DDP, and FSDP runs."""
 
-from __future__ import annotations
 
 import math
 from dataclasses import dataclass

@@ -31,7 +31,7 @@ reports/                              selected human conclusions
 ├── engineering/                      kernels and distributed/end-to-end performance
 └── synbios_moe/                      Allen-Zhu-style reproduction and diagnostics
 
-HISTORY.md                            append-only commands, lifecycle, failures, provenance
+the retained run records                            append-only commands, lifecycle, failures, provenance
 ```
 
 ## Path rules
@@ -41,7 +41,7 @@ HISTORY.md                            append-only commands, lifecycle, failures,
 3. TensorBoard events stay beside the exact run; the central index only points to them.
 4. Published historical result paths remain stable. New indexes organize them without destroying
    provenance.
-5. `reports/` contains interpretation; `results/` contains machine evidence; `HISTORY.md` contains
+5. `reports/` contains interpretation; `results/` contains machine evidence; the retained run records contains
    commands and lifecycle.
 6. Run `bash scripts/bash/export_test_results.sh` after every benchmark or validation cycle. It
    categorizes logs, exports notebooks, rebuilds the catalog, and refreshes all hashes.

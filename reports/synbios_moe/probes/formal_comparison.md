@@ -160,7 +160,7 @@ first-token 和 whole-attribute，因此不能用 first 的成功替代 whole �
   [`figures/`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/)
 - Formal pipeline：
   `artifacts/synbios_moe/results/{single,multi5_permute}_fsdp_4gpu/probe_pipeline/formal/`
-- 运行与失败历史：`HISTORY.md`。
+- 运行与失败历史：the retained run records。
 
 ![Formal study overview](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_study_overview.png)
 

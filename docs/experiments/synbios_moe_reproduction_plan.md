@@ -38,7 +38,7 @@ baseline 反映其未公开原始词表。报告可以比较本项目 `single` �
 
 用户已明确选择让正式 probe 使用服务器吞吐最优 batch，而不是强制论文的 P=50/Q=200。
 这会改变固定30k steps下的样本曝光量，是另一项有意的 fidelity 差异；两个主数据条件必须使用
-同一份 `recommended.env`，并在 `HISTORY.md` 和结果 provenance 中记录，才可做公平对照。
+同一份 `recommended.env`，并在 the retained run records 和结果 provenance 中记录，才可做公平对照。
 
 ## 实现阶段
 

@@ -26,7 +26,7 @@ layout without tensor contents. Excluded payload paths, sizes, manifests, and ha
 where available.
 
 See `BENCHMARK_SUMMARY.md` for the current conclusions, `../reports/synbios_moe/README.md` for the
-canonical SynBioS dataset-to-diagnostics map, and `../HISTORY.md` for the append-only run timeline
+canonical SynBioS dataset-to-diagnostics map, and `../the retained run records` for the append-only run timeline
 and exact commands.
 
 ## TensorBoard

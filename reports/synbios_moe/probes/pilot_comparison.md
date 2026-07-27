@@ -65,7 +65,7 @@ first-token as the primary endpoint, with whole-attribute as a secondary endpoin
 - `artifacts/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/pilot/`
 - `results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/pilot/`
 - `results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/pilot/`
-- `HISTORY.md` entries dated 2026-07-23 for both pilot launches/completions
+- the retained run records entries dated 2026-07-23 for both pilot launches/completions
 
 Before formal launch, update the console to show task, phase, and full-pipeline ETA, run the
 required regression gates, and record the paper-faithful formal configuration in HISTORY.

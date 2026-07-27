@@ -5,7 +5,6 @@ Each shape runs in a fresh CUDA process so an OOM is retained as evidence and
 cannot poison later cases in the notebook.
 """
 
-from __future__ import annotations
 
 import argparse
 import csv

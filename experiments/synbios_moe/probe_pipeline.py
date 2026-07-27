@@ -1,6 +1,5 @@
 """Task-level scheduling and result reduction for the SynBioS probe experiment."""
 
-from __future__ import annotations
 
 import csv
 from datetime import datetime, timedelta

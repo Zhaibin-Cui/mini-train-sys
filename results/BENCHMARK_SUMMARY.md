@@ -1,7 +1,7 @@
 # Canonical result index
 
 This file is the compact cross-run index. Narrative interpretation lives in `reports/`; exact
-commands and lifecycle live in `HISTORY.md`; every pushable artifact is listed in
+commands and lifecycle live in the retained run records; every pushable artifact is listed in
 [`catalog/artifacts.json`](catalog/artifacts.json).
 
 ## Environment
@@ -100,12 +100,15 @@ This is training-text recall, not held-out generalization. Machine summaries:
 Question: does five-way rewriting and field permutation change when facts become linearly
 readable?
 
-| Endpoint | `single` | `multi5_permute` | Allen-Zhu multi5 |
+| Endpoint | `single` | `multi5_permute` | Dense `multi5+permute` |
 |---|---:|---:|---:|
 | P0 first, excluding birth date | 6.76% | **98.63%** | ≈100% |
 | Q-first macro | 12.83% | **98.79%** | 99.93% |
-| P0 whole macro | 3.16% | **32.59%** | ≈93.5% |
+| P1 whole macro | 13.92% | **39.66%** | **93.56%** |
 | Q-whole macro | 3.18% | **33.15%** | 92.58% |
+
+Dense `bioS multi5+permute` references: P1-whole is the Figure 13(c), rank-2 macro of 96.4,
+76.0, 96.0, 99.7, and 99.7 (**93.56%**); Q-whole is the Figure 7 macro (**92.58%**).
 
 The first-token mechanism is reproduced; the dense-paper whole endpoint is not numerically
 reproduced on the MoE before a correct first-token branch is entered.

@@ -1,6 +1,5 @@
 """Measure leading-space GPT-2 token distributions for every SynBioS attribute."""
 
-from __future__ import annotations
 
 import argparse
 import csv

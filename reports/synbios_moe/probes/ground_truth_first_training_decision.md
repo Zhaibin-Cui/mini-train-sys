@@ -44,7 +44,7 @@ therefore a **pilot-budget full-matrix run**, not an original-formal-budget repr
 
 - Replicated capacity gate:
   `artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T094600Z/summary.json`
-- Lifecycle and failures: repository-root `HISTORY.md`.
+- Lifecycle and failures: repository-root the retained run records.
 
 ## Interpretation
 

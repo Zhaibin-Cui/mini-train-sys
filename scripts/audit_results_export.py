@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Verify that every pushable server artifact has an identical Git-safe copy."""
 
-from __future__ import annotations
 
 import argparse
 import hashlib

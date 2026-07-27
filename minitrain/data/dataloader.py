@@ -10,7 +10,6 @@ Keeping them separate lets persistent workers remain read-only while the main
 process changes shuffle order from one epoch to the next.
 """
 
-from __future__ import annotations
 
 import os
 from functools import partial

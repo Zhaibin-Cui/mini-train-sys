@@ -2,7 +2,6 @@
 
 # ruff: noqa: E402 -- direct script execution needs the repository root on sys.path.
 
-from __future__ import annotations
 
 import argparse
 import hashlib

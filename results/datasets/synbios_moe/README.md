@@ -25,5 +25,5 @@ split 为空。
 
 完整跨层校验结果见
 [`repository_audit_20260724`](../../formal_runs/synbios_moe/results/repository_audit_20260724/summary.json)；
-对应生命周期与命令见仓库根目录 `HISTORY.md` 的
+对应生命周期与命令见仓库根目录 the retained run records 的
 “2026-07-24 01:28 — SynBioS repository path and lineage audit”。

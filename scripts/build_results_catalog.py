@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Build deterministic indexes for the Git-safe server result snapshot."""
 
-from __future__ import annotations
 
 import argparse
 import csv

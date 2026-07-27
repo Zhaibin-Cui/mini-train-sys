@@ -1,6 +1,5 @@
 """Epoch/step orchestration around the single-step :class:`Trainer`."""
 
-from __future__ import annotations
 
 import time
 import tracemalloc

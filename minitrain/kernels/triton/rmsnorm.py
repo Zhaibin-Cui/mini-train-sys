@@ -14,7 +14,6 @@ contract, so a CUDA C++ or future accelerator backend can replace this later
 without touching transformer blocks.
 """
 
-from __future__ import annotations
 
 import math
 

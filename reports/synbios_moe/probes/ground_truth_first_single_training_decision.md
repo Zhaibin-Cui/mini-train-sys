@@ -44,7 +44,7 @@ No fresh Q task is defined or launched.
   `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/training/`.
 - Launch/result root:
   `artifacts/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/`.
-- Exact command, lifecycle, failures, and completion status: repository-root `HISTORY.md`.
+- Exact command, lifecycle, failures, and completion status: repository-root the retained run records.
 
 ## Interpretation
 
