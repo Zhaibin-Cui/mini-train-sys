@@ -21,11 +21,11 @@ keep as the notebook maximum.
 
 ## Calibration result
 
-The final notebooks were executed in place on 2026-07-16. Both have every code
-cell executed and contain no error output:
-
-- `tests/operator_bench_sm86_4gb.ipynb`: 20/20 code cells;
-- `tests/moe_operator_bench_sm86_4gb.ipynb`: 6/6 code cells.
+The machine-specific notebooks were executed locally on 2026-07-16; they are
+not versioned because their cell outputs are large, hardware-bound artifacts.
+The reusable notebook templates are
+`tests/operator_bench.ipynb` and `tests/moe_operator_bench.ipynb`. The raw
+measurements below remain versioned under `tests/benchmark_results/`.
 
 Representative largest-case measurements are below. `full delta` is the
 PyTorch allocated-memory increase measured by the harness; it excludes the
@@ -75,11 +75,9 @@ sweep sizes remain intentionally different.
 
 From the repository root, with the CUDA build toolchain available:
 
-```powershell
-$env:CUDA_MODULE_LOADING = "LAZY"
-jupyter nbconvert --to notebook --execute --inplace tests/moe_operator_bench_sm86_4gb.ipynb --ExecutePreprocessor.timeout=7200 --ExecutePreprocessor.kernel_name=python3
-jupyter nbconvert --to notebook --execute --inplace tests/operator_bench_sm86_4gb.ipynb --ExecutePreprocessor.timeout=7200 --ExecutePreprocessor.kernel_name=python3
-```
+Use the reusable templates as the starting point, then set sizes appropriate
+for the target GPU before executing them. The 4 GiB sweep sizes above are a
+recorded calibration, not a portable default.
 
 Raw immutable datasets and Nsight reports are under
 `tests/benchmark_results/sm86-nvidia-geforce-rtx-3050-laptop-gpu/`; figures are

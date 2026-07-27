@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/readme-banner.svg" alt="MiniTrainSys" width="100%" />
+<img src="assets/readme-banner.svg" alt="MiniTrainSys" width="88%" />
 
 <p>
   <img src="https://img.shields.io/badge/Models-Dense%20%26%20MoE-2563eb?style=flat-square" alt="Dense and MoE models" />
