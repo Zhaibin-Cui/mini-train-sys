@@ -384,7 +384,7 @@ $$
 E' = E + AB, \qquad e'_t = e_t + A_tB.
 $$
 
-Here $t$ is a token ID and $A_t$ is its rank-$r$ row. $B$ starts at zero, so the probe begins with
+Here $t$ is a token ID and $A_t$ is its rank-*r* row. $B$ starts at zero, so the probe begins with
 the exact pretrained embeddings. At its chosen read position, it applies a normalizer and linear
 head:
 
@@ -488,7 +488,7 @@ $$
 = 1 - \frac{\binom{4}{j}}{\binom{6}{j}}.
 $$
 
-For P0 through P5, this is $0,\;1/3,\;3/5,\;4/5,\;14/15,\;1$. We fit each observed curve against
+For P0 through P5, this is 0, 1/3, 3/5, 4/5, 14/15, 1. We fit each observed curve against
 that probability.
 
 | Target | Fitted baseline | Saturation | RMSE | $R^2$ |
