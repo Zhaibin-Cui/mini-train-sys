@@ -137,7 +137,7 @@ before they are benchmarked.
 
 For each hidden row $x \in \mathbb{R}^{H}$, the forward pass is
 
-$r = \frac{1}{\sqrt{\mathrm{mean}(x^2) + \varepsilon}}, \qquad y = x \odot r \odot \gamma.$
+$`r = \frac{1}{\sqrt{\mathrm{mean}(x^2) + \varepsilon}}, \qquad y = x \odot r \odot \gamma.`$
 
 One Triton program owns one row (or packs short rows), reduces `sum(x²)` in FP32, and writes `y`
 once. It saves `r` per row. Backward reads `x`, `γ`, `r`, and `dy` to form `dx` and `dγ`; it does
@@ -151,7 +151,7 @@ program.
 
 For every rotary pair $(a,b)$ at position $t$, forward applies
 
-$a' = a\cos(t) - b\sin(t), \qquad b' = a\sin(t) + b\cos(t).$
+$`a' = a\cos(t) - b\sin(t), \qquad b' = a\sin(t) + b\cos(t).`$
 
 One program owns one `(batch, token)` position and lays out all Q/K heads and rotary pairs as a
 tile. `sin(t)` and `cos(t)` are loaded once for that position and shared across heads; there is no
@@ -165,7 +165,7 @@ tile. The gain is mostly fewer launches and less temporary traffic.
 
 With gate projection $g$ and up projection $u$, forward is
 
-$y = \mathrm{SiLU}(g) \odot u, \qquad \mathrm{SiLU}(g) = g\,\sigma(g).$
+$`y = \mathrm{SiLU}(g) \odot u, \qquad \mathrm{SiLU}(g) = g\,\sigma(g).`$
 
 Each program covers a tile of the activation. It loads `g` and `u`, evaluates the gate and product
 in registers, then stores only `y`. Backward uses $dy$ to form
@@ -179,7 +179,7 @@ $dg = dy \odot u \odot \mathrm{SiLU}'(g)$ in the same tiled layout. **20.0% lowe
 
 For a target class $c$ and logits $z$, forward evaluates
 
-$L = -z_c + \log\!\sum_v \exp(z_v), \qquad \frac{\partial L}{\partial z_v} = \frac{\mathrm{softmax}(z)_v - \mathbf{1}[v=c]}{N_{\mathrm{valid}}}.$
+$`L = -z_c + \log\!\sum_v \exp(z_v), \qquad \frac{\partial L}{\partial z_v} = \frac{\mathrm{softmax}(z)_v - \mathbf{1}[v=c]}{N_{\mathrm{valid}}}.`$
 
 The vocabulary is read in blocks. Online log-sum-exp retains only a running maximum and running
 sum, rather than a full probability vector. A program owns one token row while lanes cover a
@@ -192,7 +192,7 @@ vocabulary block. **83.3% lower peak allocation** at the largest common shape.
 
 The LM head and CE are fused across token chunks. For a chunk $C$:
 
-$Z_C = X_C W^\top, \qquad \frac{\partial L}{\partial X_C} = \frac{\partial L}{\partial Z_C}W, \qquad \frac{\partial L}{\partial W} \mathrel{+}= \left(\frac{\partial L}{\partial Z_C}\right)^\top X_C.$
+$`Z_C = X_C W^\top, \qquad \frac{\partial L}{\partial X_C} = \frac{\partial L}{\partial Z_C}W, \qquad \frac{\partial L}{\partial W} \mathrel{+}= \left(\frac{\partial L}{\partial Z_C}\right)^\top X_C.`$
 
 **Forward.** Choose the largest power-of-two number of tokens whose temporary
 `[chunk_tokens, vocab]` logits buffer fits the 64 MiB workspace budget. For one chunk, it adds the
@@ -217,15 +217,15 @@ independent programs.
 
 Backward first runs a small preprocess kernel for each query row:
 
-$D_i = \sum_d O_{id}\,dO_{id}.$
+$`D_i = \sum_d O_{id}\,dO_{id}.`$
 
 `D` is one FP32 scalar per row (named `Delta` in the code). The two tiled backward paths then
 recompute $P = \exp(QK^\top / \sqrt{d} - \mathrm{LSE})$ from Q/K and the saved row LSE, rather
 than reading a saved probability matrix. For each tile:
 
-$dP = dO\,V^\top, \qquad dS = P \odot (dP - D),$
+$`dP = dO\,V^\top, \qquad dS = P \odot (dP - D),`$
 
-$dV = P^\top dO, \qquad dK = \frac{dS^\top Q}{\sqrt{d}}, \qquad dQ = \frac{dS K}{\sqrt{d}}.$
+$`dV = P^\top dO, \qquad dK = \frac{dS^\top Q}{\sqrt{d}}, \qquad dQ = \frac{dS K}{\sqrt{d}}.`$
 
 The K/V-tile kernel scans query tiles and accumulates $dK$ and $dV$; the Q-tile kernel scans K/V
 tiles and accumulates $dQ$.
@@ -243,7 +243,7 @@ $QK^\top \rightarrow \mathrm{softmax} \rightarrow V$: Triton reduces allocation 
 For router logits $r_t$, the forward pass computes $p_t = \mathrm{softmax}(r_t)$, selects
 $\mathrm{topk}(p_t)$, and optionally renormalizes the selected weights:
 
-$w_{tj} = \frac{p_{t,e_j}}{\sum_{j' \in \mathrm{topk}(p_t)} p_{t,e_{j'}}}.$
+$`w_{tj} = \frac{p_{t,e_j}}{\sum_{j' \in \mathrm{topk}(p_t)} p_{t,e_{j'}}}.`$
 
 The same pass accumulates mean expert probability, z-loss, and entropy statistics. A program covers
 a small block of token rows and all experts for those rows, writing only `k` weights and indices per
@@ -258,7 +258,7 @@ expert indices are non-differentiable. **65.2% lower peak allocation.**
 
 For selected expert $e_j$ and routing weight $w_{tj}$, forward is
 
-$h_{tj} = \mathrm{SiLU}(x_t W_{\mathrm{gate},e_j}^\top) \odot (x_t W_{\mathrm{up},e_j}^\top), \qquad y_t = \sum_j w_{tj}\,h_{tj}W_{\mathrm{down},e_j}^\top.$
+$`h_{tj} = \mathrm{SiLU}(x_t W_{\mathrm{gate},e_j}^\top) \odot (x_t W_{\mathrm{up},e_j}^\top), \qquad y_t = \sum_j w_{tj}\,h_{tj}W_{\mathrm{down},e_j}^\top.`$
 
 It first builds expert counts, prefix sums, and scatter indices, then groups the `T × k` routed
 copies into expert-contiguous tiles. Each expert tile runs fused gate/up projection plus SwiGLU,
