@@ -82,8 +82,8 @@ profiles/
 !reports/**
 # Machine-specific benchmark notebooks are local execution artifacts. Keep the
 # portable notebook variants tracked and regenerate these per target machine.
-# tests/operator_bench_sm86_4gb.ipynb
-# tests/moe_operator_bench_sm86_4gb.ipynb
+tests/operator_bench_sm86_4gb.ipynb
+tests/moe_operator_bench_sm86_4gb.ipynb
 tests/**/__pycache__/
 tests/**/*.py[cod]
 reports/**/__pycache__/
