@@ -532,10 +532,7 @@ J_g(t) = \frac{1}{\lvert \mathcal{P}_g \rvert}
 $$
 
 $$
-\mathrm{DiD} = \mathrm{branching}_{\mathrm{different}\ t_2}
-- \mathrm{branching}_{\mathrm{same}\ t_2}
-= [J_{\mathrm{different}}(t_1) - J_{\mathrm{different}}(t_2)]
-  - [J_{\mathrm{same}}(t_1) - J_{\mathrm{same}}(t_2)].
+\mathrm{DiD} = \mathrm{branching}_{\mathrm{different}\ t_2} - \mathrm{branching}_{\mathrm{same}\ t_2} = [J_{\mathrm{different}}(t_1) - J_{\mathrm{different}}(t_2)] - [J_{\mathrm{same}}(t_1) - J_{\mathrm{same}}(t_2)].
 $$
 
 The same-`t2` group controls for route changes that occur even when the next token is unchanged. A
