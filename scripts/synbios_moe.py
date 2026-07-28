@@ -48,6 +48,10 @@ from experiments.synbios_moe.probes.batch_benchmark import (
     summarize_probe_benchmarks,
 )
 from experiments.synbios_moe.probes.checkpoint import save_probe_result
+from experiments.synbios_moe.probes.commands import (
+    probe_train_command_builder,
+    probe_validation_command_builder,
+)
 from experiments.synbios_moe.probes.comparison_report import build_formal_report_artifacts
 from experiments.synbios_moe.probes.dataset import (
     CachedProbeDataset,
@@ -71,14 +75,12 @@ from experiments.synbios_moe.probes.pipeline import (
     estimate_phase_durations,
     jobs_for_stage,
     load_pipeline_config,
-    probe_train_command_builder,
-    probe_validation_command_builder,
     reusable_cloze_gate,
     require_matching_identity,
     resolve_devices,
     schedule_jobs,
-    summarize_probe_results,
 )
+from experiments.synbios_moe.probes.results import summarize_probe_results
 from minitrain.data.documents import CleaningConfig
 from minitrain.data.preprocess import prepare_token_shards
 from minitrain.data.tokenizer import TiktokenTokenizer
