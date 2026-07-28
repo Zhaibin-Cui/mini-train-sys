@@ -292,7 +292,7 @@ def _write_report(
     p_batch = next(row["batch_size"] for row in rows if row["kind"] == "p")
     steps = sorted({int(row["steps"]) for row in rows})
     step_text = ", ".join(str(value) for value in steps)
-    text = f"""# Fresh whole probes with P-first-classifier `t1`
+    text = f"""# Fresh whole probes with oracle `t1`
 
 ## Question or hypothesis
 
@@ -303,14 +303,14 @@ formal whole probe without that token?
 ## Exact compared conditions
 
 The baseline is the original formal whole probe. The intervention trains a fresh
-P `AttributeProbe` with the same rank-2 low-rank input delta and reads the inserted classifier-generated `t1`
+P `AttributeProbe` with the same rank-2 low-rank input delta and reads the inserted ground-truth `t1`
 after each biography prefix. It uses the same frozen backbone, whole-value class mappings,
 person split, seed, and cache. This run uses {step_text} optimizer steps per head and P batch
 {p_batch}.
 
-`t1` is the output of the original formal P-first classifier, decoded to its exact GPT-2 token
-and round-trip checked before the frozen-backbone readout. It is not produced by the fresh
-whole-value head.
+`t1` comes from the aligned first-token label in the probe cache. The token ID is decoded and
+round-trip checked before the frozen-backbone readout; neither the original P-first classifier
+nor the fresh whole-value head generates it.
 
 ## Run/checkpoint and dataset identity
 
@@ -323,7 +323,7 @@ whole-value head.
 
 ## Primary metrics
 
-| Endpoint | Formal no-`t1` baseline | Fresh whole probe + P-first classifier `t1` | Delta |
+| Endpoint | Formal no-`t1` baseline | Fresh whole probe + oracle `t1` | Delta |
 |---|---:|---:|---:|
 | P, all six source positions × five attributes | {_percent(_mean(p_rows, "original_whole_accuracy"))} | {_percent(_mean(p_rows, "whole_accuracy"))} | {_points(_mean(p_rows, "delta_vs_original_whole"))} |
 | P0, five attributes | {_percent(_mean(p0_rows, "original_whole_accuracy"))} | {_percent(_mean(p0_rows, "whole_accuracy"))} | {_points(_mean(p0_rows, "delta_vs_original_whole"))} |
@@ -338,7 +338,7 @@ whole-value head.
 
 ## Interpretation
 
-An increase shows that the complete value is more linearly extractable after classifier-generated `t1` changes
+An increase shows that the complete value is more linearly extractable after oracle `t1` changes
 the context and a matched fresh head is trained. It does not show that the unchanged original
 head was causally unlocked, and it does not by itself locate the value in a particular MoE
 expert.
@@ -353,7 +353,7 @@ information. The intervention also changes sequence length and readout coordinat
 
 ## Next decision/action
 
-Use these complete held-out curves and tables to decide whether the qualitative baseline-vs-classifier-`t1`
+Use these complete held-out curves and tables to decide whether the qualitative baseline-vs-oracle-`t1`
 contrast is stable. If only P remains optimization-limited, extend P alone with the same
 protocol and report the extension separately; do not silently replace this pilot-budget result.
 """
