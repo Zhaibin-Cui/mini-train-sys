@@ -18,28 +18,35 @@
 
 ## 🧭 Overview
 
-MiniTrainSys is a **from-source LLM training system**. It is not a wrapper around a ready-made
-trainer: this repository implements the data path, Transformer and MoE blocks, operator dispatch,
-training loop, distributed lifecycle, checkpoint contract, benchmarks, and analysis protocol. PyTorch
-provides the tensor and distributed primitives; the training system built on top is owned here.
+MiniTrainSys is a **from-source LLM training system** centered on a formal 12-layer,
+293.49M-parameter sparse MoE workload. The repository implements the path from raw documents to
+token shards, Transformer and MoE blocks, PyTorch/Triton/CUDA operator dispatch, single- and
+multi-GPU training, distributed checkpoints, benchmarks, and post-training experiments.
 
-Its layered design keeps data preparation, Transformer structure, operator backends, distributed
-execution, and training state separate, so each can be changed and validated without turning the
-rest of the stack into a black box.
+The project is split at real system boundaries: data preparation, model structure, operator
+backends, distributed execution, and training state. The same model and run configuration can
+switch between PyTorch references, Triton kernels, and native CUDA attention, so backend comparisons
+do not require a second model implementation.
 
-It trains Dense and 293M-parameter sparse MoE models through PyTorch, Triton, and native CUDA
-paths. The same system supports a controlled study of how factual knowledge becomes readable in
-MoE: data conditions, frozen-backbone P/Q probes, and route-level diagnostics are all part of the
-repository.
+The systems work is measured end to end. Custom forward-and-backward kernels reach
+**1.22–6.51×** the corresponding PyTorch operator speed; the CUDA backend reaches **2.201×**
+PyTorch token throughput at the matched memory budget; and four-GPU FSDP reaches **3.69×** weak
+scaling. The repository keeps the parity checks, capacity sweeps, raw measurements, and generated
+figures behind those numbers.
+
+The same stack supports a controlled MoE knowledge-retrieval study. Two matched, approximately
+4B-token pretraining runs vary only biography presentation, then use source-text recall, frozen P/Q
+probes, route difference-in-differences, and an oracle first-token intervention to trace how a
+memorized fact becomes readable.
 
 ### 🗺️ Scope
 
 | Area | What is implemented here |
 |---|---|
-| **Models and data** | Model YAMLs select Dense or top-2 MoE blocks and set depth, width, heads, sequence length, and expert shape. The formal workload is a 12-layer, 293.49M-parameter MoE; data supports byte-level BPE or recorded tiktoken tokenizers, mmap token shards, document offsets, and manifests. |
-| **Operator backends** | A common `OpsBackend` interface with PyTorch reference paths, Triton kernels for the Transformer/MoE operators, and a native CUDA FlashAttention path. |
-| **Training runs** | Single-GPU, DDP, and FSDP execution; BF16, typed model/run YAMLs, JSONL and TensorBoard logging, and DCP checkpoint save/resume. |
-| **SynBioS experiments** | `single` and `multi5_permute` factual-recall corpora; cloze validation; frozen-backbone P/Q linear probes; and token-conditioned expert-route DiD. |
+| **Training system** | Configurable Dense and top-2 MoE decoders, token-shard data loading, BF16 training, AdamW, logging, and resumable checkpoints. |
+| **GPU kernels** | PyTorch references plus Triton RMSNorm, RoPE, SwiGLU, cross entropy, FlashAttention, router, and fused MoE paths; native CUDA FlashAttention. |
+| **Distributed runtime** | Single GPU, DDP, and FSDP with rank-safe metrics, DCP optimizer/model state, consolidated evaluation checkpoints, and recovery anchors. |
+| **Research workflow** | Matched `single` and `multi5_permute` pretraining, cloze recall, frozen P/Q probes, relation controls, route DiD, and first-token intervention. |
 
 ## 📖 Contents
 
@@ -49,8 +56,6 @@ repository.
 | [🚄 Training Performance](#training-performance) | [🧠 Model Interpretability](#interpretability) | [🚀 Quick Start](#quick-start) |
 | [📊 Reproducibility](#reproducibility) | [🗂️ Project Structure](#project-structure) | [📦 Data and Configuration](#data-and-configuration) |
 | [🛠️ Training Workflows](#training-workflows) | [🛡️ Reliability](#reliability) | [📚 Documentation](#documentation) |
-<!-- | [📖 References](#references) |  |  | -->
-
 <a id="benchmarks"></a>
 
 ## 🔥 Performance at a glance
@@ -65,7 +70,7 @@ repository.
 | 293M MoE, matched memory budget | CUDA: local batch **24 → 96** and **2.201×** PyTorch token throughput |
 | FSDP weak scaling, 1 → 4 GPUs | **3.69×** throughput; **92.24%** parallel efficiency |
 | `multi5_permute` Q-first macro, name-only context | **98.79%**, compared with **12.83%** for `single` |
-| `multi5_permute` P-whole, P-first classifier output appended | **45.28% → 96.38%** after training a fresh probe |
+| `multi5_permute` P-whole, oracle first token appended | **45.28% → 96.38%** after training a fresh probe |
 
 All server results were produced on the same 4× RTX 4090 24 GB machine with PyTorch 2.5.1+cu118, CUDA 11.8, and Triton 3.1.
 
@@ -73,9 +78,9 @@ All server results were produced on the same 4× RTX 4090 24 GB machine with PyT
 
 ## 🧩 System design
 
-The code is split into data, model, execution, and analysis layers. A training run moves from
-documents to token shards, through the model and selected backend, then into training, checkpoints,
-and analysis.
+Source documents are converted into indexed token shards and read by the selected distributed
+strategy. The model calls the configured operator backend; training writes metrics and checkpoints;
+experiment code reads those checkpoints together with their data manifests.
 
 <div align="center">
   <img src="assets/system-design.svg" alt="MiniTrainSys system design" width="100%" />
@@ -95,21 +100,16 @@ implemented in PyTorch, Triton, or CUDA.
 
 ## ⚡ Kernel engineering
 
-This section compares each custom kernel with the equivalent PyTorch path used by the same
-293.49M MoE workload. Every number covers **forward + backward**, not forward-only microbenchmarks.
-
-How to read the table:
+Each custom kernel is compared with the equivalent PyTorch path at shapes taken from the 293.49M
+MoE workload. Every reported number covers **forward + backward**.
 
 - **Speedup** is elapsed-time improvement over PyTorch at the same shape; `2.00×` means half the time.
 - **Peak allocation reduction** is the reduction in PyTorch-reported peak allocated GPU memory.
-<!-- - If PyTorch cannot fit the formal shape, speed is measured at the largest shape both paths can run.
-  A larger fused-only shape is reported separately as a **capacity** result, never as a speedup. -->
 
-The representative workload uses BF16 with hidden size 768, 8 experts, top-2 routing, vocabulary
-size 50,257, and up to 57,344 tokens per rank. Each case runs in a fresh CUDA process with warmup,
-synchronization, repeated trials, and P50/P95 latency collection. Custom paths must pass forward /
-backward parity, dtype and reduction checks, boundary/strided-shape checks, and fallback checks
-before they are benchmarked.
+The representative workload uses BF16, hidden size 768, 8 experts, top-2 routing, vocabulary size
+50,257, and up to 57,344 tokens per rank. Each case runs in a fresh CUDA process with warmup,
+synchronization, repeated trials, and P50/P95 latency collection. Results are published only after
+forward/backward parity, dtype and reduction, boundary and strided-shape, and fallback checks pass.
 
 ![Kernel benchmark overview](results/benchmarks/operator_benchmark/resume_summary/kernel_benchmark_overview.png)
 
@@ -277,9 +277,8 @@ stages.
 
 ## 🚄 Training performance
 
-Operator speedups matter only if they improve a complete training step. The backend benchmark
-therefore measures data loading, forward, backward, optimizer, logging, and synchronization
-together.
+The backend benchmark measures the complete training step: data loading, forward, backward,
+optimizer update, logging, and synchronization.
 
 ![Equal-memory backend comparison](results/benchmarks/synbios_backend_capacity/20260725T113500Z/presentation/capacity_backend_comparison.png)
 
@@ -292,9 +291,8 @@ together.
 | Largest memory-safe local batch | 28 | 96 | **112** |
 | Equal-budget relative throughput | 1.000× | 1.994× | **2.201×** |
 
-The largest safe batch is not automatically the fastest. Capacity sweeps therefore choose the
-highest measured throughput below the accepted memory ceiling rather than simply selecting the
-largest runnable allocation.
+Capacity sweeps select the highest measured throughput below the accepted memory ceiling. This may
+be smaller than the largest allocation that completes without OOM.
 
 ### 📈 FSDP scaling
 
@@ -306,31 +304,36 @@ topology; this machine has no NVLink.
 
 <a id="interpretability"></a>
 
-## 🧠 Model interpretability
+## 🧠 Factual retrieval in a sparse MoE
 
-The interpretability track uses a controlled synthetic-biography experiment to study how a 293M
-sparse MoE retrieves memorized facts. Each condition uses 100,000 people with six facts each. Both
-backbones use the same 12-layer, hidden-768, 8-expert top-2 MoE: 293.49M total parameters and
-123.62M token-active parameters. Formal pretraining uses BF16 and four-GPU FSDP.
-<!-- The complete
-training budgets are: -->
+We ask:
 
-<!-- <div align="center">
-  <code>two data layouts</code> &nbsp;→&nbsp; <code>cloze recall</code> &nbsp;→&nbsp; <code>frozen P/Q readout</code> &nbsp;→&nbsp; <code>route DiD + t1 intervention</code>
-</div> -->
+> If two MoE models memorize the same facts, can the presentation of those facts alone change where
+> they become readable?
 
-| Dataset | People | Biographies / person | Documents | Epochs | Optimizer steps | Total scheduled tokens |
+To answer this question, we adapt the controlled bioS experiments of
+[Allen-Zhu and Li](https://arxiv.org/abs/2309.14316) to a sparse model.
+
+Both conditions contain the same 100,000 people and the same six facts per person. They use the same
+12-layer, hidden-768, 8-expert top-2 MoE, with 293.49M total parameters and 123.62M
+token-active parameters. The experimental change is the number, wording, and sentence order of the
+biographies presented for each person.
+
+| Dataset | People | Biographies / person | Documents | Epochs | Optimizer steps | Scheduled tokens |
 |---|---:|---:|---:|---:|---:|---:|
 | `single` | 100,000 | 1, fixed field order | 100,000 | 540 | 17,280 | 3,963,617,280 |
 | `multi5_permute` | 100,000 | 5, independently rewritten and shuffled | 500,000 | 108 | 17,388 | 3,988,389,888 |
 
-Both models are pretrained from scratch with the same tokenizer, next-token objective, optimizer,
-seed 1337, and global batch 448. Only biography presentation and the epoch count differ.
-`multi5_permute` has five times as many documents, so it uses one fifth as many epochs. The two
-budgets differ by 24,772,608 tokens (0.62%); both are approximately 4B-token runs. Their
-`profiles.jsonl` files are byte-identical, ensuring that only presentation differs.
+Both models start from random initialization and use the same tokenizer, next-token objective,
+optimizer, global batch 448, and seed 1337. `multi5_permute` contains five times as many documents,
+so it runs for one fifth as many epochs. The scheduled-token budgets differ by 0.62%. The two
+`profiles.jsonl` files are byte-identical.
 
-### 🧪 Two pretraining conditions and cloze recall
+### 🧪 Result 0: both models memorize the source biographies
+
+We first rule out failed memorization. The cloze evaluator removes all six fact spans from each
+training biography, regenerates them from left to right, and inserts each prediction before
+generating the next field. It fits no new parameters.
 
 | Recall metric | `single` | `multi5_permute` |
 |---|---:|---:|
@@ -338,28 +341,22 @@ budgets differ by 24,772,608 tokens (0.62%); both are approximately 4B-token run
 | All-six-fields biography accuracy | **100.0000%** | **99.9626%** |
 | Evaluation coverage | 100k biographies / 600k fields | 500k biographies / 3M fields |
 
-The cloze evaluator removes the six exact fact spans from each source biography and regenerates
-them greedily in source-text order. Earlier predictions are inserted back into the context before
-later fields are generated. No parameters are trained in this stage; it checks source-corpus recall
-before any representation analysis.
+The augmented model misses 254 of 3,000,000 fields; the fixed-order model misses none. Failed
+memorization cannot explain the differences below. These numbers are source-corpus recall, not
+generalization to unseen people.
 
-The augmented model misses only 254 of 3,000,000 strict fields. **Both models pass the
-cloze/source-recall gate before probing begins.** These are training-corpus recall results, not
-held-out generalization results.
+### 🔎 Reading facts with frozen P/Q probes
 
-### 🔎 P and Q probes for knowledge storage
+We next ask where each fact can be read. P and Q follow the definitions introduced by Allen-Zhu and
+Li. P reads a final-layer state inside a biography, immediately before an attribute value. Q sees
+only `[EOS, full_name, EOS]` and reads the final EOS state.
 
-We then ask where the learned facts can be read from the frozen MoE. The P/Q setup follows the
-distinction in [Allen-Zhu and Li, *Physics of Language Models: Part 3.1*](https://arxiv.org/abs/2309.14316):
-P reads a biography-prefix state; Q reads only the final state of `[EOS, full_name, EOS]`.
-
-| Probe | Input / read position | `first` target | `whole` target |
+| Probe | Input and read position | `first` target | `whole` target |
 |---|---|---|---|
-| P | Biography prefix, hidden state before the attribute | First BPE token | Complete attribute class |
-| Q | `[EOS, full_name, EOS]`, read at the final EOS | First BPE token | Complete attribute class |
+| P | Biography prefix; state immediately before the attribute span | First BPE token | Complete attribute class |
+| Q | `[EOS, full_name, EOS]`; final EOS state | First BPE token | Complete attribute class |
 
-The read positions are easiest to see on one generated `single` biography. This is person 0 from
-the seed-1337 corpus; each bracketed preposition is the token whose final-layer state P reads:
+The bracketed tokens below are the six P read positions in one generated `single` biography:
 
 ```text
 Jonah15 Blair13 Carter36 entered the world [P0: on] October 24, 2046.
@@ -369,62 +366,51 @@ He specialized [P3: in] Political Science2.
 He was employed [P4: by] Brooks9 Group.
 He was professionally based [P5: in] Albany3, GA.
 
-P-company: [biography start → ... → "employed" → P4: " by"] → predict " Brooks9 Group"
-Q-company: [EOS] → Jonah15 Blair13 Carter36 → |Q: EOS| → predict " Brooks9 Group"
+P-company: biography prefix ending at P4 → predict " Brooks9 Group"
+Q-company: [EOS, Jonah15 Blair13 Carter36, EOS] → predict " Brooks9 Group"
 ```
 
-Thus P asks what is readable immediately before an attribute in its source biography; Q asks what
-is readable from the name alone, with no biography facts in the input.
-
-The pretrained backbone is frozen for every P/Q task. Let the frozen embedding table be
-$E \in \mathbb{R}^{V \times H}$. The probe learns $A \in \mathbb{R}^{V \times r}$ and
-$B \in \mathbb{R}^{r \times H}$:
+The backbone is frozen in every probe experiment. Given its embedding table
+$E \in \mathbb{R}^{V \times H}$, the probe fits a rank-`r` input-embedding update:
 
 $$
 E' = E + AB, \qquad e'_t = e_t + A_tB.
 $$
 
-Here `t` is a token ID and `A[t]` is its row in the rank-r factor. `B` starts at zero, so the probe begins with
-the exact pretrained embeddings. At its chosen read position, it applies a normalizer and linear
-head:
+`B` is initialized to zero, so training starts from the original embeddings. The selected hidden
+state is normalized and passed to a linear classifier:
 
 $$
 \mathrm{logits} = W_{\mathrm{cls}}\,\mathrm{Norm}(h_L[\mathrm{position}]) + b_{\mathrm{cls}}.
 $$
 
-This is not LoRA on Transformer weights: only `A`, `B`, the normalizer, and classifier train; all
-attention, MoE, backbone normalization, and LM-head parameters stay fixed. With `V = 50,257` and
-`H = 768`, the rank-2 P delta has 102,050 parameters; the rank-16 Q delta has 816,400.
+Only `A`, `B`, the normalizer, and the classifier are trainable. Attention, MoE, backbone
+normalization, and LM-head parameters remain fixed.
 
-| Probe | Input and readout position | Trainable probe | Rank | First / whole budget |
-|---|---|---|---:|---:|
-| P | Full biography; read P0–P5 immediately before each fact span | Embedding delta + LayerNorm + classifier | 2 | 4,000 / 12,000 steps; batch 128 |
-| Q | `[EOS, full_name, EOS]`; read the final EOS | Embedding delta + BatchNorm + classifier | 16 | 4,000 / 12,000 steps; batch 768 |
+| Probe | Readout | Rank | First / whole budget |
+|---|---|---:|---:|
+| P | P0–P5 in the full biography | 2 | 4,000 / 12,000 steps; batch 128 |
+| Q | Final EOS after the name | 16 | 4,000 / 12,000 steps; batch 768 |
 
-Formal probes use cross entropy and AdamW (`lr=1e-3`, `weight_decay=0.3`, `eps=1e-6`) with no
-warmup and linear decay to zero; all runs use seed 1337.
+Each head trains on 49,882 people and is evaluated on the other 50,118. This split tests whether a
+probe fitted on one group of pretrained people transfers to another group; all 100,000 people were
+seen by the backbone. Non-date `first` targets are the first GPT-2 token of
+`" " + full_value`; `whole` treats the complete value as one class. Birth date uses the month as
+its first-token target and has no whole-value task.
 
-P positions are ordered by where facts occur in that rendered biography, not by a fixed semantic
-attribute index. Only complete BPE tokens ending before the attribute span are included. For
-non-date attributes, `first` is the first GPT-2 token of `" " + full_value`; `whole` is the exact
-complete value treated as one class. Birth date uses its month as the first-token target and has no
-whole-value task. Each attribute/target pair has an independent classifier.
-
-Probe heads train on 49,882 people and validate in `eval()` mode on the other 50,118. Those people
-are held out from probe training, but not from backbone pretraining. P validation batches are 512;
-Q validation batches are 6,144.
-
-#### 🟢 First-token retrieval
+#### Result 1: augmentation moves first-token readout to the name
 
 ![Knowledge augmentation changes where facts become linearly readable](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_study_overview.png)
 
 | Probe endpoint | `single` | `multi5_permute` |
 |---|---:|---:|
-| P0-first | 6.76% | **98.63%** |
+| P0-first, excluding the fixed first field | 6.76% | **98.63%** |
 | Q-first macro | 12.83% | **98.79%** |
 
-**In `single`, a fact is most readable near its original position; with rewrites and field
-permutation, its first token becomes nearly linearly readable from the name alone.**
+In `single`, first-token accuracy rises only when P reaches the target sentence. In
+`multi5_permute`, every attribute is already 97.18–99.76% readable at P0, and the name-only Q probe
+reaches 98.79%. Rewriting and sentence permutation move the first token from its fixed biography
+position to the name state.
 
 ![P-first position heatmap](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_first_heatmaps.png)
 
@@ -432,28 +418,27 @@ permutation, its first token becomes nearly linearly readable from the name alon
   <img src="results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_probe_table.png" alt="Q-first results" width="64%" />
 </div>
 
-#### 🧾 Whole-value retrieval
+#### Result 2: augmentation does not make complete values equally readable
 
-The first difference is the whole-value gap. Allen-Zhu's augmented dense model reports **92.58%**
-Q-whole accuracy; this MoE reaches **98.79%** on Q-first but only **33.15%** on Q-whole. In other
-words, **augmentation makes a name a strong linear cue for the first token, not for the entire
-value as one linear readout in MoE architecture.**
+The same result does not hold for the complete value. The augmented MoE reaches 98.79% on Q-first
+but only 33.15% on Q-whole. Allen-Zhu and Li report 92.58% Q-whole accuracy for their dense
+`bioS multi5+permute` model.
 
 | Five-attribute macro | `single` MoE | `multi5_permute` MoE | Dense `multi5+permute` |
 |---|---:|---:|---:|
 | P1-whole | 13.92% | **39.66%** | **93.56%** |
 | Q-whole | 3.18% | **33.15%** | **92.58%** |
 
-<sub>Dense references use `bioS multi5+permute`: P1-whole is the Figure 13(c) rank-2 macro of
-96.4, 76.0, 96.0, 99.7, and 99.7; Q-whole is the Figure 7 macro of 96.1, 72.6, 94.9, 99.6, and
-99.7. Both are from [Allen-Zhu and Li](https://arxiv.org/pdf/2309.14316).</sub>
+<sub>The dense P1-whole value is the Figure 13(c) rank-2 macro of 96.4, 76.0, 96.0, 99.7, and
+99.7. The Q-whole value is the Figure 7 macro of 96.1, 72.6, 94.9, 99.6, and 99.7. Both are
+reported by [Allen-Zhu and Li](https://arxiv.org/pdf/2309.14316).</sub>
 
-The augmented Q-whole heads reach 74.51–98.18% on their probe-training split but only 8.48–51.04%
-on person-held-out validation. **The remaining gap is therefore not just failed optimization:
-whole values are less consistent across people as one linear direction than their first tokens.**
+The augmented Q-whole heads reach 74.51–98.18% on their training people but only 8.48–51.04% on
+the person-held-out probe split. The heads can fit the task, but their whole-value boundaries do not
+transfer across people as reliably as their first-token boundaries.
 
-In the fixed-order `single` heatmap, a warm-gold outline marks the P position immediately before
-that attribute's own source sentence.
+In the fixed-order `single` heatmap, warm-gold outlines mark the position immediately before each
+attribute's own sentence.
 
 ![P-whole position heatmap](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_whole_heatmaps.png)
 
@@ -461,230 +446,162 @@ that attribute's own source sentence.
   <img src="results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_whole_probe_table.png" alt="Q-whole results" width="64%" />
 </div>
 
-> **Two results need explaining.** First, augmentation makes first tokens almost perfectly readable
-> from a name in this MoE, yet complete values remain far below the dense reference. Second, within
-> the MoE P-whole matrix, only company and company-city rise sharply as P moves through the
-> biography; birth city, university, and major barely move.
+### 🔬 Why does the first token transfer but the complete value does not?
 
-### 🔬 Mechanism diagnostics
+Three questions remain. Do the company curves rise because related context has already appeared?
+Do different continuations use different MoE routes? If they do, is the first token sufficient to
+recover the value? We answer them in that order.
 
-#### 📐 Related facts follow exposure position
+#### Control: the company–city curves follow relation exposure
 
-The second pattern is relation-specific: company and company-city become readable as the biography
-advances, while the other three whole attributes stay nearly flat. This analysis trains no new model
-or probe; it fits the completed held-out P-whole measurements.
+The P-whole matrix contains a separate relational effect. Company and company-city improve as the
+biography advances, while birth city, university, and major remain nearly flat. No new probe is
+trained for this analysis; the completed held-out P-whole measurements are fitted directly.
 
-The relationship is built into the profile generator. There are 263 company candidates and 200
-company-city candidates. Every company has one fixed city; 171 cities have one candidate company
-and 28 have two. Thus a company identifies its city exactly, while a city narrows the company to an
-average of 1.315 candidates. Each person samples a company uniformly, then receives that company's
-city.
+The data generator contains 263 companies and 200 company cities. Each company maps to one city;
+171 cities map back to one candidate company and 28 map to two. A company therefore determines its
+city, while a city narrows the company to 1.315 candidates on average.
 
-The six biography sentences are independently permuted. At P position $j$, the probability that at
-least one of the two related fields has already appeared is:
+With six independently permuted sentences, the probability that either related field has appeared
+before P position `j` is
 
 $$
-\Pr(\text{either related field appears before } P_j)
+\Pr(\text{company or company city before } P_j)
 = 1 - \frac{\binom{4}{j}}{\binom{6}{j}}.
 $$
 
-For P0 through P5, this is 0, 1/3, 3/5, 4/5, 14/15, 1. We fit each observed curve against
-that probability.
+For P0 through P5, the values are 0, 1/3, 3/5, 4/5, 14/15, and 1.
 
-| Target | Fitted baseline | Saturation | RMSE | $R^2$ |
+| Target | Fitted baseline | Saturation | RMSE | R² |
 |---|---:|---:|---:|---:|
 | Company | 45.06% | 94.59% | 0.311 pp | **0.99968** |
 | Company city | 48.44% | 99.72% | 0.097 pp | **0.99997** |
 
 ![Company and company-city position fit](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/company_pair_position_fit.png)
 
-Company rises from 45.13% to 95.09%, and company-city from 48.56% to 99.86%. The paired-field fit
-reconstructs all six positions within 0.1–0.3 percentage points ($R^2=0.99968$ and $0.99997$).
-**These readouts track whether the biography has already exposed one side of the company–city
-relation, rather than simply benefiting from a later position. In representation, the two fields
-behave as a bidirectional association: seeing either makes the other easier to read out. This does
-not establish a fixed causal direction for any individual example.**
+The exposure model reconstructs all six positions within 0.1–0.3 percentage points. The two
+readouts rise when either side of the relation is already present in the prefix, rather than merely
+because P is later in the biography. This aggregate fit is consistent with use of the relation in
+both directions, but it does not identify which direction is used for an individual example.
 
-#### 🧭 Token-conditioned MoE routes
+The fit accounts for the position-dependent company curves without a generic late-position
+advantage. It does not account for the name-only first/whole gap.
 
-This is inference-only: the backbone is frozen, no probe embedding delta is applied, and no
-classifier is trained. From the person-held-out split it selects 162,044 augmented cases where
-Q-first is correct, Q-whole is wrong, and the true value has at least two tokens. The exact cached
-`t1` and `t2` are appended after the name, and the top-2 expert choices are recorded at both token
-positions for all 12 layers.
+#### Test 1: `t2` changes the MoE route after a shared `t1`
 
-Pairs share the same attribute and `t1`. Same-`t2` pairs form the control; different-`t2` pairs form
-the branch condition. The analysis compares how route Jaccard overlap changes from `t1` to `t2`,
-using seed 1337 and at most 2,000 sampled pairs per eligible group. All 12 layer-level
-difference-in-differences are positive; the largest is **0.676**, with the strongest branching in
-the early layers.
+The routing analysis uses the frozen augmented backbone without a probe embedding update or
+classifier. It selects 162,044 person-held-out cases for which Q-first is correct, Q-whole is wrong,
+and the target value contains at least two tokens. The exact target tokens `t1` and `t2` are appended
+after the name, and the top-2 selected experts are recorded at both positions in every layer.
 
-At each MoE layer, a token route is the set of its top-2 selected experts. For an attribute/layer
-group $g$ with sampled pair set $\mathcal{P}_g$, route overlap is the mean expert-set Jaccard
-similarity:
+Pairs share an attribute and `t1`. Pairs with the same `t2` are the control; pairs with different
+`t2` form the contrast. For an attribute/layer group `g` with sampled pair set `P_g`, mean route
+overlap is
 
 $$
 J_g(t) = \frac{1}{\lvert \mathcal{P}_g \rvert}
 \sum_{(a,b) \in \mathcal{P}_g}
-\frac{\lvert E_a(t) \cap E_b(t) \rvert}{\lvert E_a(t) \cup E_b(t) \rvert},
-\qquad
-\mathrm{branching}_g = J_g(t_1) - J_g(t_2).
+\frac{\lvert E_a(t) \cap E_b(t) \rvert}{\lvert E_a(t) \cup E_b(t) \rvert}.
 $$
 
+The difference-in-differences subtracts the route-overlap change in the same-`t2` control from the
+change in the different-`t2` pairs:
+
 $$
-\mathrm{DiD} = \mathrm{branching}_{\mathrm{different}\ t_2} - \mathrm{branching}_{\mathrm{same}\ t_2} = [J_{\mathrm{different}}(t_1) - J_{\mathrm{different}}(t_2)] - [J_{\mathrm{same}}(t_1) - J_{\mathrm{same}}(t_2)].
+\mathrm{DiD} = [J_{\mathrm{different}}(t_1) - J_{\mathrm{different}}(t_2)] - [J_{\mathrm{same}}(t_1) - J_{\mathrm{same}}(t_2)].
 $$
 
-The same-`t2` group controls for route changes that occur even when the next token is unchanged. A
-positive DiD means that examples with different `t2` values lose more route overlap after `t2` than
-the matched control. Each heatmap cell applies this calculation within one attribute and one layer;
-layer-level summaries are pair-count weighted across attributes.
+All 12 layer aggregates are positive. The largest DiD is **0.676** at layer 1, and the effect is
+strongest in the first four layers.
 
 ![Attribute-by-layer route branching DiD](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png)
 
-**This is where the dense and MoE extraction layouts begin to differ.** In the augmented dense
-reference, a name-only state makes the complete attribute nearly linearly readable. Here, the name
-opens a shared first-token entry, but it does not expose the complete biography fact in one readout;
-after `t1`, different `t2` values take measurably different top-2 routes. The resulting picture is
-more conditional: a shared entry can be followed by token-specific retrieval branches.
+Among examples that share `t1`, different `t2` values lose more route overlap than the matched
+same-`t2` control. Thus, in these error cases, expert selection depends on the continuation token.
+This result still does not show that providing `t1` is enough to recover the value.
 
-**This is consistent with a more finely factorized form of knowledge storage and extraction:** a
-common prefix can be reused while many continuations remain separate. That gives the MoE a larger
-conditional storage/extraction space than a single flat name-to-value direction. This is an
-interpretation of the route and probe results—not a direct measurement of compression, nor evidence
-that an individual expert physically stores one fact.
+#### Final test: oracle `t1` restores whole-value readout
 
-### 🧷 P-first token intervention
+For each P0–P5 prefix, the intervention appends the exact first token from the cached target label
+and reads the resulting token state. It does not run or reuse a P-first classifier. The backbone
+remains frozen, and a fresh rank-2 P-whole probe is trained at the appended token with the same
+person split, class mapping, and seed as the formal probes.
 
-This asks a simple follow-up question: once the earlier P-first classifier has produced `t1`, does
-that token make the rest of the value easier to read? For every P0–P5 prefix, we take the aligned
-P-first classifier output from the formal cache, decode it to its leading-space GPT-2 token, check
-the round trip, and append it to the same prefix. The backbone stays frozen; the new P-whole probe
-reads the hidden state at the appended `t1`.
+Each of the five whole-value heads trains for 4,000 steps with batch 128; validation uses batch
+3,072. The no-intervention baseline is the original 12,000-step P-whole probe at the pre-attribute
+position.
 
-For the same profile above, one `multi5_permute` biography ends with the company city:
-
-```text
-In particular, Jonah15 Blair13 Carter36 studied at Chicago8 University.
-Historically, He had a professional role at Brooks9 Group.
-Public records show He grew up in Tacoma9, NC.
-Biographical notes say He was born on October 24, 2046.
-Notably, He majored in Political Science2.
-He worked in Albany3, GA.
-
-ordinary P-whole
-prefix ending in "He worked in" ──> [read before " Albany3, GA"] ──> fresh whole-value classifier
-
-P-first-token P-whole
-the same prefix ──> [P-first classifier outputs " Albany3"] ──> [append and read that token]
-                ──> fresh whole-value classifier
-```
-
-<!-- A new P-whole head is trained after the intervention. It is separate from the earlier P-first
-classifier; that classifier is not reused as the whole-value readout. -->
-
-A fresh P-whole probe then trains on that state using the same rank-2 embedding-delta + LayerNorm +
-classifier architecture, person split, whole-value class mapping, and seed 1337. Each of the five
-whole attributes uses 4,000 steps with batch 128; validation uses batch 3,072. The formal no-`t1`
-baseline used the original pre-attribute state and a 12,000-step rank-2 head.
-
-**The recovery follows the retrieval layout, not a generic single-versus-augmentation comparison.**
-In fixed-order `single`, the useful states are the five diagonal positions immediately before each
-attribute's own sentence; that diagonal recovers from **51.21% to 94.09%**. In
-`multi5_permute`, the first-token entry works at every source position, so the complete 30-cell
-P-whole matrix recovers from **45.28% to 96.38%**.
-
-| Layout | Readout region | Formal no-`t1` | P-whole after P-first `t1` |
+| Condition | Readout region | Original P-whole | P-whole with oracle `t1` |
 |---|---|---:|---:|
 | `single` | Five fixed source positions (diagonal) | 51.21% | **94.09%** |
+| `multi5_permute` | P0, before any fact is exposed | 32.59% | **95.62%** |
 | `multi5_permute` | All 30 position × attribute cells | 45.28% | **96.38%** |
 
-Each figure compares the original formal whole probe with a fresh probe after P-first `t1` is
-appended. In `single`, read the diagonal; in `multi5_permute`, read the full matrix.
+In `single`, recovery is concentrated at the five positions where the corresponding fact is about
+to appear. In `multi5_permute`, it extends across the full 30-cell matrix. The exact first token is
+therefore sufficient for a much stronger whole-value readout, especially after augmentation.
+Because this test changes both the input and the read coordinate, it does not measure an end-to-end
+prediction chain.
 
 #### `single`
 
-![Single P-first-token P-whole](results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
+![Single oracle-first-token P-whole](results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
 
 #### `multi5_permute`
 
-![Multi5 P-first-token P-whole](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.png)
+![Multi5 oracle-first-token P-whole](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.png)
 
-#### 🧩 Attribute-token retrieval structure
+### 🧩 From the observations to the mechanism
 
-The P-first-token intervention closes the mechanism picture for this setting. The P/Q readouts
-show **what** is linearly available at each point; the route analysis shows that the continuation
-changes with the next token; and this intervention shows that supplying the classifier-produced
-first token restores the corresponding whole-value readout. Together, they identify a complete
-retrieval sequence: a shared entry into an attribute, followed by token-conditioned extraction of
-the remaining value.
+The experiments now give the following sequence:
 
-That is more structured than the dense reference, where the augmented name state can make an
-entire value linearly readable in one step. Here, the name reliably opens the first-token entry,
-but later tokens are recovered through their own conditional continuations:
+1. Near-perfect cloze recall rules out failed source memorization.
+2. P-first and Q-first show that rewriting and field permutation make each attribute's first token
+   readable from the name; fixed-order training leaves it tied to the source position.
+3. Q-whole remains low even though its training accuracy is high, so the missing held-out readout is
+   not explained by an unfitted head.
+4. Route DiD shows that examples sharing `t1` select different experts when `t2` differs.
+5. The final oracle intervention restores P-whole accuracy at the expected `single` positions and
+   across the augmented matrix, including 95.62% at P0.
+
+The two probe targets separate cleanly. A Q-first head can recover `t1` from the augmented name
+state, while a separately trained Q-whole head cannot transfer the complete value nearly as well.
+After exact `t1` is added to the tested P prefixes, a fresh P-whole head recovers almost all of the
+value. Meanwhile, continuations that differ at `t2` select different top-2 routes.
 
 ```text
-single:
-name → fixed biography position → attᵢ: t₁ → t₂ → …
-
-augmentation (`multi5_permute`):
-                  ┌→ att₁: t₁ → t₂ → …
-                  ├→ att₂: t₁ → t₂ → …
-           name ──┼→ att₃: t₁ → t₂ → …
-                  ├→ …
-                  └→ attᵢ: t₁ → t₂ → …
+name-only state ── Q-first probe ──> t1
+exact t1 → exact t2 ── route capture ──> token-dependent top-2 routes
+biography prefix + oracle t1 ── fresh P-whole probe ──> complete value
 ```
 
-The arrows summarize the retrieval sequence observed by the probes. They are not literal memory
-pointers or evidence that one expert stores one fact.
+**For this MoE and dataset, factual readout proceeds in stages. Augmentation exposes the first
+attribute token at the name state. After that token is supplied to a biography prefix, the complete
+value becomes linearly readable, and different continuations are accompanied by different expert
+routes.** The experiments observe readout and routing. They do not place a fact inside one expert.
 
-#### 🧬 Pretraining implication: teach components, not only templates
+The comparison with the published dense model concerns linear readout, not a matched architectural
+ablation. The dense reference reports high whole-value accuracy from the name state; the MoE tested
+here does not. A matched dense backbone, additional seeds, and an intervention driven by predicted
+rather than oracle `t1` would be required to attribute that difference specifically to sparsity or
+routing.
 
-A pattern that always appears as one fixed sequence may be learned as one conditioned retrieval
-path. For example, suppose the pretraining corpus repeatedly contains only:
+### 🧬 What this suggests for pretraining
 
-```python
-value = normalize(parse(load(path)))
-```
+The data comparison changes only presentation: the people, facts, model, optimizer, and token budget
+are matched. Nevertheless, fixed-order biographies and rewritten, permuted biographies produce
+different access patterns. Repetition alone is sufficient for memorization. Variation makes the
+first token readable before its original source position.
 
-If `load`, `parse`, and `normalize` must later work independently or in new combinations, repeating
-the complete expression is not enough. The corpus should also expose the intermediate operations,
-alternative inputs, and new compositions:
+The effect stops at a meaningful boundary: Q-first reaches 98.79%, while Q-whole remains at 33.15%.
+Augmentation changes how retrieval begins, but it does not make the complete value uniformly
+readable from the name.
 
-```python
-raw = load(path)
-record = parse(raw)
-value = normalize(record)
-
-preview = parse(buffer)
-score = normalize(measurement)
-```
-
-Allen-Zhu's dense-model result made some complete attributes directly readable from a name-only
-state. Here, augmentation makes the first token directly readable, but not the whole value.
-The contrast is in how the value is retrieved. The dense reference can read a complete attribute
-through one shared name-to-value direction. In this MoE, the name state opens `t1`; the token at
-that entry then conditions the route used to recover `t2` and the remaining value.
-
-The route DiD provides the corresponding evidence: after matched examples share `t1`, their top-2
-routes separate more for different `t2` values than for the same-`t2` control. In that sense, the
-MoE behaves like a gated chain of retrieval operators rather than a flat whole-value readout at the
-name state.
-
-**The resulting retrieval layout is sequential:** augmentation gives a name a direct handle on an
-attribute's first token, while recovering the rest of that value is a second, token-conditioned
-stage. Once `t1` is available, the route taken by the MoE changes with the next token.
-
-One way to view the difference is through the readout space. In the dense reference, a linear head
-can recover a complete value directly from the name-only state. In this MoE, that state exposes the
-first token, while the later tokens become readable only after the corresponding conditional route
-has been taken. The distinction is therefore in the retrieval structure, not in a larger hidden
-dimension or a literal tensor-product representation.
-
-For pretraining data, the practical consequence is simple: **a capability that must later be addressed or
-recombined independently should appear in decomposed and substituted forms during training, not
-only inside one repeated end-to-end template.** Such variation gives the model distinct entry points
-from which routing can retrieve the required component.
+The broader pretraining hypothesis is: **information that must later be selected, continued, or
+recombined independently should appear across varied contexts and orders during pretraining.** In
+this experiment, that variation makes the first token of each attribute readable from the name
+across people; later tokens still depend on the continuation. Natural corpora and larger models are
+the next test of this hypothesis.
 
 <a id="quick-start"></a>
 
@@ -974,8 +891,8 @@ ruff check .
 
 ## 🛡️ Reliability and recovery
 
-Performance is never treated as proof of correctness. Formal runs require operator parity, training
-smokes, distributed checkpoint validation, and multi-step stability at the selected batch.
+Formal runs are gated by operator parity, training smokes, distributed checkpoint validation, and
+multi-step stability at the selected batch.
 
 Each logged point is aggregated across the full logging interval and then across ranks:
 
@@ -1030,9 +947,9 @@ For deeper implementation and evidence:
 
 ## 📖 References and upstream work
 
-MiniTrainSys is written and integrated in this repository, but it is deliberately explicit about the
-projects, implementations, and research that informed it. “Adapted” below means source-derived code
-is present in this repository; license notices are retained beside that code.
+The table below records the projects, implementations, and research used by MiniTrainSys.
+“Adapted” means that source-derived code is present in this repository; its license notice is kept
+beside the code.
 
 | Reference | Relationship to MiniTrainSys |
 |---|---|
