@@ -28,13 +28,13 @@ from experiments.synbios_moe.mechanisms.intervention_report import (
     summarize_ground_truth_first_whole,
 )
 from experiments.synbios_moe.mechanisms.routing import analyze_batch
-from experiments.synbios_moe.mechanisms.token_conditioning import (
+from experiments.synbios_moe.mechanisms.first_token_intervention import (
     WHOLE_ATTRIBUTES,
-    bad_case_route_validation,
     oracle_first_token_validation,
     prepare_ground_truth_first_whole_data,
     train_ground_truth_first_whole_probe,
 )
+from experiments.synbios_moe.mechanisms.token_routes import bad_case_route_validation
 from experiments.synbios_moe.pretraining.attribute_recall import evaluate_attribute_tokens
 from experiments.synbios_moe.pretraining.cloze import (
     evaluate_progressive_biography_cloze,

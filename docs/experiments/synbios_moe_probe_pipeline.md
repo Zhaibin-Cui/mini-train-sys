@@ -431,7 +431,9 @@ tensorboard --logdir artifacts/synbios_moe/results/<run>/probe_pipeline \
 ## 11. Q-whole 的两个推理验证
 
 两个诊断都复用已经训练完成的 Q-first/Q-whole 分类头，不更新 backbone、embedding delta
-或分类头。实现集中在 `experiments/synbios_moe/mechanisms/token_conditioning.py`，与训练调度代码分离。
+或分类头。first-token intervention 与 route branching 分别位于
+`experiments/synbios_moe/mechanisms/first_token_intervention.py` 和
+`experiments/synbios_moe/mechanisms/token_routes.py`。
 
 ### 11.1 Oracle 首 token 干预
 

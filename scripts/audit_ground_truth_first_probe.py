@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from experiments.synbios_moe.mechanisms.token_conditioning import (
+from experiments.synbios_moe.mechanisms.first_token_intervention import (
     WHOLE_ATTRIBUTES,
     build_ground_truth_first_input,
     prepare_ground_truth_first_whole_data,

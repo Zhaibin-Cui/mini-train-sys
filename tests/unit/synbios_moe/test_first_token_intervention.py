@@ -1,6 +1,6 @@
 import unittest
 
-from experiments.synbios_moe.mechanisms.token_conditioning import (
+from experiments.synbios_moe.mechanisms.first_token_intervention import (
     GroundTruthFirstWholeDataset,
 )
 from experiments.synbios_moe.probes.model import ProbeBatchItem
