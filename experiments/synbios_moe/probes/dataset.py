@@ -1,4 +1,4 @@
-"""Pre-tokenized, memory-mapped datasets shared by every SynBioS probe task."""
+"""Build and load the memory-mapped datasets shared by P/Q probes."""
 
 
 import json
@@ -12,8 +12,8 @@ from typing import Callable
 import numpy as np
 from torch.utils.data import Dataset
 
-from experiments.synbios_moe.data import ATTRIBUTES
-from experiments.synbios_moe.probes import (
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES
+from experiments.synbios_moe.probes.model import (
     GPT2Codec,
     ProbeBatchItem,
     ordered_p_probe_starts,

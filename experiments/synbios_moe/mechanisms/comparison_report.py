@@ -1,4 +1,4 @@
-"""Audited report artifacts for the two Q-whole MoE diagnostics.
+"""Build figures and tables for the retrieval-mechanism experiments.
 
 This module is intentionally inference-free.  It validates the retained
 oracle-intervention and route-branching outputs against the completed formal
@@ -16,7 +16,7 @@ from typing import Sequence
 
 import numpy as np
 
-from experiments.synbios_moe.formal_report import (
+from experiments.synbios_moe.probes.comparison_report import (
     ALLEN_ZHU_Q_REFERENCE,
     ATTRIBUTE_LABELS,
     WHOLE_ATTRIBUTES,

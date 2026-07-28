@@ -1,4 +1,4 @@
-"""End-to-end path, lineage, and retained-evidence audit for SynBioS."""
+"""Audit SynBioS paths, lineage, and retained evidence."""
 
 
 import csv
@@ -10,8 +10,8 @@ from typing import Sequence
 
 import yaml
 
-from experiments.synbios_moe.formal_report import load_formal_run, validate_matched_runs
-from experiments.synbios_moe.probe_data import validate_probe_cache
+from experiments.synbios_moe.probes.comparison_report import load_formal_run, validate_matched_runs
+from experiments.synbios_moe.probes.dataset import validate_probe_cache
 from minitrain.runtime.config import load_yaml_dict
 from scripts.build_results_catalog import classify_log as export_log_category
 

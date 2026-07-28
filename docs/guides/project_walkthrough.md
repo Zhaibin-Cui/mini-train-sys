@@ -70,7 +70,7 @@ FSDP 的模型和 Adam 天然是多 rank 分片，不能安全地只让 rank 0 �
 
 ## 8. SynBioS 在通用训练之外增加什么
 
-`experiments/synbios_moe/data.py` 先生成固定 Profile，再渲染不同 biography 变体；
+`experiments/synbios_moe/pretraining/dataset.py` 先生成固定 Profile，再渲染不同 biography 变体；
 `scripts/synbios_moe.py prepare` 把它们转换成通用 token shards。主训练仍走完全相同的
 `scripts/train.py`。
 
@@ -97,9 +97,9 @@ distributed/{ddp,fsdp}.py
 如果目标是 SynBioS，再按以下顺序追加：
 
 ```text
-experiments/synbios_moe/data.py
+experiments/synbios_moe/pretraining/dataset.py
 scripts/synbios_moe.py
-experiments/synbios_moe/{evaluation,probes,router_analysis}.py
+experiments/synbios_moe/{pretraining,probes,mechanisms}/
 ```
 
 下一步阅读：[数据流水线](../data/data_pipeline.md) 或 [架构与代码边界](architecture.md)。

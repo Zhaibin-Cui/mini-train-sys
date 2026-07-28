@@ -1,4 +1,4 @@
-"""Measure leading-space GPT-2 token distributions for every SynBioS attribute."""
+"""Measure GPT-2 token distributions for every SynBioS attribute."""
 
 
 import argparse
@@ -11,8 +11,8 @@ from statistics import mean, median
 
 import numpy as np
 
-from experiments.synbios_moe.data import ATTRIBUTES, generate_profiles
-from experiments.synbios_moe.probes import GPT2Codec
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES, generate_profiles
+from experiments.synbios_moe.probes.model import GPT2Codec
 
 
 def _entropy(counts: Counter[int]) -> float:

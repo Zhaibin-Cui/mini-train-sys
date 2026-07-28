@@ -1,4 +1,4 @@
-"""Small, atomic recovery checkpoints for independent SynBioS probe jobs."""
+"""Save and restore independent probe jobs atomically."""
 
 
 import os

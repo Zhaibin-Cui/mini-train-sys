@@ -1,4 +1,4 @@
-"""Fit mechanistic position curves for the company/company-city P-whole probes."""
+"""Fit exposure-position curves for the company and company-city probes."""
 
 
 import argparse

@@ -21,7 +21,7 @@ floor `1e-4`；实际 global batch 不为 96 是单独记录的 fidelity 差异�
 ## 2. 代码地图
 
 ```text
-experiments/synbios_moe/data.py       Profile、模板、augmentation、JSONL
+experiments/synbios_moe/pretraining/dataset.py  Profile、模板、augmentation、JSONL
 scripts/synbios_moe.py                prepare/cache/probe/validate/pipeline/analyze 命令
 minitrain/data/documents.py            JSONL 读取、清洗、字符切块
 minitrain/data/preprocess.py           tokenizer 与 token shards
@@ -29,9 +29,9 @@ minitrain/data/dataloader.py           Dataset/Sampler/DataLoader
 scripts/train.py                       组装训练运行时
 minitrain/train/{trainer,runner}.py     单步和 epoch 循环
 minitrain/train/checkpoint.py           DCP 保存/恢复、probe 模型导出
-experiments/synbios_moe/probe_data.py  一次性probe mmap缓存与覆盖检查
-experiments/synbios_moe/probe_pipeline.py 阶段计划、任意GPU数队列、结果汇总
-experiments/synbios_moe/{evaluation,probes,router_analysis}.py
+experiments/synbios_moe/probes/dataset.py  一次性 probe mmap 缓存与覆盖检查
+experiments/synbios_moe/probes/pipeline.py  阶段计划、任意 GPU 数队列、结果汇总
+experiments/synbios_moe/{pretraining,probes,mechanisms}/
 ```
 
 推荐阅读顺序就是上述顺序。数据底层的详细解释见

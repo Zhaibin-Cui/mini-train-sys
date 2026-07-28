@@ -1,4 +1,4 @@
-"""Teacher-forced token accuracy restricted to the six synthetic facts."""
+"""Measure teacher-forced recall on the six synthetic attributes."""
 
 
 import json
@@ -7,8 +7,8 @@ from pathlib import Path
 
 import torch
 
-from experiments.synbios_moe.data import ATTRIBUTES
-from experiments.synbios_moe.probes import GPT2Codec
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES
+from experiments.synbios_moe.probes.model import GPT2Codec
 from minitrain.model.transformer import MiniTransformer
 from minitrain.runtime.logger import EventLogger
 from minitrain.runtime.monitoring import ProgressReporter

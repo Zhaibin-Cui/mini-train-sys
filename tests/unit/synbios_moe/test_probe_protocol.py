@@ -1,7 +1,7 @@
 import unittest
 
-from experiments.synbios_moe.probe_data import paper_probe_tasks
-from experiments.synbios_moe.probe_pipeline import (
+from experiments.synbios_moe.probes.dataset import paper_probe_tasks
+from experiments.synbios_moe.probes.pipeline import (
     ProbeJob,
     ProbeRuntimeConfig,
     all_probe_jobs,

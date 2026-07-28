@@ -1,4 +1,4 @@
-"""Observe MoE routing load and its correlation with biography labels."""
+"""Measure MoE route load and its relation to biography labels."""
 
 
 import math

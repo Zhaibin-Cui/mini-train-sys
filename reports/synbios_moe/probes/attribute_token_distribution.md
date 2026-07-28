@@ -184,7 +184,7 @@ encode(" " + value)
 重建命令：
 
 ```bash
-python -m experiments.synbios_moe.attribute_token_distribution \
+python -m experiments.synbios_moe.pretraining.token_statistics \
   --num-people 100000 \
   --seed 1337 \
   --output results/datasets/synbios_moe/attribute_token_distribution

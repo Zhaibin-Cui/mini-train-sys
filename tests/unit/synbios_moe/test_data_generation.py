@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from experiments.synbios_moe.data import (
+from experiments.synbios_moe.pretraining.dataset import (
     ATTRIBUTES,
     candidate_pools,
     entries_per_person,

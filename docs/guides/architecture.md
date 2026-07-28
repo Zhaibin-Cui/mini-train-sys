@@ -79,7 +79,7 @@ histogram 或固定色标 heatmap 的展示方式。Dense 模型不产生 MoE �
 
 SynBioS 仍把论文特有的 data/probe/evaluation/router 放在 `experiments/synbios_moe/`，
 `scripts/synbios_moe.py` 只做参数解析、模型装配和命令编排；probe 任务、运行 identity、
-原子状态、心跳和结果归并由 `experiments/synbios_moe/probe_pipeline.py` 负责。这样 CLI 不再
+原子状态、心跳和结果归并由 `experiments/synbios_moe/probes/pipeline.py` 负责。这样 CLI 不再
 自己维护一套线程状态机。端到端调用由
 `tests/synbios_moe_end_to_end.ipynb` 分阶段验证。
 

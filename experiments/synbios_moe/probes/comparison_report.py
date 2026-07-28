@@ -1,4 +1,4 @@
-"""Audited formal-study comparison and publication-quality SynBioS figures.
+"""Build the matched P/Q comparison tables and figures.
 
 This module is deliberately read-only with respect to experiment runs. It
 reconstructs metrics from the 22 independent validation JSON files rather than

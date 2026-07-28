@@ -1,6 +1,6 @@
 import unittest
 
-from experiments.synbios_moe.router_analysis import normalized_mutual_information
+from experiments.synbios_moe.mechanisms.routing import normalized_mutual_information
 
 
 class RoutingMetricTest(unittest.TestCase):

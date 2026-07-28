@@ -1,4 +1,4 @@
-"""Progressively fill facts removed from each original SynBioS biography."""
+"""Evaluate progressive cloze recall on the original SynBioS biographies."""
 
 
 import json
@@ -9,9 +9,9 @@ from pathlib import Path
 
 import torch
 
-from experiments.synbios_moe.data import ATTRIBUTES
-from experiments.synbios_moe.evaluation import _attribute_target_positions
-from experiments.synbios_moe.probes import GPT2Codec
+from experiments.synbios_moe.pretraining.attribute_recall import _attribute_target_positions
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES
+from experiments.synbios_moe.probes.model import GPT2Codec
 from minitrain.model.transformer import MiniTransformer
 from minitrain.runtime.logger import EventLogger
 from minitrain.runtime.monitoring import ProgressReporter

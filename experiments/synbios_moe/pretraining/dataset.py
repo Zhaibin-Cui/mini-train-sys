@@ -1,4 +1,4 @@
-"""Deterministic synthetic-biography generation for the bioS experiment.
+"""Generate deterministic synthetic biographies for the SynBioS experiment.
 
 The experiment has two representations: ``Profile`` is the underlying facts,
 while one or more ``Biography`` records verbalize those same facts with chosen

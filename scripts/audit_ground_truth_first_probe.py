@@ -16,12 +16,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from experiments.synbios_moe.probe_diagnostics import (
+from experiments.synbios_moe.mechanisms.token_conditioning import (
     WHOLE_ATTRIBUTES,
     build_ground_truth_first_input,
     prepare_ground_truth_first_whole_data,
 )
-from experiments.synbios_moe.probes import AttributeProbe
+from experiments.synbios_moe.probes.model import AttributeProbe
 from scripts.synbios_moe import load_model
 
 

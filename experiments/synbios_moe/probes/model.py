@@ -1,4 +1,4 @@
-"""Paper-style P/Q probes for facts stored by the synthetic biographies."""
+"""Define the P/Q readout models and their training loop."""
 
 
 import json
@@ -12,8 +12,8 @@ import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
-from experiments.synbios_moe.data import ATTRIBUTES
-from experiments.synbios_moe.probe_checkpoint import (
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES
+from experiments.synbios_moe.probes.checkpoint import (
     load_probe_recovery,
     save_probe_recovery,
 )

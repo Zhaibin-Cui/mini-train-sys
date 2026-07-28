@@ -1,4 +1,4 @@
-"""Capacity and throughput regression for paper-style probe batches."""
+"""Measure P/Q probe batch capacity and throughput."""
 
 
 import json
@@ -11,7 +11,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 
-from experiments.synbios_moe.probes import AttributeProbe, ProbeBatchItem, collate_probe
+from experiments.synbios_moe.probes.model import AttributeProbe, ProbeBatchItem, collate_probe
 from minitrain.runtime.monitoring import GpuUtilizationMonitor
 
 

@@ -42,16 +42,16 @@ baseline 反映其未公开原始词表。报告可以比较本项目 `single` �
 
 ## 实现阶段
 
-1. `experiments/synbios_moe/data.py`
+1. `experiments/synbios_moe/pretraining/dataset.py`
    - 确定性生成 100k 个唯一英文全名和六属性 profile。
    - 支持 `single`、`fullname`、`permute{1,2,5}`、`multi{2,5}` 及组合。
    - 输出 profiles、biographies、P/Q probe 元数据、token shards 和 manifest。
    - probe 位置由 UTF-8 byte span 与 GPT-2 token bytes 对齐，不依赖脆弱的字符串 token 数猜测。
-2. `experiments/synbios_moe/probes.py`
+2. `experiments/synbios_moe/probes/model.py`
    - 低秩 embedding delta 独立于冻结主干；每个任务独立训练。
    - P-probe 在六个“属性首次出现前”的位置取最后层 hidden，并按最终 biography 从左到右编号为 `P0...P5`；Q-probe 在姓名 EOS 位置取 hidden。
    - birth date 只做 first-token/month；其他五属性同时支持 first-token 与 whole-attribute 分类，共 11 个任务。
-3. `experiments/synbios_moe/router_analysis.py`
+3. `experiments/synbios_moe/mechanisms/routing.py`
    - 用 hooks 收集每层 top-k expert、权重、位置和属性标签。
    - 输出 expert load、entropy、姓名/属性位置的 expert mutual information，以及可选的 expert ablation。
 4. CLI 与配置

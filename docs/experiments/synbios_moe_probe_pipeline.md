@@ -19,24 +19,24 @@
 configs/synbios_moe/probe_pipeline.yaml
   └─ smoke/pilot/formal 的步数、任务和前置阶段
 
-experiments/synbios_moe/probe_data.py
+experiments/synbios_moe/probes/dataset.py
   ├─ 11 个论文任务定义
   ├─ 一次性 tokenizer/位置/标签缓存
   ├─ train/validation whole-label 覆盖检查
   └─ CachedProbeDataset（mmap，只读）
 
-experiments/synbios_moe/probes.py
+experiments/synbios_moe/probes/model.py
   ├─ P/Q 单任务 Dataset 的旧兼容路径
   ├─ rank embedding delta 与 AttributeProbe
   └─ 单任务训练、完整train/validation accuracy和健康指标
 
-experiments/synbios_moe/probe_checkpoint.py
+experiments/synbios_moe/probes/checkpoint.py
   └─ 不含backbone的原子恢复点与精确shuffle恢复
 
-experiments/synbios_moe/probe_benchmark.py
+experiments/synbios_moe/probes/batch_benchmark.py
   └─ 最长样本batch容量压测与跨GPU安全值汇总
 
-experiments/synbios_moe/probe_pipeline.py
+experiments/synbios_moe/probes/pipeline.py
   ├─ 任意设备列表解析
   ├─ 每卡一个进程的任务队列
   ├─ smoke/pilot/formal 任务计划
@@ -431,7 +431,7 @@ tensorboard --logdir artifacts/synbios_moe/results/<run>/probe_pipeline \
 ## 11. Q-whole 的两个推理验证
 
 两个诊断都复用已经训练完成的 Q-first/Q-whole 分类头，不更新 backbone、embedding delta
-或分类头。实现集中在 `experiments/synbios_moe/probe_diagnostics.py`，与训练调度代码分离。
+或分类头。实现集中在 `experiments/synbios_moe/mechanisms/token_conditioning.py`，与训练调度代码分离。
 
 ### 11.1 Oracle 首 token 干预
 

@@ -1,4 +1,4 @@
-"""Matched sequential probes and inference diagnostics for probe failures.
+"""Test first-token intervention and token-conditioned route branching.
 
 The legacy diagnostics in this module never update model or probe parameters:
 
@@ -34,16 +34,16 @@ import torch
 from torch.utils.data import DataLoader, Dataset, Subset
 from torch.torch_version import TorchVersion
 
-from experiments.synbios_moe.data import ATTRIBUTES
-from experiments.synbios_moe.probe_data import CachedProbeDataset
-from experiments.synbios_moe.probes import (
+from experiments.synbios_moe.mechanisms.routing import normalized_mutual_information
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES
+from experiments.synbios_moe.probes.dataset import CachedProbeDataset
+from experiments.synbios_moe.probes.model import (
     AttributeProbe,
     GPT2Codec,
     ProbeBatchItem,
     collate_probe,
     train_probe,
 )
-from experiments.synbios_moe.router_analysis import normalized_mutual_information
 from minitrain.model.transformer import MiniTransformer
 from minitrain.runtime.monitoring import ProgressReporter
 

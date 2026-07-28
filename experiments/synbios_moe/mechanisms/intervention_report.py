@@ -1,4 +1,4 @@
-"""Reporting for the ground-truth-t1 rank-matched whole-probe run."""
+"""Summarize the oracle-first-token whole-value intervention."""
 
 
 import csv

@@ -109,7 +109,7 @@ formal checkpoint 上按随机字段顺序输出四组条件准确率：`none`�
 重建命令：
 
 ```bash
-python experiments/synbios_moe/company_pair_fit.py \
+python -m experiments.synbios_moe.mechanisms.company_relation \
   --input results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/formal_probe_metrics.csv \
   --output results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit
 ```

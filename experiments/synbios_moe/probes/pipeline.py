@@ -1,4 +1,4 @@
-"""Task-level scheduling and result reduction for the SynBioS probe experiment."""
+"""Schedule P/Q jobs and reduce their results."""
 
 
 import csv
@@ -18,7 +18,7 @@ from typing import Callable, Iterable, Protocol
 import torch
 import yaml
 
-from experiments.synbios_moe.probe_data import paper_probe_tasks
+from experiments.synbios_moe.probes.dataset import paper_probe_tasks
 
 
 PIPELINE_PROTOCOL_VERSION = 4

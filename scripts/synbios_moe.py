@@ -19,38 +19,50 @@ import yaml
 from torch.utils.data import DataLoader
 from torch.torch_version import TorchVersion
 
-from experiments.synbios_moe.data import ATTRIBUTES, write_dataset
-from experiments.synbios_moe.cloze_evaluation import (
-    evaluate_progressive_biography_cloze,
-    summarize_progressive_cloze_results,
+from experiments.synbios_moe.audit import build_repository_audit
+from experiments.synbios_moe.mechanisms.comparison_report import (
+    build_diagnostic_report_artifacts,
 )
-from experiments.synbios_moe.evaluation import evaluate_attribute_tokens
-from experiments.synbios_moe.diagnostic_report import build_diagnostic_report_artifacts
-from experiments.synbios_moe.formal_report import build_formal_report_artifacts
-from experiments.synbios_moe.probe_data import (
-    CachedProbeDataset,
-    build_probe_cache,
-    validate_probe_cache,
+from experiments.synbios_moe.mechanisms.intervention_report import (
+    summarize_ground_truth_first_whole,
 )
-from experiments.synbios_moe.probe_diagnostics import (
+from experiments.synbios_moe.mechanisms.routing import analyze_batch
+from experiments.synbios_moe.mechanisms.token_conditioning import (
     WHOLE_ATTRIBUTES,
     bad_case_route_validation,
     oracle_first_token_validation,
     prepare_ground_truth_first_whole_data,
     train_ground_truth_first_whole_probe,
 )
-from experiments.synbios_moe.repository_audit import build_repository_audit
-from experiments.synbios_moe.probe_checkpoint import save_probe_result
-from experiments.synbios_moe.ground_truth_first_report import (
-    summarize_ground_truth_first_whole,
+from experiments.synbios_moe.pretraining.attribute_recall import evaluate_attribute_tokens
+from experiments.synbios_moe.pretraining.cloze import (
+    evaluate_progressive_biography_cloze,
+    summarize_progressive_cloze_results,
 )
-from experiments.synbios_moe.probe_benchmark import (
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES, write_dataset
+from experiments.synbios_moe.probes.batch_benchmark import (
     benchmark_probe_batches,
     parse_batch_sizes,
     probe_batch_environment,
     summarize_probe_benchmarks,
 )
-from experiments.synbios_moe.probe_pipeline import (
+from experiments.synbios_moe.probes.checkpoint import save_probe_result
+from experiments.synbios_moe.probes.comparison_report import build_formal_report_artifacts
+from experiments.synbios_moe.probes.dataset import (
+    CachedProbeDataset,
+    build_probe_cache,
+    validate_probe_cache,
+)
+from experiments.synbios_moe.probes.model import (
+    AttributeProbe,
+    PProbeDataset,
+    QProbeDataset,
+    active_parameter_estimate,
+    collate_probe,
+    evaluate as evaluate_probe,
+    train_probe,
+)
+from experiments.synbios_moe.probes.pipeline import (
     ProbePipelineState,
     ProbeRuntimeConfig,
     build_pipeline_identity,
@@ -67,16 +79,6 @@ from experiments.synbios_moe.probe_pipeline import (
     summarize_probe_results,
     write_json_atomic,
 )
-from experiments.synbios_moe.probes import (
-    AttributeProbe,
-    PProbeDataset,
-    QProbeDataset,
-    active_parameter_estimate,
-    collate_probe,
-    evaluate as evaluate_probe,
-    train_probe,
-)
-from experiments.synbios_moe.router_analysis import analyze_batch
 from minitrain.data.documents import CleaningConfig
 from minitrain.data.preprocess import prepare_token_shards
 from minitrain.data.tokenizer import TiktokenTokenizer
