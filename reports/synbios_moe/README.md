@@ -39,6 +39,6 @@ gap with a path-dependent readout model.
 - **Route branching** supports a dynamic-path hypothesis; it does not prove an expert is a fact
   database.
 
-Run identity, failures, exact commands, checkpoints, and dirty-state provenance are append-only in
-the retained run records. Dataset/cache lineage is under
-[`results/datasets/synbios_moe/`](../../results/datasets/synbios_moe/).
+Run identity, exact commands, checkpoints, and result paths are linked by the
+[formal study index](../../results/formal_runs/synbios_moe/study_index.json). Dataset/cache lineage
+is under [`results/datasets/synbios_moe/`](../../results/datasets/synbios_moe/).

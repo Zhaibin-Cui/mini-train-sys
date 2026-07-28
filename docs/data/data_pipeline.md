@@ -7,7 +7,7 @@ tiktoken 与 token 存储宽度分别是什么；MiniTrain 新增的数据预处
 第一次阅读如果只想理解本项目，可先看第 3 节，再回到第 1/2 节补 tokenizer 和参考
 项目背景。最短代码路径是 `documents.py → tokenizer.py → preprocess.py → dataloader.py`。
 
-实施前计划见 [`data_preprocessing_plan.md`](../design-notes/data_preprocessing_plan.md)。代码入口：
+代码入口：
 
 - `minitrain/data/documents.py`：reader、清洗、chunk；
 - `minitrain/data/tokenizer.py`：自训 byte-BPE 与现成 tiktoken 的统一接口；

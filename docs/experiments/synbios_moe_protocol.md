@@ -1,4 +1,4 @@
-# Allen-Zhu bioS P/Q-probe 的 MoE 复刻计划
+# SynBioS MoE reproduction protocol
 
 ## 目标与诚实边界
 
@@ -40,7 +40,7 @@ baseline 反映其未公开原始词表。报告可以比较本项目 `single` �
 这会改变固定30k steps下的样本曝光量，是另一项有意的 fidelity 差异；两个主数据条件必须使用
 同一份 `recommended.env`，并在 the retained run records 和结果 provenance 中记录，才可做公平对照。
 
-## 实现阶段
+## Implementation map
 
 1. `experiments/synbios_moe/pretraining/dataset.py`
    - 确定性生成 100k 个唯一英文全名和六属性 profile。

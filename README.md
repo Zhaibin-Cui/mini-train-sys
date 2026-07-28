@@ -674,8 +674,10 @@ python scripts/build_results_manifest.py --results results --check
 ```
 
 Cross-experiment headline metrics live in
-[`results/BENCHMARK_SUMMARY.md`](results/BENCHMARK_SUMMARY.md). Exact commands and lifecycle records,
-including failed and stopped runs, are retained under [`results/logs/`](results/logs/).
+[`results/BENCHMARK_SUMMARY.md`](results/BENCHMARK_SUMMARY.md). The formal SynBioS
+config-to-result chain is recorded in
+[`results/formal_runs/synbios_moe/study_index.json`](results/formal_runs/synbios_moe/study_index.json);
+retained runtime logs are indexed under [`results/logs/`](results/logs/).
 
 <a id="project-structure"></a>
 

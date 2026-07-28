@@ -27,7 +27,6 @@ P-whole P0–P5、原 Q-whole、oracle Q-whole 和 Allen-Zhu 参考值放在同�
 - [Oracle true-first-token intervention](oracle_first_token.md)
 - [Bad-case MoE route branching](bad_case_routes.md)
 - [single vs multi5+permute formal 主报告](../formal_comparison.md)
-- [历史合并报告](../q_whole_moe_diagnostics.md)
 
 ## 规范结果结构
 

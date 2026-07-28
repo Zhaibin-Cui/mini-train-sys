@@ -1,7 +1,7 @@
 # SynBioS Probe：缓存、分阶段训练、多卡调度与验证
 
 本文是 P/Q probe 的当前运行手册。它说明程序边界、正式命令、任意单机 GPU 数调度、独立 validation 和结果后处理。论文差异仍以
-[`synbios_moe_reproduction_plan.md`](synbios_moe_reproduction_plan.md) 为准。
+[`synbios_moe_protocol.md`](synbios_moe_protocol.md) 为准。
 
 ## 1. 不变的实验定义
 

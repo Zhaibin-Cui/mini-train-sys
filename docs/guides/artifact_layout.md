@@ -24,14 +24,14 @@ results/                              Git-safe machine evidence
 ├── logs/{benchmarks,experiments,validation,maintenance}/
 ├── notebooks/                        executed benchmark notebooks
 ├── tensorboard/index.csv             discovery index; events remain with owner
-├── validation/                       JUnit and correctness evidence
+├── validation/                       correctness and recovery evidence
 └── MANIFEST.sha256                   snapshot integrity
 
 reports/                              selected human conclusions
 ├── engineering/                      kernels and distributed/end-to-end performance
 └── synbios_moe/                      Allen-Zhu-style reproduction and diagnostics
 
-the retained run records                            append-only commands, lifecycle, failures, provenance
+HISTORY.md                            local concise command notes (gitignored)
 ```
 
 ## Path rules
@@ -39,10 +39,10 @@ the retained run records                            append-only commands, lifecy
 1. Raw data, weights, DCP tensor shards, caches, and large per-example records never enter Git.
 2. Dataset/cache manifests identify parents, split semantics, counts, and SHA256.
 3. TensorBoard events stay beside the exact run; the central index only points to them.
-4. Published historical result paths remain stable. New indexes organize them without destroying
-   provenance.
-5. `reports/` contains interpretation; `results/` contains machine evidence; the retained run records contains
-   commands and lifecycle.
+4. Move a published path only when every code, command, and documentation reference is updated in
+   the same change.
+5. `reports/` contains interpretation; `results/` contains machine evidence; formal experiment
+   links belong in a machine-readable study index.
 6. Run `bash scripts/bash/export_test_results.sh` after every benchmark or validation cycle. It
    categorizes logs, exports notebooks, rebuilds the catalog, and refreshes all hashes.
 

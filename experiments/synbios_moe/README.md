@@ -2,7 +2,7 @@
 
 这个实验沿用 Allen-Zhu/Li bioS 的数据与 probing 机制，但把每层 Dense FFN 换成
 MiniTrain dropless top-2 MoE。它是“机制复现 + 架构改造”，不是论文 dense 数值的逐点
-复现。差异见 [fidelity ledger](../../docs/experiments/synbios_moe_reproduction_plan.md)，完整代码流程
+复现。差异见 [fidelity ledger](../../docs/experiments/synbios_moe_protocol.md)，完整代码流程
 见 [训练导读](../../docs/experiments/synbios_moe_training_flow.md)。Probe 的缓存、阶段和多卡入口见
 [Probe pipeline 手册](../../docs/experiments/synbios_moe_probe_pipeline.md)。
 

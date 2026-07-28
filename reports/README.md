@@ -1,6 +1,6 @@
 # 📊 Reports
 
-Only selected, auditable conclusions belong here. Raw JSON/CSV/TensorBoard/JUnit evidence lives
+Only selected, auditable conclusions belong here. Raw JSON/CSV/TensorBoard and validation evidence lives
 under [`results/`](../results/); commands and run lifecycle live in the retained run records.
 
 ## Canonical reports
@@ -21,14 +21,6 @@ under [`results/`](../results/); commands and run lifecycle live in the retained
 - [Multi5 fresh P-whole + true `t1`](synbios_moe/probes/ground_truth_first_result.md)
 - [Single 100k source-text cloze](synbios_single_cloze_100k.md)
 - [Multi5 500k source-text cloze](synbios_multi5_permute_cloze_500k.md)
-
-## Historical/provenance documents
-
-Pilot analyses, launch decisions, and superseded stage reports remain under
-`synbios_moe/probes/` because they explain budget choices and failed boundaries. They are not
-headline sources. Compatibility pages at `operator_bench.md`, `distributed_bench.md`,
-`server_benchmark_resume.md`, and `q_whole_moe_diagnostics.md` preserve old links while pointing
-to the canonical reports above.
 
 ## Writing contract
 

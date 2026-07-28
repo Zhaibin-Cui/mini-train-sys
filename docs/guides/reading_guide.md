@@ -21,21 +21,20 @@
 | 文档 | 类型 | 用途 |
 |---|---|---|
 | [data_pipeline.md](../data/data_pipeline.md) | 当前手册 | 当前代码从输入文件到训练 batch 的完整流程 |
-| [data_preprocessing_plan.md](../design-notes/data_preprocessing_plan.md) | 设计记录 | 预处理功能当初的拆分理由和演进过程 |
 
 遇到 `resolve_inputs`、DocumentCleaner、`max_document_chars`、chunk、shard、worker、
 pin memory 或 non-blocking 问题，优先读 `data_pipeline.md`。只有想理解历史取舍时才读
-`data_preprocessing_plan.md`。
+[`data_pipeline.md`](../data/data_pipeline.md)。
 
 ## 三、训练运行时与数值稳定性
 
 | 文档 | 类型 | 用途 |
 |---|---|---|
 | [monitoring_and_recovery.md](../training/monitoring_and_recovery.md) | 当前手册 | loss、LR、token/s、ETA、显存、梯度范数和恢复训练 |
-| [mixed_precision_plan.md](../training/mixed_precision_plan.md) | 当前实现说明 | FP32/BF16/FP16、autocast、GradScaler、FSDP dtype |
+| [mixed_precision.md](../training/mixed_precision.md) | 当前实现说明 | FP32/BF16/FP16、autocast、GradScaler、FSDP dtype |
 | [architecture.md](architecture.md) | 当前手册 | Trainer、TrainingRunner、EventLogger、ProgressReporter 的边界 |
 
-虽然 `mixed_precision_plan.md` 文件名保留了 `plan`，其中相关章节已经用于解释当前实现；
+`mixed_precision.md` 解释当前实现；
 真正的运行参数仍以 typed config 和当前代码为准。
 
 ## 四、分布式训练与服务器性能
@@ -44,7 +43,7 @@ pin memory 或 non-blocking 问题，优先读 `data_pipeline.md`。只有想理
 
 1. [distributed_training.md](../training/distributed_training.md)：理解 DDP/FSDP、world size、global batch、DCP。
 2. [distributed_benchmark.md](../benchmarks/distributed_benchmark.md)：理解 1/4/8 卡 benchmark 的矩阵和验收指标。
-3. [benchmark_plan.md](../benchmarks/benchmark_plan.md)：需要比较算子或训练结果时，再看统一测量规范。
+3. [benchmarking.md](../benchmarks/benchmarking.md)：需要比较算子或训练结果时，再看统一测量规范。
 
 硬件个案：
 
@@ -58,7 +57,7 @@ pin memory 或 non-blocking 问题，优先读 `data_pipeline.md`。只有想理
 | 顺序 | 文档 | 作用 |
 |---:|---|---|
 | 1 | [synbios_moe_training_flow.md](../experiments/synbios_moe_training_flow.md) | 当前代码怎样生成数据、训练、evaluate、P/Q probe 和 router 结果 |
-| 2 | [synbios_moe_reproduction_plan.md](../experiments/synbios_moe_reproduction_plan.md) | 当前实现与原论文 fidelity 的一致项、差异和预算换算 |
+| 2 | [synbios_moe_protocol.md](../experiments/synbios_moe_protocol.md) | 当前实现与原论文 fidelity 的一致项、差异和预算换算 |
 | 3 | [monitoring_and_recovery.md](../training/monitoring_and_recovery.md) | 怎样观察正式实验、保存 checkpoint 和中断恢复 |
 
 阅读时要区分两件事：
@@ -89,7 +88,6 @@ router。不要在主模型尚未学会 biography 时直接解释 probe 或 expe
 
 - [reference_map.md](../references/reference_map.md)：实现与外部参考的对应关系。
 - [references.md](../references/references.md)：参考资料清单。
-- [data_preprocessing_plan.md](../design-notes/data_preprocessing_plan.md)：数据预处理历史方案。
 
 如果历史 plan 与代码不一致，以当前代码、typed config 和当前手册为准。
 
@@ -120,7 +118,7 @@ FlashAttention 深入材料。
 | 不懂 ETA、显存、梯度范数、TensorBoard | [monitoring_and_recovery.md](../training/monitoring_and_recovery.md) |
 | 不懂多卡 checkpoint 如何给单卡 probe | [monitoring_and_recovery.md](../training/monitoring_and_recovery.md) |
 | 想运行 SynBioS 全流程 | [synbios_moe_training_flow.md](../experiments/synbios_moe_training_flow.md) |
-| 想检查 Allen-Zhu fidelity | [synbios_moe_reproduction_plan.md](../experiments/synbios_moe_reproduction_plan.md) |
+| 想检查 Allen-Zhu fidelity | [synbios_moe_protocol.md](../experiments/synbios_moe_protocol.md) |
 | 想测 1/4/8 卡扩展效率 | [distributed_benchmark.md](../benchmarks/distributed_benchmark.md) |
 | 想读 MoE router/expert | [moe.md](../model/moe.md) |
 | 想读 CUDA FlashAttention | [cuda_flash_attention_code_reading_guide.md](../kernels/cuda_flash_attention_code_reading_guide.md) |
