@@ -21,17 +21,9 @@ from experiments.synbios_moe.artifact_io import (
     write_csv_atomic,
     write_json_atomic,
 )
+from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES, WHOLE_ATTRIBUTES
 
 
-ATTRIBUTES = (
-    "birth_date",
-    "birth_city",
-    "university",
-    "major",
-    "company",
-    "company_city",
-)
-WHOLE_ATTRIBUTES = ATTRIBUTES[1:]
 ATTRIBUTE_LABELS = {
     "birth_date": "Birth month",
     "birth_city": "Birth city",

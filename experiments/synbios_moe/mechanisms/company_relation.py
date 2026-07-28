@@ -13,8 +13,8 @@ import numpy as np
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from experiments.synbios_moe.pretraining.dataset import WHOLE_ATTRIBUTES
 
-ATTRIBUTES = ("birth_city", "university", "major", "company", "company_city")
 DISPLAY_NAMES = {
     "birth_city": "Birth city",
     "university": "University",
@@ -40,14 +40,14 @@ def _load_curves(path: Path) -> dict[str, np.ndarray]:
             )
     missing = [
         attribute
-        for attribute in ATTRIBUTES
+        for attribute in WHOLE_ATTRIBUTES
         if set(positions.get(attribute, {})) != set(range(6))
     ]
     if missing:
         raise ValueError(f"missing complete P-whole curves for: {missing}")
     return {
         attribute: np.asarray([positions[attribute][index] for index in range(6)])
-        for attribute in ATTRIBUTES
+        for attribute in WHOLE_ATTRIBUTES
     }
 
 
@@ -109,7 +109,7 @@ def _write_metrics(
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
-        for attribute in ATTRIBUTES:
+        for attribute in WHOLE_ATTRIBUTES:
             fit = fits[attribute]
             writer.writerow(
                 {

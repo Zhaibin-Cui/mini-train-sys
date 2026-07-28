@@ -30,7 +30,7 @@ from experiments.synbios_moe.artifact_io import (
     write_csv_atomic,
     write_json_atomic,
 )
-from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES
+from experiments.synbios_moe.pretraining.dataset import WHOLE_ATTRIBUTES
 from experiments.synbios_moe.probes.dataset import CachedProbeDataset
 from experiments.synbios_moe.probes.model import (
     AttributeProbe,
@@ -41,9 +41,6 @@ from experiments.synbios_moe.probes.model import (
 )
 from minitrain.model.transformer import MiniTransformer
 from minitrain.runtime.monitoring import ProgressReporter
-
-
-WHOLE_ATTRIBUTES = tuple(attribute for attribute in ATTRIBUTES if attribute != "birth_date")
 
 
 @dataclass(frozen=True)

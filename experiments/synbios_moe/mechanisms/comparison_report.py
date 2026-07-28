@@ -21,10 +21,10 @@ from experiments.synbios_moe.artifact_io import (
     write_csv_atomic,
     write_json_atomic,
 )
+from experiments.synbios_moe.pretraining.dataset import WHOLE_ATTRIBUTES
 from experiments.synbios_moe.probes.comparison_report import (
     ALLEN_ZHU_Q_REFERENCE,
     ATTRIBUTE_LABELS,
-    WHOLE_ATTRIBUTES,
     FormalRun,
     load_formal_run,
     tidy_rows,

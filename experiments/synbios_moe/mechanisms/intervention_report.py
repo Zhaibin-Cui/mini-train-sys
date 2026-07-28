@@ -11,10 +11,10 @@ from experiments.synbios_moe.artifact_io import (
     write_json_atomic,
     write_text_atomic,
 )
+from experiments.synbios_moe.pretraining.dataset import WHOLE_ATTRIBUTES
 
 
 KINDS = ("p",)
-ATTRIBUTES = ("birth_city", "university", "major", "company", "company_city")
 POSITION_LABELS = ("birth date", "birth city", "university", "major", "company", "company city")
 PROTOCOL = "ground_truth_first_whole_rank_matched_v1"
 
@@ -22,7 +22,7 @@ PROTOCOL = "ground_truth_first_whole_rank_matched_v1"
 def _load_tasks(run_dir: Path) -> dict[tuple[str, str], dict[str, object]]:
     tasks: dict[tuple[str, str], dict[str, object]] = {}
     for kind in KINDS:
-        for attribute in ATTRIBUTES:
+        for attribute in WHOLE_ATTRIBUTES:
             path = run_dir / f"{kind}_{attribute}.json"
             if not path.is_file():
                 raise FileNotFoundError(f"missing ground-truth-first-token result: {path}")
@@ -82,12 +82,12 @@ def _baseline_metrics(
         for row in payload["rows"]
         if row.get("target") == "whole"
         and row.get("kind") == "p"
-        and row.get("attribute") in ATTRIBUTES
+        and row.get("attribute") in WHOLE_ATTRIBUTES
     }
     expected = {
         (kind, attribute, position)
         for kind in KINDS
-        for attribute in ATTRIBUTES
+        for attribute in WHOLE_ATTRIBUTES
         for position in range(6)
     }
     missing = sorted(expected - metrics.keys())
@@ -189,7 +189,7 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path, condition: str) -
                     )
                     for position in range(6)
                 ]
-                for attribute in ATTRIBUTES
+                for attribute in WHOLE_ATTRIBUTES
             ]
         )
         image = axis.imshow(
@@ -202,7 +202,7 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path, condition: str) -
         axis.set_xticks(range(6))
         axis.set_xticklabels(POSITION_LABELS, rotation=28, ha="right")
         axis.set_yticks(range(5))
-        axis.set_yticklabels([value.replace("_", " ") for value in ATTRIBUTES])
+        axis.set_yticklabels([value.replace("_", " ") for value in WHOLE_ATTRIBUTES])
         axis.tick_params(length=0, labelsize=12)
         marks_fixed_positions = condition == "single" and metric in {
             "original_whole_accuracy",
@@ -216,7 +216,7 @@ def _plot(rows: Sequence[dict[str, object]], output_dir: Path, condition: str) -
             pad=15,
         )
         if marks_fixed_positions:
-            for row_index in range(len(ATTRIBUTES)):
+            for row_index in range(len(WHOLE_ATTRIBUTES)):
                 axis.add_patch(
                     Rectangle(
                         (row_index + 0.5, row_index - 0.5),

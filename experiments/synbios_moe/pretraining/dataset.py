@@ -18,6 +18,7 @@ from typing import Iterable
 from experiments.synbios_moe.artifact_io import sha256_file
 
 ATTRIBUTES = ("birth_date", "birth_city", "university", "major", "company", "company_city")
+WHOLE_ATTRIBUTES = tuple(attribute for attribute in ATTRIBUTES if attribute != "birth_date")
 TEMPLATE_COUNTS = (46, 49, 49, 52, 47, 48)
 
 _FIRST = (

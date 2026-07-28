@@ -10,11 +10,11 @@ import torch
 
 from experiments.synbios_moe.artifact_io import write_csv_atomic, write_json_atomic
 from experiments.synbios_moe.mechanisms.first_token_intervention import (
-    WHOLE_ATTRIBUTES,
     collect_q_predictions,
     prediction_row,
 )
 from experiments.synbios_moe.mechanisms.routing import normalized_mutual_information
+from experiments.synbios_moe.pretraining.dataset import WHOLE_ATTRIBUTES
 from experiments.synbios_moe.probes.model import GPT2Codec, ProbeBatchItem, collate_probe
 from minitrain.model.transformer import MiniTransformer
 
