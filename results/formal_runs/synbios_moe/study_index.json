@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "study": "synbios_moe",
+  "shared": {
+    "model_config": "configs/synbios_moe/model.yaml",
+    "probe_config": "configs/synbios_moe/probe_pipeline.yaml",
+    "profiles_sha256": "7d239f046cb5e16ac3d8d7636b6901a2430f2ccb8dc1179063e4eaed92256da1",
+    "entrypoint": "scripts/synbios_moe.py",
+    "training_entrypoint": "scripts/train.py"
+  },
+  "conditions": {
+    "single": {
+      "description": "One biography per person in a fixed attribute order.",
+      "prepare_command": "python scripts/synbios_moe.py prepare --output artifacts/synbios_moe/single --variant single",
+      "train_command": "NPROC=4 bash scripts/bash/synbios_moe.sh single fsdp",
+      "probe_command": "NPROC=4 STAGE=formal PROBE_BATCH_ENV=<recommended.env> bash scripts/bash/synbios_probes.sh single fsdp latest",
+      "paths": {
+        "dataset_lineage": "results/datasets/synbios_moe/single/lineage.json",
+        "dataset_manifest": "results/datasets/synbios_moe/single/manifest.json",
+        "run_config": "configs/synbios_moe/runs/single_fsdp_4gpu.yaml",
+        "training_events": "results/formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-045620/events.jsonl",
+        "final_checkpoint": "results/formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280",
+        "cloze_summary": "results/formal_runs/synbios_moe/results/single_cloze_eval/full_100k/summary.json",
+        "probe_summary": "results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/summary/summary.json",
+        "report": "reports/synbios_single_cloze_100k.md"
+      },
+      "expected": {
+        "people": 100000,
+        "biographies": 100000,
+        "training_steps": 17280,
+        "training_epochs": 540,
+        "cloze_fields": 600000,
+        "cloze_micro_accuracy": 1.0
+      }
+    },
+    "multi5_permute": {
+      "description": "Five independently rendered biographies per person with permuted attribute order.",
+      "prepare_command": "python scripts/synbios_moe.py prepare --output artifacts/synbios_moe/multi5_permute --variant multi5+permute",
+      "train_command": "NPROC=4 bash scripts/bash/synbios_moe.sh multi5_permute fsdp",
+      "probe_command": "NPROC=4 STAGE=formal PROBE_BATCH_ENV=<recommended.env> bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest",
+      "paths": {
+        "dataset_lineage": "results/datasets/synbios_moe/multi5_permute/lineage.json",
+        "dataset_manifest": "results/datasets/synbios_moe/multi5_permute/manifest.json",
+        "run_config": "configs/synbios_moe/runs/multi5_permute_fsdp_4gpu.yaml",
+        "training_events": "results/formal_runs/synbios_moe/runs/synbios_moe_multi5_permute_fsdp_4gpu/20260721-144408/events.jsonl",
+        "final_checkpoint": "results/formal_runs/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388",
+        "cloze_summary": "results/formal_runs/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json",
+        "probe_summary": "results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/summary/summary.json",
+        "report": "reports/synbios_multi5_permute_cloze_500k.md"
+      },
+      "expected": {
+        "people": 100000,
+        "biographies": 500000,
+        "training_steps": 17388,
+        "training_epochs": 108,
+        "cloze_fields": 3000000,
+        "cloze_micro_accuracy": 0.9999153333333334
+      }
+    }
+  },
+  "comparison": {
+    "result": "results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/summary.json",
+    "run_identity": "results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/run_identity.json",
+    "report": "reports/synbios_moe/probes/formal_comparison.md"
+  }
+}

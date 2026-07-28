@@ -4364,120 +4364,6 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/COMMITTED",
-      "scope": "synbios_moe",
-      "size_bytes": 3
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/rng_rank_00000.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/rng_rank_00001.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/rng_rank_00002.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/rng_rank_00003.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/runtime.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 3680
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/SAFETY",
-      "scope": "synbios_moe",
-      "size_bytes": 16
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000020_step_000000640/COMMITTED",
-      "scope": "synbios_moe",
-      "size_bytes": 3
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000020_step_000000640/rng_rank_00000.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000020_step_000000640/rng_rank_00001.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000020_step_000000640/rng_rank_00002.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000020_step_000000640/rng_rank_00003.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000020_step_000000640/runtime.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 3680
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000030_step_000000960/COMMITTED",
-      "scope": "synbios_moe",
-      "size_bytes": 3
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000030_step_000000960/rng_rank_00000.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000030_step_000000960/rng_rank_00001.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000030_step_000000960/rng_rank_00002.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000030_step_000000960/rng_rank_00003.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 10370
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000030_step_000000960/runtime.pt",
-      "scope": "synbios_moe",
-      "size_bytes": 3680
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000500_step_000016000/COMMITTED",
       "scope": "synbios_moe",
       "size_bytes": 3
@@ -4631,6 +4517,12 @@
       "path": "formal_runs/synbios_moe/operation_logs/synbios_prepare_single/20260721-035827/events.out.tfevents.1784577507.ml-ubuntu22-04-desktop-v3-2-128gb-25m.147532.0",
       "scope": "synbios_moe",
       "size_bytes": 1278
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/README.md",
+      "scope": "synbios_moe",
+      "size_bytes": 2047
     },
     {
       "category": "formal_runs",
@@ -7600,7 +7492,7 @@
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/repository_audit_20260724/log_catalog.csv",
       "scope": "synbios_moe",
-      "size_bytes": 45489
+      "size_bytes": 42791
     },
     {
       "category": "formal_runs",
@@ -7712,33 +7604,15 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/single_cloze_eval/full_100k/shard_1_duplicate_range0_r1.json",
-      "scope": "synbios_moe",
-      "size_bytes": 12031
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/single_cloze_eval/full_100k/shard_2.json",
       "scope": "synbios_moe",
       "size_bytes": 12169
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/single_cloze_eval/full_100k/shard_2_duplicate_range0_r1.json",
-      "scope": "synbios_moe",
-      "size_bytes": 12033
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/single_cloze_eval/full_100k/shard_3.json",
       "scope": "synbios_moe",
       "size_bytes": 12272
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/single_cloze_eval/full_100k/shard_3_duplicate_range0_r1.json",
-      "scope": "synbios_moe",
-      "size_bytes": 12033
     },
     {
       "category": "formal_runs",
@@ -10376,18 +10250,6 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-042956/events.jsonl",
-      "scope": "synbios_moe",
-      "size_bytes": 1643145
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-042956/events.out.tfevents.1784579396.ml-ubuntu22-04-desktop-v3-2-128gb-25m.173884.0",
-      "scope": "synbios_moe",
-      "size_bytes": 2366850
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-045620/events.jsonl",
       "scope": "synbios_moe",
       "size_bytes": 31135172
@@ -10397,6 +10259,12 @@
       "path": "formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-045620/events.out.tfevents.1784580980.ml-ubuntu22-04-desktop-v3-2-128gb-25m.191522.0",
       "scope": "synbios_moe",
       "size_bytes": 27376320
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/study_index.json",
+      "scope": "synbios_moe",
+      "size_bytes": 3770
     },
     {
       "category": "logs",
@@ -10676,12 +10544,6 @@
     },
     {
       "category": "logs",
-      "path": "logs/experiments/probe_formal_multi5_retry_20260723_2137.log",
-      "scope": "experiments",
-      "size_bytes": 6630
-    },
-    {
-      "category": "logs",
       "path": "logs/experiments/probe_formal_single_export_20260723_210112.log",
       "scope": "experiments",
       "size_bytes": 75
@@ -10808,33 +10670,15 @@
     },
     {
       "category": "logs",
-      "path": "logs/experiments/single_cloze_full_gpu1_20260721-1357_duplicate_range0_r1.log",
-      "scope": "experiments",
-      "size_bytes": 20002
-    },
-    {
-      "category": "logs",
       "path": "logs/experiments/single_cloze_full_gpu2_20260721-1357-r2.log",
       "scope": "experiments",
       "size_bytes": 20142
     },
     {
       "category": "logs",
-      "path": "logs/experiments/single_cloze_full_gpu2_20260721-1357_duplicate_range0_r1.log",
-      "scope": "experiments",
-      "size_bytes": 20001
-    },
-    {
-      "category": "logs",
       "path": "logs/experiments/single_cloze_full_gpu3_20260721-1357-r2.log",
       "scope": "experiments",
       "size_bytes": 20241
-    },
-    {
-      "category": "logs",
-      "path": "logs/experiments/single_cloze_full_gpu3_20260721-1357_duplicate_range0_r1.log",
-      "scope": "experiments",
-      "size_bytes": 20003
     },
     {
       "category": "logs",
@@ -11114,18 +10958,6 @@
     },
     {
       "category": "logs",
-      "path": "logs/maintenance/withdraw_fresh_q_20260726T033200Z.log",
-      "scope": "maintenance",
-      "size_bytes": 14128
-    },
-    {
-      "category": "logs",
-      "path": "logs/maintenance/withdraw_fresh_q_20260726T033200Z.status",
-      "scope": "maintenance",
-      "size_bytes": 2
-    },
-    {
-      "category": "logs",
       "path": "logs/README.md",
       "scope": "README.md",
       "size_bytes": 684
@@ -11171,12 +11003,6 @@
       "path": "logs/validation/multi5_results_validation_20260721.status",
       "scope": "validation",
       "size_bytes": 1
-    },
-    {
-      "category": "logs",
-      "path": "logs/validation/withdraw_fresh_q_regression_20260726T033500Z.status",
-      "scope": "validation",
-      "size_bytes": 2
     },
     {
       "category": "notebooks",
@@ -11446,9 +11272,9 @@
     },
     {
       "category": "formal_runs",
-      "files": 1029,
+      "files": 1007,
       "scope": "synbios_moe",
-      "size_bytes": 172090753
+      "size_bytes": 167912275
     },
     {
       "category": "logs",
@@ -11464,21 +11290,21 @@
     },
     {
       "category": "logs",
-      "files": 68,
+      "files": 64,
       "scope": "experiments",
-      "size_bytes": 4998510
+      "size_bytes": 4931874
     },
     {
       "category": "logs",
-      "files": 25,
+      "files": 23,
       "scope": "maintenance",
-      "size_bytes": 47189
+      "size_bytes": 33059
     },
     {
       "category": "logs",
-      "files": 8,
+      "files": 7,
       "scope": "validation",
-      "size_bytes": 17815
+      "size_bytes": 17813
     },
     {
       "category": "notebooks",
@@ -11532,7 +11358,7 @@
   "results_root": "results",
   "schema_version": 1,
   "tensorboard": {
-    "events": 265,
-    "size_bytes": 77197721
+    "events": 264,
+    "size_bytes": 74830871
   }
 }

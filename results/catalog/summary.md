@@ -12,12 +12,12 @@ This is the deterministic index of the Git-safe server snapshot. Paths are relat
 | `datasets` | `README.md` | 1 | 445.00 B |
 | `datasets` | `synbios_moe` | 17 | 122.01 KiB |
 | `environment` | `inventory` | 1 | 2.63 KiB |
-| `formal_runs` | `synbios_moe` | 1,029 | 164.12 MiB |
+| `formal_runs` | `synbios_moe` | 1,007 | 160.13 MiB |
 | `logs` | `README.md` | 1 | 684.00 B |
 | `logs` | `benchmarks` | 28 | 328.22 KiB |
-| `logs` | `experiments` | 68 | 4.77 MiB |
-| `logs` | `maintenance` | 25 | 46.08 KiB |
-| `logs` | `validation` | 8 | 17.40 KiB |
+| `logs` | `experiments` | 64 | 4.70 MiB |
+| `logs` | `maintenance` | 23 | 32.28 KiB |
+| `logs` | `validation` | 7 | 17.40 KiB |
 | `notebooks` | `executed_benchmarks` | 5 | 5.39 MiB |
 | `root` | `index` | 2 | 8.76 KiB |
 | `smoke` | `checkpoints` | 4 | 33.31 KiB |
@@ -29,8 +29,8 @@ This is the deterministic index of the Git-safe server snapshot. Paths are relat
 
 ## TensorBoard
 
-- Event files: **265**
-- Total size: **73.62 MiB**
+- Event files: **264**
+- Total size: **71.36 MiB**
 - Machine index: [`../tensorboard/index.csv`](../tensorboard/index.csv)
 
 ## Server-only retention

@@ -257,7 +257,6 @@ formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/smoke/training/o
 formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/smoke/validation/operation_logs/synbios_p_probe_validation_p_university_whole/20260723-141845/events.out.tfevents.1784787525.ml-ubuntu22-04-desktop-v3-2-128gb-25m.24734.0,single,probe_other,12312
 formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/smoke/validation/operation_logs/synbios_q_probe_validation_q_university_whole/20260723-141845/events.out.tfevents.1784787525.ml-ubuntu22-04-desktop-v3-2-128gb-25m.24735.0,single,probe_other,5927
 formal_runs/synbios_moe/runs/synbios_moe_multi5_permute_fsdp_4gpu/20260721-144408/events.out.tfevents.1784616248.ml-ubuntu22-04-desktop-v3-2-128gb-25m.42143.0,multi5_permute,pretraining,6231321
-formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-042956/events.out.tfevents.1784579396.ml-ubuntu22-04-desktop-v3-2-128gb-25m.173884.0,single,pretraining,2366850
 formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-045620/events.out.tfevents.1784580980.ml-ubuntu22-04-desktop-v3-2-128gb-25m.191522.0,single,pretraining,27376320
 smoke/local_runs/rtx4090_single_1gpu/20260721-030701/events.out.tfevents.1784574421.ml-ubuntu22-04-desktop-v3-2-128gb-25m.44448.0,single,smoke,3802
 validation/synbios_moe/runs/synbios_moe_single_fsdp_4gpu_validation/20260721-040232/events.out.tfevents.1784577753.ml-ubuntu22-04-desktop-v3-2-128gb-25m.150850.0,single,pretraining,21547
