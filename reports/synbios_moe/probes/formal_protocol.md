@@ -31,4 +31,4 @@ batch evidence is in `capacity.md` and its exported benchmark manifest.
 
 The selected batches come from [capacity.md](capacity.md). The completed formal runs and their
 matching dataset, checkpoint, and probe identities are linked by
-[`results/formal_runs/synbios_moe/study_index.json`](../../../results/formal_runs/synbios_moe/study_index.json).
+[`results/catalog/studies/synbios_moe.json`](../../../results/catalog/studies/synbios_moe.json).

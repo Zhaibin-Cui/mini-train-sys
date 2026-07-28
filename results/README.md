@@ -1,42 +1,36 @@
-# 📦 Server result snapshot
+# Experiment results
 
-This directory contains the Git-safe evidence exported from the mounted experiment volume on the
-4 × RTX 4090 server. Run `bash scripts/bash/export_test_results.sh` to refresh it.
+`results/` is the Git-safe export of the server experiment volume. Evidence is organized by the
+stage that produced it:
 
-## Canonical layout
+| Stage | Contents |
+|---|---|
+| [`pretraining/`](pretraining/) | Dataset and token-shard lineage, formal training events, and checkpoint metadata |
+| [`cloze/`](cloze/) | Source-biography recall for `single` and `multi5_permute`, including shard summaries and evaluation logs |
+| [`benchmarks/`](benchmarks/) | Kernel, backend-capacity, distributed-scaling, probe-capacity, and executed-notebook evidence |
+| [`probes/`](probes/) | Probe caches, formal P/Q runs, mechanism diagnostics, and matched comparisons |
 
-- [`catalog/summary.md`](catalog/summary.md): human-readable inventory by category and scope.
-- `catalog/artifacts.json`: machine-readable inventory for every pushable result file.
-- `catalog/retention.json`: size, path, policy, and manifest identity for server-only payloads.
-- `benchmarks/`: kernel, distributed-training, backend-capacity, and probe-capacity evidence.
-- `formal_runs/`: SynBioS pretraining, cloze, formal probes, diagnostics, TensorBoard events,
-  and lightweight checkpoint metadata. Published paths remain stable for auditability.
-- `datasets/`: authoritative dataset/cache lineage and manifests; no raw payloads.
-- `validation/`: JUnit, checkpoint-resume metadata, and correctness-gate events.
-- `logs/`: physically separated `benchmarks/`, `experiments/`, `validation/`, and `maintenance/`.
-- `notebooks/`: executed server benchmark notebooks and execution logs.
-- [`tensorboard/index.csv`](tensorboard/index.csv): central index over all embedded event files.
-- `environment/`: server software and hardware inventory.
-- `smoke/`: short worker/backend smoke results.
-- `MANIFEST.sha256`: content hashes for every exported file except the manifest itself.
+Cross-stage records stay under [`catalog/`](catalog/): the
+[SynBioS study index](catalog/studies/synbios_moe.json), exported-file catalog, retention policy,
+TensorBoard index, retention inventory, and export audits. [`environment/`](environment/) records the
+server hardware and software stack.
 
-Large model weights, optimizer/DCP tensor shards, raw dataset payloads, caches, and credentials are
-deliberately excluded. DCP `.metadata` remains included because it is small and records shard
-layout without tensor contents. Excluded payload paths, sizes, manifests, and hashes are retained
-where available.
+Start with [`SUMMARY.md`](SUMMARY.md) for headline measurements. The reports under
+[`../reports/`](../reports/) explain how the retained files support each conclusion.
 
-See `BENCHMARK_SUMMARY.md` for the current conclusions, `../reports/synbios_moe/README.md` for the
-canonical SynBioS dataset-to-diagnostics map, and `../the retained run records` for the append-only run timeline
-and exact commands.
+## Export contract
 
-## TensorBoard
+Large mutable payloads—raw biographies, token arrays, model weights, optimizer shards, probe heads,
+and per-example route records—remain on `/data`. Git retains their manifests and lineage together
+with compact metrics, figures, events, and checkpoint metadata.
 
-Event files stay beside their owning run so conditions and stages cannot be confused. The central
-CSV provides discovery without duplicating event data:
+Refresh and verify the snapshot with:
 
 ```bash
-tensorboard --logdir results/formal_runs/synbios_moe --port 6006 --bind_all
+bash scripts/bash/export_results.sh
+python scripts/build_results_manifest.py --results results --check
 ```
 
-Filter `single`, `multi5_permute`, `formal`, or `pilot` paths through
-`results/tensorboard/index.csv`. Console logs are separately organized under `results/logs/`.
+Every exported file except the manifest itself is covered by [`MANIFEST.sha256`](MANIFEST.sha256).
+TensorBoard events remain beside the run that produced them; use
+[`catalog/tensorboard/index.csv`](catalog/tensorboard/index.csv) to locate them.

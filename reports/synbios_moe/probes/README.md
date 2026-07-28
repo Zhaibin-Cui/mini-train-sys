@@ -39,4 +39,4 @@ mechanism analyses, and exact protocols.
 - The 100% true-`t1` panel checks supplied-input identity; it is not whole accuracy.
 
 Canonical machine data:
-[`results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/).
+[`results/probes/synbios_moe/comparisons/formal_20260724/`](../../../results/probes/synbios_moe/comparisons/formal_20260724/).

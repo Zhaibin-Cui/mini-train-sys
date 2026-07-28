@@ -400,7 +400,7 @@ its first-token target and has no whole-value task.
 
 #### Result 1: augmentation moves first-token readout to the name
 
-![Knowledge augmentation changes where facts become linearly readable](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_study_overview.png)
+![Knowledge augmentation changes where facts become linearly readable](results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_study_overview.png)
 
 | Probe endpoint | `single` | `multi5_permute` |
 |---|---:|---:|
@@ -412,10 +412,10 @@ In `single`, first-token accuracy rises only when P reaches the target sentence.
 reaches 98.79%. Rewriting and sentence permutation move the first token from its fixed biography
 position to the name state.
 
-![P-first position heatmap](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_first_heatmaps.png)
+![P-first position heatmap](results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_p_first_heatmaps.png)
 
 <div align="center">
-  <img src="results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_probe_table.png" alt="Q-first results" width="64%" />
+  <img src="results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_q_probe_table.png" alt="Q-first results" width="64%" />
 </div>
 
 #### Result 2: augmentation does not make complete values equally readable
@@ -440,10 +440,10 @@ transfer across people as reliably as their first-token boundaries.
 In the fixed-order `single` heatmap, warm-gold outlines mark the position immediately before each
 attribute's own sentence.
 
-![P-whole position heatmap](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_whole_heatmaps.png)
+![P-whole position heatmap](results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_p_whole_heatmaps.png)
 
 <div align="center">
-  <img src="results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_whole_probe_table.png" alt="Q-whole results" width="64%" />
+  <img src="results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_q_whole_probe_table.png" alt="Q-whole results" width="64%" />
 </div>
 
 ### 🔬 Why does the first token transfer but the complete value does not?
@@ -477,7 +477,7 @@ For P0 through P5, the values are 0, 1/3, 3/5, 4/5, 14/15, and 1.
 | Company | 45.06% | 94.59% | 0.311 pp | **0.99968** |
 | Company city | 48.44% | 99.72% | 0.097 pp | **0.99997** |
 
-![Company and company-city position fit](results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/company_pair_position_fit.png)
+![Company and company-city position fit](results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit/company_pair_position_fit.png)
 
 The exposure model reconstructs all six positions within 0.1–0.3 percentage points. The two
 readouts rise when either side of the relation is already present in the prefix, rather than merely
@@ -514,7 +514,7 @@ $$
 All 12 layer aggregates are positive. The largest DiD is **0.676** at layer 1, and the effect is
 strongest in the first four layers.
 
-![Attribute-by-layer route branching DiD](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png)
+![Attribute-by-layer route branching DiD](results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png)
 
 Among examples that share `t1`, different `t2` values lose more route overlap than the matched
 same-`t2` control. Thus, in these error cases, expert selection depends on the continuation token.
@@ -545,63 +545,80 @@ prediction chain.
 
 #### `single`
 
-![Single oracle-first-token P-whole](results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
+![Single oracle-first-token P-whole](results/probes/synbios_moe/single/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
 
 #### `multi5_permute`
 
-![Multi5 oracle-first-token P-whole](results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.png)
+![Multi5 oracle-first-token P-whole](results/probes/synbios_moe/multi5_permute/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.png)
 
-### 🧩 From the observations to the mechanism
+### 🧩 Attribute-token retrieval structure
 
-The experiments now give the following sequence:
+The three diagnostics fill in different parts of the same retrieval process. P/Q probes locate the
+states from which a fact can be read. Route DiD shows that, after examples share `t1`, different
+`t2` continuations take different top-2 routes. Finally, supplying the exact oracle `t1` restores
+whole-value readout: on `single`, the recovery appears at the attribute's own source position; on
+`multi5_permute`, it extends across the full P-position matrix.
 
-1. Near-perfect cloze recall rules out failed source memorization.
-2. P-first and Q-first show that rewriting and field permutation make each attribute's first token
-   readable from the name; fixed-order training leaves it tied to the source position.
-3. Q-whole remains low even though its training accuracy is high, so the missing held-out readout is
-   not explained by an unfitted head.
-4. Route DiD shows that examples sharing `t1` select different experts when `t2` differs.
-5. The final oracle intervention restores P-whole accuracy at the expected `single` positions and
-   across the augmented matrix, including 95.62% at P0.
-
-The two probe targets separate cleanly. A Q-first head can recover `t1` from the augmented name
-state, while a separately trained Q-whole head cannot transfer the complete value nearly as well.
-After exact `t1` is added to the tested P prefixes, a fresh P-whole head recovers almost all of the
-value. Meanwhile, continuations that differ at `t2` select different top-2 routes.
+Together, the results support the following knowledge-retrieval structure:
 
 ```text
-name-only state ── Q-first probe ──> t1
-exact t1 → exact t2 ── route capture ──> token-dependent top-2 routes
-biography prefix + oracle t1 ── fresh P-whole probe ──> complete value
+single:
+name → fixed biography position → attᵢ: t₁ → t₂ → …
+
+augmentation (`multi5_permute`):
+                  ┌→ att₁: t₁ → t₂ → …
+                  ├→ att₂: t₁ → t₂ → …
+           name ──┼→ att₃: t₁ → t₂ → …
+                  ├→ …
+                  └→ attᵢ: t₁ → t₂ → …
 ```
 
-**For this MoE and dataset, factual readout proceeds in stages. Augmentation exposes the first
-attribute token at the name state. After that token is supplied to a biography prefix, the complete
-value becomes linearly readable, and different continuations are accompanied by different expert
-routes.** The experiments observe readout and routing. They do not place a fact inside one expert.
+In `single`, each attribute remains easiest to recover at its fixed position in the biography. With
+rewrites and field permutation, the name acquires a direct entry to the first token of every
+attribute. The rest of the value is then recovered conditionally: once `t1` is present, the next
+token changes the route through the MoE.
 
-The comparison with the published dense model concerns linear readout, not a matched architectural
-ablation. The dense reference reports high whole-value accuracy from the name state; the MoE tested
-here does not. A matched dense backbone, additional seeds, and an intervention driven by predicted
-rather than oracle `t1` would be required to attribute that difference specifically to sparsity or
-routing.
+This is also where the result differs from the published dense reference. Its augmented name state
+makes complete attribute values highly readable with one linear head. In this MoE, Q-first reaches
+**98.79%**, but Q-whole reaches only **33.15%**; whole-value readout returns only after the exact
+first token is supplied. The MoE result therefore looks less like one flat name-to-value direction
+and more like an attribute entry followed by token-conditioned continuation. The arrows describe
+that measured retrieval layout—not literal memory pointers, and not a claim that one expert stores
+one fact.
 
-### 🧬 What this suggests for pretraining
+### 🧬 Pretraining implication: teach components, not only templates
 
-The data comparison changes only presentation: the people, facts, model, optimizer, and token budget
-are matched. Nevertheless, fixed-order biographies and rewritten, permuted biographies produce
-different access patterns. Repetition alone is sufficient for memorization. Variation makes the
-first token readable before its original source position.
+The two models see the same people and facts under the same optimizer and token budget. What changes
+is how those facts are presented. Fixed-order repetition is enough to memorize the biographies, but
+rewriting and permutation make each attribute independently reachable from the name. The data
+augmentation changes the access structure, not merely the final recall score.
 
-The effect stops at a meaningful boundary: Q-first reaches 98.79%, while Q-whole remains at 33.15%.
-Augmentation changes how retrieval begins, but it does not make the complete value uniformly
-readable from the name.
+The same issue appears in ordinary pretraining data. Suppose a code corpus repeatedly presents only
+one fixed composition:
 
-The broader pretraining hypothesis is: **information that must later be selected, continued, or
-recombined independently should appear across varied contexts and orders during pretraining.** In
-this experiment, that variation makes the first token of each attribute readable from the name
-across people; later tokens still depend on the continuation. Natural corpora and larger models are
-the next test of this hypothesis.
+```python
+value = normalize(parse(load(path)))
+```
+
+The model may learn that sequence without making `load`, `parse`, and `normalize` equally easy to
+invoke or recombine. If those operations must later be used separately, the corpus should also show
+their intermediate results, substitutions, and new compositions:
+
+```python
+raw = load(path)
+record = parse(raw)
+value = normalize(record)
+
+preview = parse(buffer)
+score = normalize(measurement)
+```
+
+**A component that must be selected or recombined later should not appear only inside one repeated
+end-to-end template.** In the SynBioS experiment, varied wording and field order create direct
+name-to-attribute entries; the route analysis then shows that later tokens still follow
+continuation-dependent paths. This is a concrete result for the controlled corpus and model studied
+here. Whether the same structure holds in larger models and natural corpora remains an empirical
+question.
 
 <a id="quick-start"></a>
 
@@ -649,14 +666,13 @@ Large mutable artifacts live on the data disk; Git stores compact, auditable evi
 artifacts/ → /data/mini-train-sys/artifacts/   datasets, checkpoints, logs, raw runs
 
 results/                                       Git-safe evidence
-├── benchmarks/                               raw cases, aggregates, figures
-├── datasets/                                 manifests, lineage, checksums
-├── formal_runs/                              metrics, events, summaries
-├── logs/                                     benchmark, experiment, validation logs
-├── notebooks/                                executed benchmark notebooks
-├── tensorboard/index.csv                     TensorBoard ownership index
+├── pretraining/                              datasets, runs, checkpoint metadata
+├── cloze/                                    source-recall validation
+├── benchmarks/                               kernels, scaling, capacity, notebooks
+├── probes/                                   P/Q runs, diagnostics, comparisons
+├── catalog/studies/                          cross-stage experiment indexes
+├── catalog/tensorboard/index.csv             TensorBoard ownership index
 ├── catalog/artifacts.json                    exported-file catalog
-├── catalog/retention.json                    retained large-artifact catalog
 └── MANIFEST.sha256                           snapshot integrity
 
 reports/                                       long-form engineering and research reports
@@ -666,18 +682,17 @@ Raw biographies, token caches, model weights, optimizer/DCP shards, and large pe
 records remain under `/data`. Git records their logical location, size, category, retention state,
 and available hashes.
 
-After every benchmark or validation cycle:
+After every formal run or benchmark:
 
 ```bash
-bash scripts/bash/export_test_results.sh
+bash scripts/bash/export_results.sh
 python scripts/build_results_manifest.py --results results --check
 ```
 
-Cross-experiment headline metrics live in
-[`results/BENCHMARK_SUMMARY.md`](results/BENCHMARK_SUMMARY.md). The formal SynBioS
-config-to-result chain is recorded in
-[`results/formal_runs/synbios_moe/study_index.json`](results/formal_runs/synbios_moe/study_index.json);
-retained runtime logs are indexed under [`results/logs/`](results/logs/).
+Cross-experiment headline metrics live in [`results/SUMMARY.md`](results/SUMMARY.md). The formal
+SynBioS config-to-result chain is recorded in
+[`results/catalog/studies/synbios_moe.json`](results/catalog/studies/synbios_moe.json);
+each runtime log now stays under the stage that produced it.
 
 <a id="project-structure"></a>
 
@@ -695,7 +710,6 @@ minitrain/
 experiments/       SynBioS data generation, cloze evaluation, probes, route analysis
 configs/           composable model/data/strategy/hardware/run YAML
 scripts/           training, benchmarking, export, and server entry points
-tests/             automated correctness and regression checks
 benchmarks/        operator and distributed performance workflows
 examples/          small end-to-end walkthrough notebooks
 reports/           engineering and experiment reports

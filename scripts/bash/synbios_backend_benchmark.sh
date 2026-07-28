@@ -67,7 +67,7 @@ python scripts/run_dist_bench.py present-backend \
   --validation "$FIXED_OUTPUT/backend_validation.json" \
   --output "$FIXED_OUTPUT/presentation"
 
-bash scripts/bash/export_test_results.sh
+bash scripts/bash/export_results.sh
 echo "common_fixed_batch=$COMMON_BATCH"
 echo "fixed_workload=$FIXED_OUTPUT"
 echo "fixed_space=$CAPACITY_OUTPUT"

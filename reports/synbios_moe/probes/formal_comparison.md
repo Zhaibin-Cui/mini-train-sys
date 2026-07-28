@@ -83,7 +83,7 @@ validation。其作用是排除“multi 的 probe 较弱只是因为 backbone �
 
 ### 4.2 P-probe first token：核心机制复刻成功
 
-![Formal P-first heatmaps](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_first_heatmaps.png)
+![Formal P-first heatmaps](../../../results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_p_first_heatmaps.png)
 
 | 正式端点 | `single` | `multi5_permute` | Δ |
 |---|---:|---:|---:|
@@ -97,7 +97,7 @@ augmentation 把 first-token 信息从“依赖已读 biography 上下文”转�
 
 ### 4.3 Q-probe first token：name-only 表示的主结果复刻成功
 
-![Formal Q table](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_q_probe_table.png)
+![Formal Q table](../../../results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_q_probe_table.png)
 
 | Q-first | Birth month | Birth city | University | Major | Company | Company city | Macro |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -111,7 +111,7 @@ name-to-attribute 近线性表示。
 
 ### 4.4 Whole attribute：提升真实，但未复刻原论文的高准确率
 
-![Formal P-whole heatmaps](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_whole_heatmaps.png)
+![Formal P-whole heatmaps](../../../results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_p_whole_heatmaps.png)
 
 | Whole endpoint（5 属性 macro） | `single` | `multi5_permute` | Δ |
 |---|---:|---:|---:|
@@ -147,22 +147,22 @@ first-token 和 whole-attribute，因此不能用 first 的成功替代 whole �
 ## 5. 支持产物
 
 - Canonical machine summary：
-  [`summary.json`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/summary.json)
+  [`summary.json`](../../../results/probes/synbios_moe/comparisons/formal_20260724/summary.json)
 - Run identity 与 lineage：
-  [`run_identity.json`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/run_identity.json)
+  [`run_identity.json`](../../../results/probes/synbios_moe/comparisons/formal_20260724/run_identity.json)
 - 154 个 train/validation position-level 指标：
-  [`formal_probe_metrics.csv`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/formal_probe_metrics.csv)
+  [`formal_probe_metrics.csv`](../../../results/probes/synbios_moe/comparisons/formal_20260724/formal_probe_metrics.csv)
 - Headline endpoints：
-  [`headline_metrics.json`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/headline_metrics.json)
+  [`headline_metrics.json`](../../../results/probes/synbios_moe/comparisons/formal_20260724/headline_metrics.json)
 - 原论文 Q 参考值及来源：
-  [`allen_zhu_q_reference.json`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/allen_zhu_q_reference.json)
+  [`allen_zhu_q_reference.json`](../../../results/probes/synbios_moe/comparisons/formal_20260724/allen_zhu_q_reference.json)
 - 四张主图（PNG + vector PDF）：
-  [`figures/`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/)
+  [`figures/`](../../../results/probes/synbios_moe/comparisons/formal_20260724/figures/)
 - Formal pipeline：
   `artifacts/synbios_moe/results/{single,multi5_permute}_fsdp_4gpu/probe_pipeline/formal/`
 - 运行与失败历史：the retained run records。
 
-![Formal study overview](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_study_overview.png)
+![Formal study overview](../../../results/probes/synbios_moe/comparisons/formal_20260724/figures/formal_study_overview.png)
 
 ## 6. 解释
 

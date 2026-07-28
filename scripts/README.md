@@ -36,7 +36,7 @@ oracle 结果、五属性×12层 route contrast 的统一图表；canonical 命�
 `audit-synbios-repository` 会从 raw manifests 一直校验到正式 checkpoint、cloze/probe/
 diagnostic 身份与运行配置，同时生成 dataset lineage、path contract 和 log catalog。
 它只做 CPU/storage 校验，不训练或推理；规范输出见
-[`../results/formal_runs/synbios_moe/results/repository_audit_20260724/summary.json`](../results/formal_runs/synbios_moe/results/repository_audit_20260724/summary.json)。
+[`../results/catalog/audits/repository_20260724/summary.json`](../results/catalog/audits/repository_20260724/summary.json)。
 
 正式全流程入口有意要求 `CONFIRM_FULL_EXPERIMENT=1`，避免误触发两次大模型训练。它仍然
 逐个调用可独立复跑的预训练与 probe 入口，不隐藏 smoke/pilot/formal 门禁。
@@ -47,6 +47,6 @@ SynBioS 的预训练、checkpoint 恢复、分阶段 Probe、GPU 分配和完整
 服务器首次安装、PyTorch CUDA wheel、NCCL/BF16 验收和正式实验前检查见
 [`../docs/guides/server_setup.md`](../docs/guides/server_setup.md)。
 
-所有 Git-safe 结果通过 `bash/export_test_results.sh` 导出；日志分类、executed notebook、
+所有 Git-safe 结果通过 `bash/export_results.sh` 导出；日志分类、executed notebook、
 TensorBoard 索引和 server-only retention 规则见
 [`../docs/guides/artifact_layout.md`](../docs/guides/artifact_layout.md)。

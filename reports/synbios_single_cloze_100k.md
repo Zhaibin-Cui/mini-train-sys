@@ -98,10 +98,10 @@ was already 100%, and every fuzzy score was consequently 1.0.
 | Four-GPU parallel wall time | 419.48 s |
 
 - Aggregate JSON:
-  `results/formal_runs/synbios_moe/results/single_cloze_eval/full_100k/summary.json`
+  `results/cloze/synbios_moe/single/full_100k/summary.json`
 - Shards:
-  `results/formal_runs/synbios_moe/results/single_cloze_eval/full_100k/shard_{0,1,2,3}.json`
+  `results/cloze/synbios_moe/single/full_100k/shard_{0,1,2,3}.json`
 - Exact checkpoint:
-  `results/formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`
+  `results/pretraining/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`
 - Training events:
-  `results/formal_runs/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-045620/events.jsonl`
+  `results/pretraining/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-045620/events.jsonl`

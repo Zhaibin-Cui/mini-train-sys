@@ -1,1 +1,0 @@
-"""Fast, hardware-independent checks."""

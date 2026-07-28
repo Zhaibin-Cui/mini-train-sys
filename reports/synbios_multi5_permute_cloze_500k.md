@@ -129,10 +129,10 @@ uniform random permutation of all 500,000 documents.
 | Company city | 499,975 | 99.9950% |
 
 - Aggregate JSON:
-  `results/formal_runs/synbios_moe/results/multi5_permute_cloze_eval/full_500k/summary.json`
+  `results/cloze/synbios_moe/multi5_permute/full_500k/summary.json`
 - Shards:
-  `results/formal_runs/synbios_moe/results/multi5_permute_cloze_eval/full_500k/shard_{0,1,2,3}.json`
+  `results/cloze/synbios_moe/multi5_permute/full_500k/shard_{0,1,2,3}.json`
 - Exact checkpoint:
-  `results/formal_runs/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388/`
+  `results/pretraining/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000108_step_000017388/`
 - Training events:
-  `results/formal_runs/synbios_moe/runs/synbios_moe_multi5_permute_fsdp_4gpu/20260721-144408/events.jsonl`
+  `results/pretraining/synbios_moe/runs/synbios_moe_multi5_permute_fsdp_4gpu/20260721-144408/events.jsonl`

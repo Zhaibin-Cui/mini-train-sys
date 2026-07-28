@@ -1,7 +1,6 @@
 """Audit SynBioS paths, lineage, and retained evidence."""
 
 
-from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -9,13 +8,11 @@ import yaml
 from experiments.synbios_moe.artifact_io import (
     read_json_object,
     sha256_file,
-    write_csv_atomic,
     write_json_atomic,
 )
 from experiments.synbios_moe.probes.comparison_report import load_formal_run, validate_matched_runs
 from experiments.synbios_moe.probes.dataset import validate_probe_cache
 from minitrain.runtime.config import load_yaml_dict
-from scripts.build_results_catalog import classify_log as export_log_category
 
 
 EXPECTED_PROBE_RUNTIME = {
@@ -186,46 +183,6 @@ def _validate_config_paths(repo_root: Path, formal_runs) -> dict[str, object]:
     }
 
 
-def classify_log(name: str) -> str:
-    if name.startswith(("probe_", "formal_probe_")):
-        return "probe"
-    if "cloze" in name:
-        return "pretraining_validation"
-    if "benchmark" in name or "capacity" in name or "scaling" in name:
-        return "benchmark"
-    if "formal" in name and "synbios_moe" in name:
-        return "pretraining"
-    if "prepare" in name:
-        return "dataset"
-    if "tensorboard" in name or "export" in name:
-        return "infrastructure"
-    return "engineering_validation"
-
-
-def _log_catalog(log_root: Path) -> list[dict[str, object]]:
-    rows = []
-    for path in sorted(log_root.glob("*")):
-        if not path.is_file():
-            continue
-        rows.append(
-            {
-                "category": classify_log(path.name),
-                "filename": path.name,
-                "bytes": path.stat().st_size,
-                "modified_utc": datetime.fromtimestamp(
-                    path.stat().st_mtime,
-                    tz=timezone.utc,
-                ).isoformat(),
-                "sha256": sha256_file(path),
-                "mounted_path": str(path.resolve()),
-                "git_safe_path": (
-                    f"results/logs/{export_log_category(path.name)}/{path.name}"
-                ),
-            }
-        )
-    return rows
-
-
 def build_repository_audit(
     *,
     repo_root: str | Path,
@@ -288,10 +245,8 @@ def build_repository_audit(
 
     output = Path(output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
-    log_rows = _log_catalog(artifacts / "logs")
     write_json_atomic(output / "dataset_lineage.json", lineages)
     write_json_atomic(output / "path_contract.json", configs)
-    write_csv_atomic(output / "log_catalog.csv", log_rows)
     checks = [
         "mounted_artifacts_symlink",
         "raw_dataset_file_sizes_and_hashes",
@@ -328,8 +283,6 @@ def build_repository_audit(
         "catalogs": {
             "dataset_lineage": "dataset_lineage.json",
             "path_contract": "path_contract.json",
-            "logs": "log_catalog.csv",
-            "log_count": len(log_rows),
         },
     }
     write_json_atomic(output / "summary.json", summary)

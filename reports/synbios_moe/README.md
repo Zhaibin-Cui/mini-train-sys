@@ -23,12 +23,12 @@ gap with a path-dependent readout model.
 
 | Stage | Canonical report | Machine evidence |
 |---|---|---|
-| Dataset + pretraining | [README experiment setup](../../README.md#model-interpretability) | [`results/datasets/synbios_moe/`](../../results/datasets/synbios_moe/) |
-| Formal P/Q | [Formal comparison](probes/formal_comparison.md) | [`formal_probe_comparison_20260724/`](../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/) |
-| Company relation | [Quantitative fit](probes/company_pair_position_fit.md) | [`company_pair_position_fit/`](../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/) |
-| Route branching | [Layer analysis](probes/diagnostics/bad_case_routes.md) | [`diagnostics/report/`](../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/) |
+| Dataset + pretraining | [README experiment setup](../../README.md#model-interpretability) | [`results/pretraining/synbios_moe/datasets/`](../../results/pretraining/synbios_moe/datasets/) |
+| Formal P/Q | [Formal comparison](probes/formal_comparison.md) | [`formal_probe_comparison_20260724/`](../../results/probes/synbios_moe/comparisons/formal_20260724/) |
+| Company relation | [Quantitative fit](probes/company_pair_position_fit.md) | [`company_pair_position_fit/`](../../results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit/) |
+| Route branching | [Layer analysis](probes/diagnostics/bad_case_routes.md) | [`diagnostics/report/`](../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/) |
 | True-`t1` P-whole | [Single](probes/ground_truth_first_single_result.md) · [Multi5](probes/ground_truth_first_result.md) | Each formal diagnostic run root |
-| Source-text cloze | [Single](../synbios_single_cloze_100k.md) · [Multi5](../synbios_multi5_permute_cloze_500k.md) | `results/formal_runs/synbios_moe/results/*_cloze_eval/` |
+| Source-text cloze | [Single](../synbios_single_cloze_100k.md) · [Multi5](../synbios_multi5_permute_cloze_500k.md) | [`results/cloze/synbios_moe/`](../../results/cloze/synbios_moe/) |
 
 ## Validity labels
 
@@ -40,5 +40,5 @@ gap with a path-dependent readout model.
   database.
 
 Run identity, exact commands, checkpoints, and result paths are linked by the
-[formal study index](../../results/formal_runs/synbios_moe/study_index.json). Dataset/cache lineage
-is under [`results/datasets/synbios_moe/`](../../results/datasets/synbios_moe/).
+[formal study index](../../results/catalog/studies/synbios_moe.json). Dataset/cache lineage
+is under [`results/pretraining/synbios_moe/datasets/`](../../results/pretraining/synbios_moe/datasets/).

@@ -176,10 +176,10 @@ encode(" " + value)
 
 ## 机器结果
 
-- [Summary JSON](../../../results/datasets/synbios_moe/attribute_token_distribution/summary.json)
-- [Attribute summary](../../../results/datasets/synbios_moe/attribute_token_distribution/attribute_summary.csv)
-- [Length distribution](../../../results/datasets/synbios_moe/attribute_token_distribution/length_distribution.csv)
-- [Full position-token distribution](../../../results/datasets/synbios_moe/attribute_token_distribution/position_token_distribution.csv)
+- [Summary JSON](../../../results/probes/synbios_moe/data/attribute_token_distribution/summary.json)
+- [Attribute summary](../../../results/probes/synbios_moe/data/attribute_token_distribution/attribute_summary.csv)
+- [Length distribution](../../../results/probes/synbios_moe/data/attribute_token_distribution/length_distribution.csv)
+- [Full position-token distribution](../../../results/probes/synbios_moe/data/attribute_token_distribution/position_token_distribution.csv)
 
 重建命令：
 
@@ -187,5 +187,5 @@ encode(" " + value)
 python -m experiments.synbios_moe.pretraining.token_statistics \
   --num-people 100000 \
   --seed 1337 \
-  --output results/datasets/synbios_moe/attribute_token_distribution
+  --output results/probes/synbios_moe/data/attribute_token_distribution
 ```

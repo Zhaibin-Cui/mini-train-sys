@@ -84,7 +84,7 @@ df -h . artifacts
 ```text
 系统盘/$HOME/src/mini-train-sys/
 ├── .venv/
-├── configs/ minitrain/ experiments/ scripts/ tests/ benchmarks/ examples/ docs/
+├── configs/ minitrain/ experiments/ scripts/ benchmarks/ examples/ docs/
 ├── .minitrain-storage.env
 └── artifacts -> /data/mini-train-sys/artifacts
 

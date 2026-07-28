@@ -50,7 +50,6 @@ docs/
 - [runtime](../minitrain/runtime/README.md)
 - [train](../minitrain/train/README.md)
 - [scripts](../scripts/README.md)
-- [tests](../tests/README.md)
 - [benchmarks](../benchmarks/README.md)
 - [examples](../examples/README.md)
 - [reports](../reports/README.md)

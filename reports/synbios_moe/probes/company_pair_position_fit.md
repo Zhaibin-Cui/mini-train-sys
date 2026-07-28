@@ -10,7 +10,7 @@
 - 看见 company-city 后，company 也明显更容易恢复；
 - 反向恢复的饱和值较低，与多个 company 共用同一 city 的数据歧义一致。
 
-![Company pair position fit](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/company_pair_position_fit.png)
+![Company pair position fit](../../../results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit/company_pair_position_fit.png)
 
 ## 数据与双字段模型
 
@@ -101,15 +101,15 @@ formal checkpoint 上按随机字段顺序输出四组条件准确率：`none`�
 
 ## 可复现产物
 
-- [Machine summary](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/summary.json)
-- [Fit metrics](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/fit_metrics.csv)
-- [PNG figure](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/company_pair_position_fit.png)
-- [Vector PDF](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit/company_pair_position_fit.pdf)
+- [Machine summary](../../../results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit/summary.json)
+- [Fit metrics](../../../results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit/fit_metrics.csv)
+- [PNG figure](../../../results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit/company_pair_position_fit.png)
+- [Vector PDF](../../../results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit/company_pair_position_fit.pdf)
 
 重建命令：
 
 ```bash
 python -m experiments.synbios_moe.mechanisms.company_relation \
-  --input results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/formal_probe_metrics.csv \
-  --output results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/company_pair_position_fit
+  --input results/probes/synbios_moe/comparisons/formal_20260724/formal_probe_metrics.csv \
+  --output results/probes/synbios_moe/comparisons/formal_20260724/company_pair_position_fit
 ```

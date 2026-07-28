@@ -48,6 +48,15 @@ def _same_path(left: object, right: object) -> bool:
     if marker in left_text and marker in right_text:
         left_suffix = left_text.split(marker, 1)[1]
         right_suffix = right_text.split(marker, 1)[1]
+        prefixes = {
+            "results/single_fsdp_4gpu/probe_pipeline/": "single/",
+            "results/multi5_permute_fsdp_4gpu/probe_pipeline/": "multi5_permute/",
+        }
+        for prefix, replacement in prefixes.items():
+            if left_suffix.startswith(prefix):
+                left_suffix = replacement + left_suffix[len(prefix) :]
+            if right_suffix.startswith(prefix):
+                right_suffix = replacement + right_suffix[len(prefix) :]
         return left_suffix.casefold() == right_suffix.casefold()
     return False
 

@@ -67,11 +67,27 @@ def _baseline_metrics(
     baseline_path = Path(str(reference["probe_dir"])).parent / "summary" / "summary.json"
     if not baseline_path.is_file():
         normalized = str(baseline_path).replace("\\", "/")
-        marker = "/synbios_moe/"
+        marker = "/synbios_moe/results/"
         if marker in normalized:
             repository = Path(__file__).resolve().parents[3]
             suffix = normalized.split(marker, 1)[1]
-            exported = repository / "results" / "formal_runs" / "synbios_moe" / suffix
+            parts = Path(suffix).parts
+            condition_map = {
+                "single_fsdp_4gpu": "single",
+                "multi5_permute_fsdp_4gpu": "multi5_permute",
+            }
+            condition = condition_map.get(parts[0]) if parts else None
+            if condition and parts[1:2] == ("probe_pipeline",):
+                exported = (
+                    repository
+                    / "results"
+                    / "probes"
+                    / "synbios_moe"
+                    / condition
+                    / Path(*parts[2:])
+                )
+            else:
+                exported = Path()
             if exported.is_file():
                 baseline_path = exported
     if not baseline_path.is_file():

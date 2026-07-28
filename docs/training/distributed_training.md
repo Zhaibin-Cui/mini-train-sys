@@ -161,27 +161,15 @@ NPROC=8 bash scripts/bash/synbios_moe.sh multi5_permute fsdp
 开始。`FORCE_PREPARE=1` 会重新生成数据，已有 checkpoint 时应先人工归档，避免把
 旧模型/Adam 状态恢复到不同语料。
 
-## 7. 服务器验收
+## 7. 正式服务器运行
 
-代码合入前的本地门槛：Python 静态检查、配置/auto-wrap/batch-scaling 单测、单进程
-训练、单进程 DCP save/load。Linux CI 还会执行二进程 Gloo DDP → single reshard 测试。
+正式训练使用与实验对应的 YAML 配置和 `scripts/bash/synbios_moe.sh` 启动。分布式容量、
+吞吐和恢复能力通过正式 benchmark 工作流记录，不保留独立的仓库维护测试。
 
-真实多卡服务器必须执行：
-
-```bash
-# 两步 FSDP + DCP 保存（固定服务器 launcher 支持 1/4/8 卡）
-NPROC=4 CONFIG=configs/smoke/fsdp_cuda.yaml \
-  MODEL_CONFIG=configs/model_debug_dense.yaml bash scripts/bash/distributed.sh fsdp
-
-# 从刚才的完整 checkpoint 恢复，再跑两步
-NPROC=4 CONFIG=configs/smoke/fsdp_cuda.yaml RESUME=latest \
-  MODEL_CONFIG=configs/model_debug_dense.yaml bash scripts/bash/distributed.sh fsdp
-```
-
-验收项：所有 rank 均完成；模型中每个 `TransformerBlock` 都被独立 FSDP 包裹；
-checkpoint 有 `COMMITTED`、DCP metadata、每-rank RNG 和 `model.pt`；恢复后的 step/
-Adam/LR 连续；无 NCCL timeout、OOM 或 rank-0-only collective hang。生产长跑前还应在
-目标 GPU 上记录峰值显存与 tokens/s，再决定 prefetch 和 activation checkpointing。
+运行命令、结果目录和恢复方式见
+[`../../scripts/synbios_moe_runbook.md`](../../scripts/synbios_moe_runbook.md)；FSDP scaling
+与后端容量测量见
+[`../benchmarks/distributed_benchmark.md`](../benchmarks/distributed_benchmark.md)。
 
 实现基于 PyTorch 官方 FSDP 与 Distributed Checkpoint 接口：
 

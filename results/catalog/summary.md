@@ -6,32 +6,28 @@ This is the deterministic index of the Git-safe server snapshot. Paths are relat
 | Category | Scope | Files | Size |
 |---|---|---:|---:|
 | `benchmarks` | `distributed_training` | 370 | 2.71 MiB |
+| `benchmarks` | `executed_notebooks` | 5 | 5.39 MiB |
 | `benchmarks` | `kernels` | 224 | 8.99 MiB |
+| `benchmarks` | `logs` | 29 | 332.47 KiB |
 | `benchmarks` | `probes` | 89 | 1.06 MiB |
+| `catalog` | `audits` | 3 | 10.79 KiB |
 | `catalog` | `export_audit.json` | 1 | 791.00 B |
-| `datasets` | `README.md` | 1 | 445.00 B |
-| `datasets` | `synbios_moe` | 17 | 122.01 KiB |
+| `catalog` | `studies` | 1 | 3.57 KiB |
+| `catalog` | `tensorboard` | 1 | 686.00 B |
+| `cloze` | `index` | 1 | 677.00 B |
+| `cloze` | `synbios_moe` | 40 | 827.17 KiB |
 | `environment` | `inventory` | 1 | 2.63 KiB |
-| `formal_runs` | `synbios_moe` | 1,007 | 160.13 MiB |
-| `logs` | `README.md` | 1 | 684.00 B |
-| `logs` | `benchmarks` | 28 | 328.22 KiB |
-| `logs` | `experiments` | 64 | 4.70 MiB |
-| `logs` | `maintenance` | 23 | 32.28 KiB |
-| `logs` | `validation` | 7 | 17.40 KiB |
-| `notebooks` | `executed_benchmarks` | 5 | 5.39 MiB |
-| `root` | `index` | 2 | 8.76 KiB |
-| `smoke` | `checkpoints` | 4 | 33.31 KiB |
-| `smoke` | `distributed_worker_fix.json` | 1 | 1.23 KiB |
-| `smoke` | `local_runs` | 2 | 6.15 KiB |
-| `smoke` | `single_worker.json` | 1 | 1.24 KiB |
-| `tensorboard` | `index` | 1 | 622.00 B |
-| `validation` | `synbios_moe` | 22 | 1.54 MiB |
+| `pretraining` | `index` | 1 | 684.00 B |
+| `pretraining` | `synbios_moe` | 66 | 71.10 MiB |
+| `probes` | `index` | 1 | 647.00 B |
+| `probes` | `synbios_moe` | 500 | 64.33 MiB |
+| `root` | `index` | 2 | 8.23 KiB |
 
 ## TensorBoard
 
-- Event files: **264**
-- Total size: **71.36 MiB**
-- Machine index: [`../tensorboard/index.csv`](../tensorboard/index.csv)
+- Event files: **155**
+- Total size: **60.31 MiB**
+- Machine index: [`tensorboard/index.csv`](tensorboard/index.csv)
 
 ## Server-only retention
 
