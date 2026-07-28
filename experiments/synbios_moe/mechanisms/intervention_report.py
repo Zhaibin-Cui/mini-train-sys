@@ -1,44 +1,22 @@
 """Summarize the oracle-first-token whole-value intervention."""
 
 
-import csv
-import hashlib
 import json
 from pathlib import Path
 from typing import Sequence
+
+from experiments.synbios_moe.artifact_io import (
+    sha256_file,
+    write_csv_atomic,
+    write_json_atomic,
+    write_text_atomic,
+)
 
 
 KINDS = ("p",)
 ATTRIBUTES = ("birth_city", "university", "major", "company", "company_city")
 POSITION_LABELS = ("birth date", "birth city", "university", "major", "company", "company city")
 PROTOCOL = "ground_truth_first_whole_rank_matched_v1"
-
-
-def _atomic_json(path: Path, payload: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
-
-
-def _atomic_csv(path: Path, rows: Sequence[dict[str, object]]) -> None:
-    if not rows:
-        raise ValueError("cannot write an empty ground-truth-first-token summary")
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
-    temporary.replace(path)
-
-
-def _atomic_text(path: Path, text: str) -> None:
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(text.rstrip() + "\n", encoding="utf-8")
-    temporary.replace(path)
 
 
 def _load_tasks(run_dir: Path) -> dict[tuple[str, str], dict[str, object]]:
@@ -87,6 +65,15 @@ def _baseline_metrics(
 ) -> tuple[dict[tuple[str, str, int], float], Path | None]:
     reference = next(iter(tasks.values()))
     baseline_path = Path(str(reference["probe_dir"])).parent / "summary" / "summary.json"
+    if not baseline_path.is_file():
+        normalized = str(baseline_path).replace("\\", "/")
+        marker = "/synbios_moe/"
+        if marker in normalized:
+            repository = Path(__file__).resolve().parents[3]
+            suffix = normalized.split(marker, 1)[1]
+            exported = repository / "results" / "formal_runs" / "synbios_moe" / suffix
+            if exported.is_file():
+                baseline_path = exported
     if not baseline_path.is_file():
         return {}, None
     payload = json.loads(baseline_path.read_text(encoding="utf-8"))
@@ -370,7 +357,7 @@ Use these complete held-out curves and tables to decide whether the qualitative 
 contrast is stable. If only P remains optimization-limited, extend P alone with the same
 protocol and report the extension separately; do not silently replace this pilot-budget result.
 """
-    _atomic_text(output / "README.md", text)
+    write_text_atomic(output / "README.md", text)
 
 
 def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]:
@@ -380,7 +367,7 @@ def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]
     tasks = _load_tasks(output)
     baseline, baseline_path = _baseline_metrics(tasks)
     rows = _rows(tasks, baseline)
-    _atomic_csv(output / "summary.csv", rows)
+    write_csv_atomic(output / "summary.csv", rows)
     reference = next(iter(tasks.values()))
     condition = _condition(reference)
     summary = {
@@ -401,7 +388,7 @@ def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]
         "baseline": (
             {
                 "summary": str(baseline_path.resolve()),
-                "sha256": hashlib.sha256(baseline_path.read_bytes()).hexdigest(),
+                "sha256": sha256_file(baseline_path),
                 "protocol": "original_formal_whole_probe",
             }
             if baseline_path is not None
@@ -410,7 +397,7 @@ def summarize_ground_truth_first_whole(run_dir: str | Path) -> dict[str, object]
         "rows": rows,
         "figures": _plot(rows, output, condition),
     }
-    _atomic_json(output / "summary.json", summary)
+    write_json_atomic(output / "summary.json", summary)
     _write_report(
         output,
         rows=rows,

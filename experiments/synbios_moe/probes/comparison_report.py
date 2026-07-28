@@ -7,14 +7,20 @@ before producing comparison artifacts.
 """
 
 
-import csv
-import hashlib
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
 import numpy as np
+
+from experiments.synbios_moe.artifact_io import (
+    read_json_object,
+    resolve_hashed_file,
+    save_figure_pair,
+    sha256_file,
+    write_csv_atomic,
+    write_json_atomic,
+)
 
 
 ATTRIBUTES = (
@@ -79,21 +85,6 @@ class FormalRun:
         return str(files["profiles.jsonl"]["sha256"])
 
 
-def _read_json(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError(f"expected JSON object: {path}")
-    return payload
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
 def _task_files(directory: Path) -> dict[str, Path]:
     return {path.stem: path for path in directory.glob("*.json") if path.stem in EXPECTED_TASKS}
 
@@ -102,7 +93,7 @@ def load_formal_run(condition: str, root: str | Path) -> FormalRun:
     """Load and strictly validate one completed 22-head formal run."""
 
     root = Path(root).resolve()
-    pipeline = _read_json(root / "pipeline.json")
+    pipeline = read_json_object(root / "pipeline.json")
     if pipeline.get("status") != "completed" or pipeline.get("stage") != "formal":
         raise ValueError(f"{root} is not a completed formal pipeline")
     identity = pipeline.get("identity")
@@ -116,16 +107,22 @@ def load_formal_run(condition: str, root: str | Path) -> FormalRun:
     if set(item.get("status") for item in pipeline.get("validation", ())) != {"completed"}:
         raise ValueError(f"{root} has incomplete validation tasks")
 
-    data_root = Path(str(identity["data"])).resolve()
-    cache_root = Path(str(identity["probe_cache"])).resolve()
-    data_manifest_path = data_root / "manifest.json"
-    cache_manifest_path = cache_root / "manifest.json"
-    if _sha256(data_manifest_path) != identity["data_manifest_sha256"]:
-        raise ValueError(f"{condition} data manifest SHA256 does not match pipeline identity")
-    if _sha256(cache_manifest_path) != identity["probe_cache_manifest_sha256"]:
-        raise ValueError(f"{condition} cache manifest SHA256 does not match pipeline identity")
-    data_manifest = _read_json(data_manifest_path)
-    cache_manifest = _read_json(cache_manifest_path)
+    repository = Path(__file__).resolve().parents[3]
+    exported_data = repository / "results" / "datasets" / "synbios_moe" / condition
+    data_manifest_path = resolve_hashed_file(
+        Path(str(identity["data"])) / "manifest.json",
+        str(identity["data_manifest_sha256"]),
+        fallbacks=(exported_data / "manifest.json",),
+        label=f"{condition} dataset manifest",
+    )
+    cache_manifest_path = resolve_hashed_file(
+        Path(str(identity["probe_cache"])) / "manifest.json",
+        str(identity["probe_cache_manifest_sha256"]),
+        fallbacks=(exported_data / "probe_cache" / "manifest.json",),
+        label=f"{condition} probe-cache manifest",
+    )
+    data_manifest = read_json_object(data_manifest_path)
+    cache_manifest = read_json_object(cache_manifest_path)
 
     validation_paths = _task_files(root / "validation")
     training_paths = _task_files(root / "training")
@@ -137,8 +134,8 @@ def load_formal_run(condition: str, root: str | Path) -> FormalRun:
     training: dict[str, dict[str, object]] = {}
     checkpoint = Path(str(identity["checkpoint"])).resolve()
     for task in EXPECTED_TASKS:
-        validation_record = _read_json(validation_paths[task])
-        training_record = _read_json(training_paths[task])
+        validation_record = read_json_object(validation_paths[task])
+        training_record = read_json_object(training_paths[task])
         kind, remainder = task.split("_", 1)
         target = "whole" if remainder.endswith("_whole") else "first"
         attribute = remainder.removesuffix(f"_{target}")
@@ -320,24 +317,6 @@ def headline_metrics(rows: Sequence[dict[str, object]]) -> dict[str, object]:
     return output
 
 
-def _atomic_json(path: Path, payload: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    temporary.replace(path)
-
-
-def _atomic_csv(path: Path, rows: Sequence[dict[str, object]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    columns = list(rows[0])
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns)
-        writer.writeheader()
-        writer.writerows(rows)
-    temporary.replace(path)
-
-
 def _paper_cmap():
     from matplotlib.colors import LinearSegmentedColormap
 
@@ -378,12 +357,6 @@ def _annotated_heatmap(
     for spine in axis.spines.values():
         spine.set_visible(False)
     return image
-
-
-def _save_figure(figure, destination: Path) -> None:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(destination.with_suffix(".png"), dpi=220, bbox_inches="tight", facecolor="white")
-    figure.savefig(destination.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
 
 
 def _outline_fixed_attribute_positions(axis) -> None:
@@ -460,7 +433,7 @@ def plot_p_heatmaps(
     colorbar = figure.colorbar(image, ax=axes, label="Accuracy (%)", fraction=0.025, pad=0.02)
     colorbar.ax.tick_params(labelsize=11)
     colorbar.set_label("Accuracy (%)", fontsize=12)
-    _save_figure(figure, destination)
+    save_figure_pair(figure, destination, dpi=220, facecolor="white")
     plt.close(figure)
 
 
@@ -498,7 +471,7 @@ def plot_q_table(rows: Sequence[dict[str, object]], *, target: str, destination:
         fontsize=19,
         fontweight="bold",
     )
-    _save_figure(figure, destination)
+    save_figure_pair(figure, destination, dpi=220, facecolor="white")
     plt.close(figure)
 
 
@@ -584,7 +557,7 @@ def plot_overview(
         fontsize=23,
         fontweight="bold",
     )
-    _save_figure(figure, destination)
+    save_figure_pair(figure, destination, dpi=220, facecolor="white")
     plt.close(figure)
 
 
@@ -604,8 +577,8 @@ def build_formal_report_artifacts(
     rows = tidy_rows((single, multi))
     metrics = headline_metrics(rows)
     cloze = {
-        "single": _read_json(Path(single_cloze).resolve()),
-        "multi5_permute": _read_json(Path(multi_cloze).resolve()),
+        "single": read_json_object(Path(single_cloze).resolve()),
+        "multi5_permute": read_json_object(Path(multi_cloze).resolve()),
     }
     for condition, run in (("single", single), ("multi5_permute", multi)):
         if (
@@ -618,9 +591,9 @@ def build_formal_report_artifacts(
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    _atomic_csv(output / "formal_probe_metrics.csv", rows)
-    _atomic_json(output / "headline_metrics.json", metrics)
-    _atomic_json(output / "allen_zhu_q_reference.json", ALLEN_ZHU_Q_REFERENCE)
+    write_csv_atomic(output / "formal_probe_metrics.csv", rows)
+    write_json_atomic(output / "headline_metrics.json", metrics)
+    write_json_atomic(output / "allen_zhu_q_reference.json", ALLEN_ZHU_Q_REFERENCE)
     identity = {
         "protocol": "synbios_moe_formal_comparison_v1",
         "comparison_status": "matched",
@@ -637,7 +610,7 @@ def build_formal_report_artifacts(
         "cloze": {
             condition: {
                 "path": str(Path(path).resolve()),
-                "sha256": _sha256(Path(path).resolve()),
+                "sha256": sha256_file(Path(path).resolve()),
                 "biographies": cloze[condition]["biographies"],
                 "fields": cloze[condition]["fields"],
                 "micro_field_accuracy": cloze[condition]["micro_field_accuracy"],
@@ -648,7 +621,7 @@ def build_formal_report_artifacts(
             )
         },
     }
-    _atomic_json(output / "run_identity.json", identity)
+    write_json_atomic(output / "run_identity.json", identity)
     figures = output / "figures"
     plot_p_heatmaps(
         rows,
@@ -674,5 +647,5 @@ def build_formal_report_artifacts(
             ),
         },
     }
-    _atomic_json(output / "summary.json", summary)
+    write_json_atomic(output / "summary.json", summary)
     return summary

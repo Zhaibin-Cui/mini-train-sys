@@ -19,6 +19,7 @@ import yaml
 from torch.utils.data import DataLoader
 from torch.torch_version import TorchVersion
 
+from experiments.synbios_moe.artifact_io import write_json_atomic
 from experiments.synbios_moe.audit import build_repository_audit
 from experiments.synbios_moe.mechanisms.comparison_report import (
     build_diagnostic_report_artifacts,
@@ -77,7 +78,6 @@ from experiments.synbios_moe.probes.pipeline import (
     resolve_devices,
     schedule_jobs,
     summarize_probe_results,
-    write_json_atomic,
 )
 from minitrain.data.documents import CleaningConfig
 from minitrain.data.preprocess import prepare_token_shards

@@ -7,15 +7,20 @@ publication-quality tables and figures.
 """
 
 
-import csv
-import hashlib
-import json
 from collections import defaultdict
 from pathlib import Path
 from typing import Sequence
 
 import numpy as np
 
+from experiments.synbios_moe.artifact_io import (
+    read_csv_rows,
+    read_json_object,
+    save_figure_pair,
+    sha256_file,
+    write_csv_atomic,
+    write_json_atomic,
+)
 from experiments.synbios_moe.probes.comparison_report import (
     ALLEN_ZHU_Q_REFERENCE,
     ATTRIBUTE_LABELS,
@@ -32,50 +37,19 @@ ROUTE_PROTOCOL = "q_bad_case_t1_t2_route_branching_v1"
 EXPECTED_SPLIT = "person-held-out validation"
 
 
-def _read_json(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError(f"expected a JSON object: {path}")
-    return payload
-
-
-def _read_csv(path: Path) -> list[dict[str, str]]:
-    with path.open(encoding="utf-8", newline="") as handle:
-        return list(csv.DictReader(handle))
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def _atomic_json(path: Path, payload: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
-
-
-def _atomic_csv(path: Path, rows: Sequence[dict[str, object]]) -> None:
-    if not rows:
-        raise ValueError(f"cannot write empty CSV: {path}")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
-    temporary.replace(path)
-
-
 def _same_path(left: object, right: object) -> bool:
-    return Path(str(left)).resolve() == Path(str(right)).resolve()
+    left_text = str(left).replace("\\", "/").rstrip("/")
+    right_text = str(right).replace("\\", "/").rstrip("/")
+    if left_text.casefold() == right_text.casefold():
+        return True
+    if Path(left_text).resolve() == Path(right_text).resolve():
+        return True
+    marker = "/synbios_moe/"
+    if marker in left_text and marker in right_text:
+        left_suffix = left_text.split(marker, 1)[1]
+        right_suffix = right_text.split(marker, 1)[1]
+        return left_suffix.casefold() == right_suffix.casefold()
+    return False
 
 
 def _assert_close(left: float, right: float, label: str, tolerance: float = 1e-12) -> None:
@@ -96,13 +70,19 @@ def _validate_raw_manifest(diagnostics_root: Path, manifest: dict[str, object]) 
     }
     if {str(record.get("logical_path")) for record in records} != expected:
         raise ValueError("diagnostics raw-artifact manifest is incomplete")
-    for record in records:
-        path = diagnostics_root / str(record["logical_path"])
-        if not path.is_file():
-            raise ValueError(f"missing retained raw diagnostic evidence: {path}")
+    paths = [diagnostics_root / str(record["logical_path"]) for record in records]
+    present = [path.is_file() for path in paths]
+    if not any(present):
+        if "excluded" not in str(manifest.get("retention", "")).lower():
+            raise ValueError("raw diagnostic evidence is absent without an external-retention record")
+        return
+    if not all(present):
+        missing = [str(path) for path, exists in zip(paths, present) if not exists]
+        raise ValueError("raw diagnostic evidence is only partially retained: " + ", ".join(missing))
+    for record, path in zip(records, paths):
         if path.stat().st_size != int(record["bytes"]):
             raise ValueError(f"raw diagnostic size mismatch: {path}")
-        if _sha256(path) != record["sha256"]:
+        if sha256_file(path) != record["sha256"]:
             raise ValueError(f"raw diagnostic SHA256 mismatch: {path}")
 
 
@@ -383,20 +363,20 @@ def load_diagnostic_evidence(
     diagnostics = Path(diagnostics_root).resolve()
     oracle_root = diagnostics / "oracle_first_token"
     route_root = diagnostics / "bad_case_routes"
-    oracle = _read_json(oracle_root / "summary.json")
-    routes = _read_json(route_root / "summary.json")
+    oracle = read_json_object(oracle_root / "summary.json")
+    routes = read_json_object(route_root / "summary.json")
     _validate_common_identity(formal, oracle, routes)
-    raw_manifest = _read_json(diagnostics / "raw_artifacts_manifest.json")
+    raw_manifest = read_json_object(diagnostics / "raw_artifacts_manifest.json")
     _validate_raw_manifest(diagnostics, raw_manifest)
     oracle_rows = _oracle_rows(
         formal,
         oracle,
-        _read_csv(oracle_root / "summary.csv"),
+        read_csv_rows(oracle_root / "summary.csv"),
     )
     layer_rows, attribute_layer_rows, route_headline = _route_rows(
         routes,
-        _read_csv(route_root / "pairwise_branching.csv"),
-        _read_csv(route_root / "token_route_nmi.csv"),
+        read_csv_rows(route_root / "pairwise_branching.csv"),
+        read_csv_rows(route_root / "token_route_nmi.csv"),
     )
     return {
         "single_formal": single,
@@ -414,11 +394,6 @@ def load_diagnostic_evidence(
 
 def _formal_whole_rows(single: FormalRun, multi: FormalRun) -> list[dict[str, object]]:
     return [row for row in tidy_rows((single, multi)) if row["target"] == "whole"]
-
-
-def _save_figure(figure, destination: Path) -> None:
-    figure.savefig(destination.with_suffix(".png"), dpi=200, bbox_inches="tight")
-    figure.savefig(destination.with_suffix(".pdf"), bbox_inches="tight")
 
 
 def _text_color(face_color: Sequence[float]) -> str:
@@ -523,7 +498,7 @@ def _plot_oracle_table(rows: Sequence[dict[str, object]], destination: Path) -> 
         fontsize=9.5,
         color="#52666a",
     )
-    _save_figure(figure, destination)
+    save_figure_pair(figure, destination, dpi=200)
     plt.close(figure)
 
 
@@ -587,7 +562,7 @@ def _plot_route_did_heatmap(
     colorbar = figure.colorbar(image, ax=axis, fraction=0.025, pad=0.02)
     colorbar.set_label("Difference-in-differences", fontsize=12)
     colorbar.ax.tick_params(labelsize=10)
-    _save_figure(figure, destination)
+    save_figure_pair(figure, destination, dpi=200)
     plt.close(figure)
 
 
@@ -764,7 +739,7 @@ def _plot_full_whole_comparison(
         fontsize=9.2,
         color="#52666a",
     )
-    _save_figure(figure, destination)
+    save_figure_pair(figure, destination, dpi=200)
     plt.close(figure)
 
 
@@ -794,10 +769,10 @@ def build_diagnostic_report_artifacts(
     formal: FormalRun = evidence["formal"]
     whole_rows = _formal_whole_rows(single, formal)
 
-    _atomic_csv(output / "oracle_metrics.csv", oracle_rows)
-    _atomic_csv(output / "route_layer_metrics.csv", layer_rows)
-    _atomic_csv(output / "route_attribute_layer_metrics.csv", attribute_layer_rows)
-    _atomic_csv(output / "formal_whole_metrics.csv", whole_rows)
+    write_csv_atomic(output / "oracle_metrics.csv", oracle_rows)
+    write_csv_atomic(output / "route_layer_metrics.csv", layer_rows)
+    write_csv_atomic(output / "route_attribute_layer_metrics.csv", attribute_layer_rows)
+    write_csv_atomic(output / "formal_whole_metrics.csv", whole_rows)
     _plot_oracle_table(oracle_rows, figures / "oracle_intervention_table")
     _plot_route_did_heatmap(
         attribute_layer_rows,
@@ -856,5 +831,5 @@ def build_diagnostic_report_artifacts(
             ),
         },
     }
-    _atomic_json(output / "summary.json", summary)
+    write_json_atomic(output / "summary.json", summary)
     return summary

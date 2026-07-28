@@ -15,6 +15,8 @@ from datetime import date
 from pathlib import Path
 from typing import Iterable
 
+from experiments.synbios_moe.artifact_io import sha256_file
+
 ATTRIBUTES = ("birth_date", "birth_city", "university", "major", "company", "company_city")
 TEMPLATE_COUNTS = (46, 49, 49, 52, 47, 48)
 
@@ -358,14 +360,6 @@ def split_for_person(person_id: int, seed: int, validation_fraction: float = 0.5
     )
 
 
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
 def write_dataset(output_dir: str | Path, *, num_people: int, variant: str, seed: int) -> Path:
     """Write profiles, biographies, plain text, and an integrity manifest."""
 
@@ -413,7 +407,7 @@ def write_dataset(output_dir: str | Path, *, num_people: int, variant: str, seed
         "split_unit": "person",
         "validation_fraction": 0.5,
         "files": {
-            name: {"bytes": (output / name).stat().st_size, "sha256": _sha256(output / name)}
+            name: {"bytes": (output / name).stat().st_size, "sha256": sha256_file(output / name)}
             for name in ("profiles.jsonl", "biographies.jsonl", "biographies.txt")
         },
     }

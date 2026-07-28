@@ -1,15 +1,17 @@
 """Audit SynBioS paths, lineage, and retained evidence."""
 
 
-import csv
-import hashlib
-import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Sequence
 
 import yaml
 
+from experiments.synbios_moe.artifact_io import (
+    read_json_object,
+    sha256_file,
+    write_csv_atomic,
+    write_json_atomic,
+)
 from experiments.synbios_moe.probes.comparison_report import load_formal_run, validate_matched_runs
 from experiments.synbios_moe.probes.dataset import validate_probe_cache
 from minitrain.runtime.config import load_yaml_dict
@@ -26,50 +28,11 @@ EXPECTED_PROBE_RUNTIME = {
 }
 
 
-def _read_json(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError(f"expected JSON object: {path}")
-    return payload
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def _atomic_json(path: Path, payload: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
-
-
-def _atomic_csv(path: Path, rows: Sequence[dict[str, object]]) -> None:
-    if not rows:
-        raise ValueError(f"cannot write empty catalog: {path}")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(
-            handle, fieldnames=list(rows[0]), lineterminator="\n"
-        )
-        writer.writeheader()
-        writer.writerows(rows)
-    temporary.replace(path)
-
-
 def _file_record(path: Path, base: Path) -> dict[str, object]:
     return {
         "path": path.relative_to(base).as_posix(),
         "bytes": path.stat().st_size,
-        "sha256": _sha256(path),
+        "sha256": sha256_file(path),
     }
 
 
@@ -77,7 +40,7 @@ def _verify_manifest_file(root: Path, record: dict[str, object]) -> None:
     path = root / str(record["path"])
     if path.stat().st_size != int(record["num_bytes"]):
         raise ValueError(f"token-shard size mismatch: {path}")
-    if _sha256(path) != record["sha256"]:
+    if sha256_file(path) != record["sha256"]:
         raise ValueError(f"token-shard SHA256 mismatch: {path}")
 
 
@@ -87,15 +50,15 @@ def _dataset_lineage(variant: str, data_root: Path) -> dict[str, object]:
     token_manifest_path = token_root / "manifest.json"
     cache_root = data_root / "probe_cache"
     cache_manifest_path = cache_root / "manifest.json"
-    data_manifest = _read_json(data_manifest_path)
-    token_manifest = _read_json(token_manifest_path)
-    cache_manifest = _read_json(cache_manifest_path)
+    data_manifest = read_json_object(data_manifest_path)
+    token_manifest = read_json_object(token_manifest_path)
+    cache_manifest = read_json_object(cache_manifest_path)
     expected_variant = "multi5+permute" if variant == "multi5_permute" else "single"
     if data_manifest.get("variant") != expected_variant:
         raise ValueError(f"{variant} dataset manifest has the wrong variant")
     for name, record in data_manifest["files"].items():
         path = data_root / name
-        if path.stat().st_size != int(record["bytes"]) or _sha256(path) != record["sha256"]:
+        if path.stat().st_size != int(record["bytes"]) or sha256_file(path) != record["sha256"]:
             raise ValueError(f"{variant} raw dataset file mismatch: {path}")
     train = token_manifest["splits"]["train"]
     if int(train["documents"]) != int(data_manifest["biographies"]):
@@ -122,9 +85,9 @@ def _dataset_lineage(variant: str, data_root: Path) -> dict[str, object]:
         for path in sorted(token_root.rglob("*"))
         if path.is_file() and path.name != "lineage.json"
     ]
-    parent_sha = _sha256(data_manifest_path)
-    token_sha = _sha256(token_manifest_path)
-    cache_sha = _sha256(cache_manifest_path)
+    parent_sha = sha256_file(data_manifest_path)
+    token_sha = sha256_file(token_manifest_path)
+    cache_sha = sha256_file(cache_manifest_path)
     lineage = {
         "format_version": 1,
         "variant": variant,
@@ -159,8 +122,8 @@ def _dataset_lineage(variant: str, data_root: Path) -> dict[str, object]:
             "files": cache_records,
         },
     }
-    _atomic_json(data_root / "lineage.json", lineage)
-    _atomic_json(
+    write_json_atomic(data_root / "lineage.json", lineage)
+    write_json_atomic(
         token_root / "lineage.json",
         {
             "format_version": 1,
@@ -168,7 +131,7 @@ def _dataset_lineage(variant: str, data_root: Path) -> dict[str, object]:
             **lineage["token_shards"],
         },
     )
-    _atomic_json(
+    write_json_atomic(
         cache_root / "lineage.json",
         {
             "format_version": 1,
@@ -253,7 +216,7 @@ def _log_catalog(log_root: Path) -> list[dict[str, object]]:
                     path.stat().st_mtime,
                     tz=timezone.utc,
                 ).isoformat(),
-                "sha256": _sha256(path),
+                "sha256": sha256_file(path),
                 "mounted_path": str(path.resolve()),
                 "git_safe_path": (
                     f"results/logs/{export_log_category(path.name)}/{path.name}"
@@ -297,7 +260,7 @@ def build_repository_audit(
         checkpoint = Path(str(formal.identity["checkpoint"]))
         if not (checkpoint / "COMMITTED").is_file():
             raise ValueError(f"formal checkpoint is not committed: {checkpoint}")
-        if _sha256(checkpoint / "model.pt") != formal.identity["checkpoint_model_sha256"]:
+        if sha256_file(checkpoint / "model.pt") != formal.identity["checkpoint_model_sha256"]:
             raise ValueError(f"formal checkpoint model hash mismatch: {checkpoint}")
     cloze_paths = {
         "single": artifacts / "synbios_moe/results/single_cloze_eval/full_100k/summary.json",
@@ -307,12 +270,12 @@ def build_repository_audit(
         ),
     }
     for formal, condition in ((single, "single"), (multi, "multi5_permute")):
-        cloze = _read_json(cloze_paths[condition])
+        cloze = read_json_object(cloze_paths[condition])
         if Path(str(cloze["checkpoint"])).resolve() != Path(
             str(formal.identity["checkpoint"])
         ).resolve():
             raise ValueError(f"{condition} cloze summary uses the wrong checkpoint")
-    diagnostic_summary = _read_json(
+    diagnostic_summary = read_json_object(
         multi_root / "diagnostics/report/summary.json"
     )
     if diagnostic_summary.get("status") != "completed":
@@ -326,9 +289,9 @@ def build_repository_audit(
     output = Path(output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
     log_rows = _log_catalog(artifacts / "logs")
-    _atomic_json(output / "dataset_lineage.json", lineages)
-    _atomic_json(output / "path_contract.json", configs)
-    _atomic_csv(output / "log_catalog.csv", log_rows)
+    write_json_atomic(output / "dataset_lineage.json", lineages)
+    write_json_atomic(output / "path_contract.json", configs)
+    write_csv_atomic(output / "log_catalog.csv", log_rows)
     checks = [
         "mounted_artifacts_symlink",
         "raw_dataset_file_sizes_and_hashes",
@@ -369,5 +332,5 @@ def build_repository_audit(
             "log_count": len(log_rows),
         },
     }
-    _atomic_json(output / "summary.json", summary)
+    write_json_atomic(output / "summary.json", summary)
     return summary

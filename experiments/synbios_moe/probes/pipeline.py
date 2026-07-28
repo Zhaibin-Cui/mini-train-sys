@@ -3,7 +3,6 @@
 
 import csv
 from datetime import datetime, timedelta
-import hashlib
 import json
 import os
 import queue
@@ -18,6 +17,7 @@ from typing import Callable, Iterable, Protocol
 import torch
 import yaml
 
+from experiments.synbios_moe.artifact_io import sha256_file, write_json_atomic
 from experiments.synbios_moe.probes.dataset import paper_probe_tasks
 
 
@@ -208,14 +208,6 @@ def jobs_for_stage(
     return steps, jobs, stage_cfg.get("requires")
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def build_pipeline_identity(
     *,
     stage: str,
@@ -251,13 +243,13 @@ def build_pipeline_identity(
         "jobs": [job.key for job in jobs],
         "seed": int(seed),
         "data": str(data_root),
-        "data_manifest_sha256": _sha256_file(required_files["dataset manifest"]),
+        "data_manifest_sha256": sha256_file(required_files["dataset manifest"]),
         "probe_cache": str(cache_root),
-        "probe_cache_manifest_sha256": _sha256_file(required_files["probe cache manifest"]),
+        "probe_cache_manifest_sha256": sha256_file(required_files["probe cache manifest"]),
         "model_config": str(model_path),
-        "model_config_sha256": _sha256_file(model_path),
+        "model_config_sha256": sha256_file(model_path),
         "checkpoint": str(checkpoint_path),
-        "checkpoint_model_sha256": _sha256_file(model_export),
+        "checkpoint_model_sha256": sha256_file(model_export),
     }
     if runtime is not None:
         identity["runtime"] = runtime
@@ -293,17 +285,6 @@ def require_matching_identity(
         key for key in set(actual) | set(expected) if actual.get(key) != expected.get(key)
     )
     raise ValueError(f"{label} does not match this run: " + ", ".join(mismatches))
-
-
-def write_json_atomic(path: str | Path, payload: dict[str, object]) -> None:
-    destination = Path(path)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_suffix(destination.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(destination)
 
 
 class ProbePipelineState:

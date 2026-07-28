@@ -18,8 +18,6 @@ separate so conclusions remain auditable.
 """
 
 
-import csv
-import hashlib
 import heapq
 import json
 import random
@@ -34,6 +32,11 @@ import torch
 from torch.utils.data import DataLoader, Dataset, Subset
 from torch.torch_version import TorchVersion
 
+from experiments.synbios_moe.artifact_io import (
+    sha256_file,
+    write_csv_atomic,
+    write_json_atomic,
+)
 from experiments.synbios_moe.mechanisms.routing import normalized_mutual_information
 from experiments.synbios_moe.pretraining.dataset import ATTRIBUTES
 from experiments.synbios_moe.probes.dataset import CachedProbeDataset
@@ -82,39 +85,6 @@ class QPrediction:
 def _read_profiles(data_root: Path) -> list[dict[str, object]]:
     with (data_root / "profiles.jsonl").open(encoding="utf-8") as handle:
         return [json.loads(line) for line in handle if line.strip()]
-
-
-def _write_json(path: Path, payload: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    temporary.replace(path)
-
-
-def _write_csv(
-    path: Path,
-    rows: Sequence[dict[str, object]],
-    *,
-    fieldnames: Sequence[str] | None = None,
-) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    columns = list(fieldnames or sorted({key for row in rows for key in row}))
-    if not columns:
-        raise ValueError(f"cannot infer CSV columns for empty output: {path}")
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns)
-        writer.writeheader()
-        writer.writerows(rows)
-    temporary.replace(path)
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def task_class_names(cache_root: str | Path, attribute: str, target: str) -> list[str]:
@@ -404,7 +374,7 @@ def train_ground_truth_first_whole_probe(
         "max_validation_examples": max_validation_examples,
         "seed": seed,
         "reference_whole_probe_checkpoint": str(reference_whole_checkpoint.resolve()),
-        "reference_whole_probe_checkpoint_sha256": _sha256(reference_whole_checkpoint),
+        "reference_whole_probe_checkpoint_sha256": sha256_file(reference_whole_checkpoint),
         "reference_whole_probe_rank": rank,
         "probe_cache_manifest_sha256": cache_manifest_sha256,
         "backbone_checkpoint": (
@@ -511,7 +481,7 @@ def prepare_ground_truth_first_whole_data(
         raise ValueError(f"ground-truth-t1 whole probe does not support {attribute!r}")
     cache_root, probe_dir = Path(cache_root), Path(probe_dir)
     codec = GPT2Codec()
-    cache_manifest_sha256 = _sha256(cache_root / "manifest.json")
+    cache_manifest_sha256 = sha256_file(cache_root / "manifest.json")
     first_train = CachedProbeDataset(
         cache_root, kind="p", attribute=attribute, target="first", split="train"
     )
@@ -631,7 +601,7 @@ def collect_q_predictions(
     if len(first_data) != len(whole_data):
         raise ValueError("first and whole Q datasets are not aligned")
     profiles = _read_profiles(data_root)
-    cache_manifest_sha256 = _sha256(cache_root / "manifest.json")
+    cache_manifest_sha256 = sha256_file(cache_root / "manifest.json")
     first_probe = _load_probe(
         probe_dir / f"q_{attribute}_first.pt",
         backbone=backbone,
@@ -858,9 +828,9 @@ def oracle_first_token_validation(
         "overall": overall,
         "attributes": summary_rows,
     }
-    _write_csv(output / "records.csv", all_rows)
-    _write_csv(output / "summary.csv", summary_rows)
-    _write_json(output / "summary.json", summary)
+    write_csv_atomic(output / "records.csv", all_rows)
+    write_csv_atomic(output / "summary.csv", summary_rows)
+    write_json_atomic(output / "summary.json", summary)
     figures = output / "figures"
     figures.mkdir(exist_ok=True)
     _plot_oracle(summary_rows, figures / "accuracy_before_after.png")
@@ -1162,7 +1132,7 @@ def bad_case_route_validation(
         "whole_correct",
         "whole_true_probability",
     ]
-    _write_csv(
+    write_csv_atomic(
         output / "bad_cases.csv",
         case_rows,
         fieldnames=[
@@ -1175,7 +1145,7 @@ def bad_case_route_validation(
             "t2_route_path",
         ],
     )
-    _write_csv(
+    write_csv_atomic(
         output / "route_records.csv",
         route_rows,
         fieldnames=[
@@ -1193,7 +1163,7 @@ def bad_case_route_validation(
             "top1_changed",
         ],
     )
-    _write_csv(
+    write_csv_atomic(
         output / "pairwise_branching.csv",
         pair_rows,
         fieldnames=[
@@ -1206,7 +1176,7 @@ def bad_case_route_validation(
             "branching_score",
         ],
     )
-    _write_csv(
+    write_csv_atomic(
         output / "token_route_nmi.csv",
         nmi_rows,
         fieldnames=[
@@ -1217,5 +1187,5 @@ def bad_case_route_validation(
             "examples",
         ],
     )
-    _write_json(output / "summary.json", summary)
+    write_json_atomic(output / "summary.json", summary)
     return summary
