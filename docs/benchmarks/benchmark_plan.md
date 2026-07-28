@@ -34,10 +34,10 @@ FlashAttention、Router postprocess 和 Fused MoE。代表 shape 的选择规则
 伪装成成对 speedup。FusedLinearCrossEntropy 是否能避免该显式 logits 空间，作为独立
 空间结论报告。
 
-开发期完整正确性入口为 `tests/operator_bench.ipynb`；正式隔离执行入口为
-`tests/operator_bench_linux_server.ipynb` 和
-`tests/moe_operator_bench_linux_server.ipynb`，runner 为
-`tests/dense_operator_bench_runner.py`、`tests/moe_operator_bench_runner.py`。
+开发期完整正确性入口为 `benchmarks/operators/operator_bench.ipynb`；正式隔离执行入口为
+`benchmarks/operators/operator_bench_linux_server.ipynb` 和
+`benchmarks/operators/moe_operator_bench_linux_server.ipynb`，runner 为
+`benchmarks/operators/dense_runner.py`、`benchmarks/operators/moe_runner.py`。
 CUDA backend 当前只有 attention 是 native CUDA；
 其他算子的 CUDA 名称若发生 fallback，不能当作 CUDA kernel 性能。
 
@@ -74,4 +74,4 @@ Torch 的 reduction 和每新增 local sample 的斜率。该差分抵消相同 
 
 当前 1/4/8 卡协议与验收门槛见 [distributed_benchmark.md](distributed_benchmark.md)。
 正式 SynBioS backend 简历 benchmark 的执行入口与两阶段交付规范见
-[`scripts/server_benchmark_codex_prompt.md`](../../scripts/server_benchmark_codex_prompt.md)。
+运行入口和输出位置见 [`benchmarks/README.md`](../../benchmarks/README.md)。

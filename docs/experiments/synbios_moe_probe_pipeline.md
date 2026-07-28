@@ -423,7 +423,7 @@ tensorboard --logdir artifacts/synbios_moe/results/<run>/probe_pipeline \
 通过 SSH 转发 `6606` 后在本机浏览器查看。不同分类器使用独立 run 目录，不会互相覆盖；
 父 pipeline 还会按 `phase/task` 汇集关键 worker 指标，方便比较四张卡的实时进度。
 
-端到端验证使用 `tests/synbios_moe_end_to_end.ipynb` 和专用的
+端到端验证使用 `examples/notebooks/synbios_moe_walkthrough.ipynb` 和专用的
 `configs/synbios_moe/probe_pipeline_notebook_smoke.yaml`。notebook 把单 probe 训练、独立
 `validate-probe`、两任务 pipeline、状态/事件检查和正式 smoke/pilot/formal 命令拆成不同
 单元格。该配置只有 3 steps，只验证调用与监控契约，不能替代正式预算。

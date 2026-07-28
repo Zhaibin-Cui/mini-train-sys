@@ -670,7 +670,7 @@ After every benchmark or validation cycle:
 
 ```bash
 bash scripts/bash/export_test_results.sh
-sha256sum --quiet -c results/MANIFEST.sha256
+python scripts/build_results_manifest.py --results results --check
 ```
 
 Cross-experiment headline metrics live in
@@ -693,7 +693,9 @@ minitrain/
 experiments/       SynBioS data generation, cloze evaluation, probes, route analysis
 configs/           composable model/data/strategy/hardware/run YAML
 scripts/           training, benchmarking, export, and server entry points
-tests/             executable benchmark notebooks, runners, and shared utilities
+tests/             automated correctness and regression checks
+benchmarks/        operator and distributed performance workflows
+examples/          small end-to-end walkthrough notebooks
 reports/           engineering and experiment reports
 results/           versioned machine-readable evidence
 ```
@@ -928,11 +930,11 @@ Use the [project walkthrough](docs/guides/project_walkthrough.md) for a guided t
 
 | Entry point | What it runs |
 |---|---|
-| `tests/example_training.ipynb` | Minimal model, LR, and checkpoint experiment |
-| `tests/synbios_moe_end_to_end.ipynb` | Small data → training → evaluation → probe → route loop |
-| `tests/operator_bench_linux_server.ipynb` | RTX 4090 Dense/Transformer kernel benchmark |
-| `tests/moe_operator_bench_linux_server.ipynb` | Isolated router and fused-MoE benchmark |
-| `tests/distributed_server_benchmark.ipynb` | Single/DDP/FSDP scaling and capacity |
+| `examples/notebooks/training_walkthrough.ipynb` | Minimal model, LR, and checkpoint walkthrough |
+| `examples/notebooks/synbios_moe_walkthrough.ipynb` | Small data → training → evaluation → probe → route loop |
+| `benchmarks/operators/operator_bench_linux_server.ipynb` | RTX 4090 Dense/Transformer kernel benchmark |
+| `benchmarks/operators/moe_operator_bench_linux_server.ipynb` | Isolated router and fused-MoE benchmark |
+| `benchmarks/distributed/distributed_server_benchmark.ipynb` | Single/DDP/FSDP scaling and capacity |
 | `scripts/bash/synbios_backend_benchmark.sh` | 293M MoE equal-batch and equal-memory backend comparison |
 
 For deeper implementation and evidence:

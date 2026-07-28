@@ -133,7 +133,7 @@ root 位于用户 cache，而不是安装包目录；`MINITRAIN_CUDA_BUILD_ROOT`
 
 ## 7. Correctness 与 benchmark
 
-所有 CUDA 主验证都集中在 `tests/operator_bench.ipynb`。CUDA correctness 固定为
+所有 CUDA 主验证都集中在 `benchmarks/operators/operator_bench.ipynb`。CUDA correctness 固定为
 fp16，遍历：
 
 ```text

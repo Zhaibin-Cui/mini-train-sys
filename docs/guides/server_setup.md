@@ -84,7 +84,7 @@ df -h . artifacts
 ```text
 系统盘/$HOME/src/mini-train-sys/
 ├── .venv/
-├── configs/ minitrain/ experiments/ scripts/ tests/ docs/
+├── configs/ minitrain/ experiments/ scripts/ tests/ benchmarks/ examples/ docs/
 ├── .minitrain-storage.env
 └── artifacts -> /data/mini-train-sys/artifacts
 
@@ -306,7 +306,7 @@ jupyter lab --no-browser --ip=127.0.0.1 --port=8888
 ssh -L 8888:127.0.0.1:8888 <user>@<server>
 ```
 
-打开 `tests/distributed_server_benchmark.ipynb`，选择 `MiniTrainSys (.venv)`，依次运行
+打开 `benchmarks/distributed/distributed_server_benchmark.ipynb`，选择 `MiniTrainSys (.venv)`，依次运行
 预检、weak scaling 和 capacity。结果、CSV、失败明细和 PNG 写入
 `artifacts/distributed_benchmark/`。原理见
 [`distributed_benchmark.md`](../benchmarks/distributed_benchmark.md)。

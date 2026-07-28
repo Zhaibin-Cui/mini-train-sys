@@ -4,25 +4,7 @@
       "category": "root",
       "path": "BENCHMARK_SUMMARY.md",
       "scope": "index",
-      "size_bytes": 6398
-    },
-    {
-      "category": "root",
-      "path": "README.md",
-      "scope": "index",
-      "size_bytes": 2364
-    },
-    {
-      "category": "benchmarks",
-      "path": "benchmarks/README.md",
-      "scope": "distributed_training",
-      "size_bytes": 816
-    },
-    {
-      "category": "benchmarks",
-      "path": "benchmarks/operator_benchmark/legacy_figures/README.md",
-      "scope": "kernels",
-      "size_bytes": 310
+      "size_bytes": 6589
     },
     {
       "category": "benchmarks",
@@ -77,6 +59,12 @@
       "path": "benchmarks/operator_benchmark/legacy_figures/fused_moe_summary.png",
       "scope": "kernels",
       "size_bytes": 254924
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/operator_benchmark/legacy_figures/README.md",
+      "scope": "kernels",
+      "size_bytes": 310
     },
     {
       "category": "benchmarks",
@@ -140,15 +128,9 @@
     },
     {
       "category": "benchmarks",
-      "path": "benchmarks/operator_benchmark/resume_summary/README.md",
-      "scope": "kernels",
-      "size_bytes": 3630
-    },
-    {
-      "category": "benchmarks",
       "path": "benchmarks/operator_benchmark/resume_summary/kernel_benchmark_overview.png",
       "scope": "kernels",
-      "size_bytes": 94420
+      "size_bytes": 320175
     },
     {
       "category": "benchmarks",
@@ -161,6 +143,12 @@
       "path": "benchmarks/operator_benchmark/resume_summary/kernel_benchmark_summary.json",
       "scope": "kernels",
       "size_bytes": 19657
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/operator_benchmark/resume_summary/README.md",
+      "scope": "kernels",
+      "size_bytes": 3642
     },
     {
       "category": "benchmarks",
@@ -1334,6 +1322,42 @@
     },
     {
       "category": "benchmarks",
+      "path": "benchmarks/operator_benchmark/sm86_4gb/raw/rmsnorm/2026-07-17T06-04-59.560699_00-00.json",
+      "scope": "kernels",
+      "size_bytes": 10738
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/operator_benchmark/sm86_4gb/raw/rope/2026-07-17T06-06-40.768662_00-00.json",
+      "scope": "kernels",
+      "size_bytes": 8782
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/operator_benchmark/sm86_4gb/raw/rope/2026-07-17T06-17-21.059664_00-00.json",
+      "scope": "kernels",
+      "size_bytes": 8767
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/operator_benchmark/sm86_4gb/raw/swiglu/2026-07-17T06-08-12.512428_00-00.json",
+      "scope": "kernels",
+      "size_bytes": 10532
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/operator_benchmark/sm86_4gb/raw/swiglu/2026-07-17T06-09-44.776952_00-00.json",
+      "scope": "kernels",
+      "size_bytes": 10529
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/README.md",
+      "scope": "distributed_training",
+      "size_bytes": 816
+    },
+    {
+      "category": "benchmarks",
       "path": "benchmarks/rtx4090_125m_moe/capacity/capacity_summary.json",
       "scope": "distributed_training",
       "size_bytes": 68787
@@ -1586,12 +1610,6 @@
     },
     {
       "category": "benchmarks",
-      "path": "benchmarks/rtx4090_125m_moe/capacity/presentation/README.md",
-      "scope": "distributed_training",
-      "size_bytes": 492
-    },
-    {
-      "category": "benchmarks",
       "path": "benchmarks/rtx4090_125m_moe/capacity/presentation/capacity_frontier.json",
       "scope": "distributed_training",
       "size_bytes": 695
@@ -1607,6 +1625,12 @@
       "path": "benchmarks/rtx4090_125m_moe/capacity/presentation/failures.csv",
       "scope": "distributed_training",
       "size_bytes": 21677
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/rtx4090_125m_moe/capacity/presentation/README.md",
+      "scope": "distributed_training",
+      "size_bytes": 492
     },
     {
       "category": "benchmarks",
@@ -1898,12 +1922,6 @@
     },
     {
       "category": "benchmarks",
-      "path": "benchmarks/rtx4090_125m_moe/weak/presentation/README.md",
-      "scope": "distributed_training",
-      "size_bytes": 486
-    },
-    {
-      "category": "benchmarks",
       "path": "benchmarks/rtx4090_125m_moe/weak/presentation/failures.csv",
       "scope": "distributed_training",
       "size_bytes": 0
@@ -1913,6 +1931,12 @@
       "path": "benchmarks/rtx4090_125m_moe/weak/presentation/quality_gates.json",
       "scope": "distributed_training",
       "size_bytes": 201
+    },
+    {
+      "category": "benchmarks",
+      "path": "benchmarks/rtx4090_125m_moe/weak/presentation/README.md",
+      "scope": "distributed_training",
+      "size_bytes": 486
     },
     {
       "category": "benchmarks",
@@ -2656,7 +2680,7 @@
       "category": "benchmarks",
       "path": "benchmarks/synbios_backend_capacity/20260725T113500Z/presentation/capacity_backend_comparison.png",
       "scope": "distributed_training",
-      "size_bytes": 59460
+      "size_bytes": 254441
     },
     {
       "category": "benchmarks",
@@ -4022,12 +4046,6 @@
     },
     {
       "category": "benchmarks",
-      "path": "benchmarks/synbios_moe_fsdp4/weak_b64/presentation/README.md",
-      "scope": "distributed_training",
-      "size_bytes": 457
-    },
-    {
-      "category": "benchmarks",
       "path": "benchmarks/synbios_moe_fsdp4/weak_b64/presentation/failures.csv",
       "scope": "distributed_training",
       "size_bytes": 0
@@ -4040,6 +4058,12 @@
     },
     {
       "category": "benchmarks",
+      "path": "benchmarks/synbios_moe_fsdp4/weak_b64/presentation/README.md",
+      "scope": "distributed_training",
+      "size_bytes": 457
+    },
+    {
+      "category": "benchmarks",
       "path": "benchmarks/synbios_moe_fsdp4/weak_b64/presentation/results_aggregated.csv",
       "scope": "distributed_training",
       "size_bytes": 1658
@@ -4048,7 +4072,7 @@
       "category": "benchmarks",
       "path": "benchmarks/synbios_moe_fsdp4/weak_b64/presentation/weak_overview.png",
       "scope": "distributed_training",
-      "size_bytes": 184155
+      "size_bytes": 395095
     },
     {
       "category": "benchmarks",
@@ -4091,12 +4115,6 @@
       "path": "datasets/README.md",
       "scope": "README.md",
       "size_bytes": 445
-    },
-    {
-      "category": "datasets",
-      "path": "datasets/synbios_moe/README.md",
-      "scope": "synbios_moe",
-      "size_bytes": 1617
     },
     {
       "category": "datasets",
@@ -4160,6 +4178,12 @@
     },
     {
       "category": "datasets",
+      "path": "datasets/synbios_moe/README.md",
+      "scope": "synbios_moe",
+      "size_bytes": 1629
+    },
+    {
+      "category": "datasets",
       "path": "datasets/synbios_moe/single/lineage.json",
       "scope": "synbios_moe",
       "size_bytes": 3488
@@ -4198,7 +4222,7 @@
       "category": "environment",
       "path": "environment/server_environment.json",
       "scope": "inventory",
-      "size_bytes": 2709
+      "size_bytes": 2689
     },
     {
       "category": "formal_runs",
@@ -4211,12 +4235,6 @@
       "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000100_step_000016100/COMMITTED",
       "scope": "synbios_moe",
       "size_bytes": 3
-    },
-    {
-      "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000100_step_000016100/SAFETY",
-      "scope": "synbios_moe",
-      "size_bytes": 16
     },
     {
       "category": "formal_runs",
@@ -4253,6 +4271,12 @@
       "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000100_step_000016100/runtime.pt",
       "scope": "synbios_moe",
       "size_bytes": 3680
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_multi5_permute_fsdp_4gpu/epoch_000100_step_000016100/SAFETY",
+      "scope": "synbios_moe",
+      "size_bytes": 16
     },
     {
       "category": "formal_runs",
@@ -4346,12 +4370,6 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/SAFETY",
-      "scope": "synbios_moe",
-      "size_bytes": 16
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/rng_rank_00000.pt",
       "scope": "synbios_moe",
       "size_bytes": 10370
@@ -4379,6 +4397,12 @@
       "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/runtime.pt",
       "scope": "synbios_moe",
       "size_bytes": 3680
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000010_step_000000320/SAFETY",
+      "scope": "synbios_moe",
+      "size_bytes": 16
     },
     {
       "category": "formal_runs",
@@ -4460,12 +4484,6 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000500_step_000016000/SAFETY",
-      "scope": "synbios_moe",
-      "size_bytes": 16
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000500_step_000016000/distributed/.metadata",
       "scope": "synbios_moe",
       "size_bytes": 252680
@@ -4499,6 +4517,12 @@
       "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000500_step_000016000/runtime.pt",
       "scope": "synbios_moe",
       "size_bytes": 3680
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000500_step_000016000/SAFETY",
+      "scope": "synbios_moe",
+      "size_bytes": 16
     },
     {
       "category": "formal_runs",
@@ -4642,25 +4666,25 @@
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_first_heatmaps.pdf",
       "scope": "synbios_moe",
-      "size_bytes": 31138
+      "size_bytes": 33492
     },
     {
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_first_heatmaps.png",
       "scope": "synbios_moe",
-      "size_bytes": 155177
+      "size_bytes": 174604
     },
     {
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_whole_heatmaps.pdf",
       "scope": "synbios_moe",
-      "size_bytes": 31375
+      "size_bytes": 34763
     },
     {
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_p_whole_heatmaps.png",
       "scope": "synbios_moe",
-      "size_bytes": 161357
+      "size_bytes": 190259
     },
     {
       "category": "formal_runs",
@@ -4690,13 +4714,13 @@
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_study_overview.pdf",
       "scope": "synbios_moe",
-      "size_bytes": 30800
+      "size_bytes": 32466
     },
     {
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/figures/formal_study_overview.png",
       "scope": "synbios_moe",
-      "size_bytes": 211377
+      "size_bytes": 245113
     },
     {
       "category": "formal_runs",
@@ -4720,7 +4744,7 @@
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/formal_probe_comparison_20260724/summary.json",
       "scope": "synbios_moe",
-      "size_bytes": 7974
+      "size_bytes": 8022
     },
     {
       "category": "formal_runs",
@@ -4820,21 +4844,15 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/README.md",
-      "scope": "synbios_moe",
-      "size_bytes": 3166
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.pdf",
       "scope": "synbios_moe",
-      "size_bytes": 26496
+      "size_bytes": 32028
     },
     {
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/figures/ground_truth_first_p_overview.png",
       "scope": "synbios_moe",
-      "size_bytes": 186741
+      "size_bytes": 211337
     },
     {
       "category": "formal_runs",
@@ -4973,6 +4991,12 @@
       "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/p_university.json",
       "scope": "synbios_moe",
       "size_bytes": 52483
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/README.md",
+      "scope": "synbios_moe",
+      "size_bytes": 3395
     },
     {
       "category": "formal_runs",
@@ -7576,7 +7600,7 @@
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/repository_audit_20260724/log_catalog.csv",
       "scope": "synbios_moe",
-      "size_bytes": 45793
+      "size_bytes": 45489
     },
     {
       "category": "formal_runs",
@@ -7784,21 +7808,15 @@
     },
     {
       "category": "formal_runs",
-      "path": "formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/README.md",
-      "scope": "synbios_moe",
-      "size_bytes": 3133
-    },
-    {
-      "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.pdf",
       "scope": "synbios_moe",
-      "size_bytes": 26900
+      "size_bytes": 33187
     },
     {
       "category": "formal_runs",
       "path": "formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png",
       "scope": "synbios_moe",
-      "size_bytes": 188068
+      "size_bytes": 227682
     },
     {
       "category": "formal_runs",
@@ -7889,6 +7907,12 @@
       "path": "formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/p_university.json",
       "scope": "synbios_moe",
       "size_bytes": 52269
+    },
+    {
+      "category": "formal_runs",
+      "path": "formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/README.md",
+      "scope": "synbios_moe",
+      "size_bytes": 3362
     },
     {
       "category": "formal_runs",
@@ -10376,12 +10400,6 @@
     },
     {
       "category": "logs",
-      "path": "logs/README.md",
-      "scope": "README.md",
-      "size_bytes": 672
-    },
-    {
-      "category": "logs",
       "path": "logs/benchmarks/cuda_build_sm89_d64_20260725T080800Z.log",
       "scope": "benchmarks",
       "size_bytes": 86229
@@ -10550,27 +10568,9 @@
     },
     {
       "category": "logs",
-      "path": "logs/experiments/cloze_full_validation_20260721-1409.log",
-      "scope": "experiments",
-      "size_bytes": 1430
-    },
-    {
-      "category": "logs",
-      "path": "logs/experiments/cloze_probe_gate_validation_20260721-1433.log",
-      "scope": "experiments",
-      "size_bytes": 1430
-    },
-    {
-      "category": "logs",
       "path": "logs/experiments/formal_probe_comparison_20260724_0052.log",
       "scope": "experiments",
       "size_bytes": 5154
-    },
-    {
-      "category": "logs",
-      "path": "logs/experiments/ground_truth_first_full_regression_20260725T095900Z.log",
-      "scope": "experiments",
-      "size_bytes": 1344
     },
     {
       "category": "logs",
@@ -10682,12 +10682,6 @@
     },
     {
       "category": "logs",
-      "path": "logs/experiments/probe_formal_preflight_20260723_1730.log",
-      "scope": "experiments",
-      "size_bytes": 1362
-    },
-    {
-      "category": "logs",
       "path": "logs/experiments/probe_formal_single_export_20260723_210112.log",
       "scope": "experiments",
       "size_bytes": 75
@@ -10727,12 +10721,6 @@
       "path": "logs/experiments/probe_pilot_single_export_20260723_1549.log",
       "scope": "experiments",
       "size_bytes": 75
-    },
-    {
-      "category": "logs",
-      "path": "logs/experiments/probe_preflight_cache_20260723_1359.log",
-      "scope": "experiments",
-      "size_bytes": 5714
     },
     {
       "category": "logs",
@@ -10874,21 +10862,9 @@
     },
     {
       "category": "logs",
-      "path": "logs/experiments/single_ground_truth_first_finalize_20260726T041500Z.log",
-      "scope": "experiments",
-      "size_bytes": 1513
-    },
-    {
-      "category": "logs",
       "path": "logs/experiments/single_ground_truth_first_finalize_20260726T041500Z.status",
       "scope": "experiments",
       "size_bytes": 2
-    },
-    {
-      "category": "logs",
-      "path": "logs/experiments/single_ground_truth_first_p4000_20260726T033800Z.log",
-      "scope": "experiments",
-      "size_bytes": 274474
     },
     {
       "category": "logs",
@@ -10901,12 +10877,6 @@
       "path": "logs/experiments/synbios_final_export_20260724_0138.log",
       "scope": "experiments",
       "size_bytes": 75
-    },
-    {
-      "category": "logs",
-      "path": "logs/experiments/synbios_final_pytest_20260724_0136.log",
-      "scope": "experiments",
-      "size_bytes": 1344
     },
     {
       "category": "logs",
@@ -11042,21 +11012,9 @@
     },
     {
       "category": "logs",
-      "path": "logs/maintenance/final_export_r2_20260726T031900Z.log",
-      "scope": "maintenance",
-      "size_bytes": 271589
-    },
-    {
-      "category": "logs",
       "path": "logs/maintenance/final_export_r2_20260726T031900Z.status",
       "scope": "maintenance",
       "size_bytes": 2
-    },
-    {
-      "category": "logs",
-      "path": "logs/maintenance/final_train_push_gate_20260726T050500Z.log",
-      "scope": "maintenance",
-      "size_bytes": 3378
     },
     {
       "category": "logs",
@@ -11087,12 +11045,6 @@
       "path": "logs/maintenance/repo_consolidation_final_20260726T043900Z.status",
       "scope": "maintenance",
       "size_bytes": 2
-    },
-    {
-      "category": "logs",
-      "path": "logs/maintenance/repo_consolidation_final_r2_20260726T044100Z.log",
-      "scope": "maintenance",
-      "size_bytes": 3802
     },
     {
       "category": "logs",
@@ -11174,9 +11126,9 @@
     },
     {
       "category": "logs",
-      "path": "logs/validation/checkpoint_optimization_tests.log",
-      "scope": "validation",
-      "size_bytes": 1282
+      "path": "logs/README.md",
+      "scope": "README.md",
+      "size_bytes": 684
     },
     {
       "category": "logs",
@@ -11204,33 +11156,9 @@
     },
     {
       "category": "logs",
-      "path": "logs/validation/fidelity_gpu_telemetry_tests.log",
-      "scope": "validation",
-      "size_bytes": 3233
-    },
-    {
-      "category": "logs",
-      "path": "logs/validation/fidelity_gpu_telemetry_tests_rerun.log",
-      "scope": "validation",
-      "size_bytes": 1282
-    },
-    {
-      "category": "logs",
-      "path": "logs/validation/final_regression_20260726T025900Z.log",
-      "scope": "validation",
-      "size_bytes": 1363
-    },
-    {
-      "category": "logs",
       "path": "logs/validation/final_regression_20260726T025900Z.status",
       "scope": "validation",
       "size_bytes": 2
-    },
-    {
-      "category": "logs",
-      "path": "logs/validation/final_regression_r2_20260726T031800Z.log",
-      "scope": "validation",
-      "size_bytes": 1363
     },
     {
       "category": "logs",
@@ -11240,51 +11168,15 @@
     },
     {
       "category": "logs",
-      "path": "logs/validation/multi5_results_validation_20260721.log",
-      "scope": "validation",
-      "size_bytes": 1362
-    },
-    {
-      "category": "logs",
       "path": "logs/validation/multi5_results_validation_20260721.status",
       "scope": "validation",
       "size_bytes": 1
     },
     {
       "category": "logs",
-      "path": "logs/validation/prelaunch_full_tests.log",
-      "scope": "validation",
-      "size_bytes": 1282
-    },
-    {
-      "category": "logs",
-      "path": "logs/validation/prepush_validation_20260721-1333.log",
-      "scope": "validation",
-      "size_bytes": 1282
-    },
-    {
-      "category": "logs",
-      "path": "logs/validation/readme_results_validation_20260721-1452.log",
-      "scope": "validation",
-      "size_bytes": 1430
-    },
-    {
-      "category": "logs",
-      "path": "logs/validation/withdraw_fresh_q_regression_20260726T033500Z.log",
-      "scope": "validation",
-      "size_bytes": 247179
-    },
-    {
-      "category": "logs",
       "path": "logs/validation/withdraw_fresh_q_regression_20260726T033500Z.status",
       "scope": "validation",
       "size_bytes": 2
-    },
-    {
-      "category": "notebooks",
-      "path": "notebooks/README.md",
-      "scope": "executed_benchmarks",
-      "size_bytes": 388
     },
     {
       "category": "notebooks",
@@ -11309,6 +11201,18 @@
       "path": "notebooks/operator_bench_linux_server_executed_20260725_162544.log",
       "scope": "executed_benchmarks",
       "size_bytes": 1388
+    },
+    {
+      "category": "notebooks",
+      "path": "notebooks/README.md",
+      "scope": "executed_benchmarks",
+      "size_bytes": 388
+    },
+    {
+      "category": "root",
+      "path": "README.md",
+      "scope": "index",
+      "size_bytes": 2378
     },
     {
       "category": "smoke",
@@ -11363,36 +11267,6 @@
       "path": "tensorboard/README.md",
       "scope": "index",
       "size_bytes": 622
-    },
-    {
-      "category": "validation",
-      "path": "validation/pytest_checkpoint_optimization.xml",
-      "scope": "test_reports",
-      "size_bytes": 9005
-    },
-    {
-      "category": "validation",
-      "path": "validation/pytest_fidelity_gpu_telemetry.xml",
-      "scope": "test_reports",
-      "size_bytes": 9307
-    },
-    {
-      "category": "validation",
-      "path": "validation/pytest_full.xml",
-      "scope": "test_reports",
-      "size_bytes": 8753
-    },
-    {
-      "category": "validation",
-      "path": "validation/pytest_probe_formal_preflight_20260723.xml",
-      "scope": "test_reports",
-      "size_bytes": 11206
-    },
-    {
-      "category": "validation",
-      "path": "validation/pytest_probe_preflight_20260723.xml",
-      "scope": "test_reports",
-      "size_bytes": 10938
     },
     {
       "category": "validation",
@@ -11532,13 +11406,13 @@
       "category": "benchmarks",
       "files": 370,
       "scope": "distributed_training",
-      "size_bytes": 2432720
+      "size_bytes": 2838641
     },
     {
       "category": "benchmarks",
-      "files": 219,
+      "files": 224,
       "scope": "kernels",
-      "size_bytes": 9151624
+      "size_bytes": 9426739
     },
     {
       "category": "benchmarks",
@@ -11562,25 +11436,25 @@
       "category": "datasets",
       "files": 17,
       "scope": "synbios_moe",
-      "size_bytes": 124925
+      "size_bytes": 124937
     },
     {
       "category": "environment",
       "files": 1,
       "scope": "inventory",
-      "size_bytes": 2709
+      "size_bytes": 2689
     },
     {
       "category": "formal_runs",
       "files": 1029,
       "scope": "synbios_moe",
-      "size_bytes": 171947233
+      "size_bytes": 172090753
     },
     {
       "category": "logs",
       "files": 1,
       "scope": "README.md",
-      "size_bytes": 672
+      "size_bytes": 684
     },
     {
       "category": "logs",
@@ -11590,21 +11464,21 @@
     },
     {
       "category": "logs",
-      "files": 76,
+      "files": 68,
       "scope": "experiments",
-      "size_bytes": 5287121
+      "size_bytes": 4998510
     },
     {
       "category": "logs",
-      "files": 28,
+      "files": 25,
       "scope": "maintenance",
-      "size_bytes": 325958
+      "size_bytes": 47189
     },
     {
       "category": "logs",
-      "files": 18,
+      "files": 8,
       "scope": "validation",
-      "size_bytes": 278873
+      "size_bytes": 17815
     },
     {
       "category": "notebooks",
@@ -11616,7 +11490,7 @@
       "category": "root",
       "files": 2,
       "scope": "index",
-      "size_bytes": 8762
+      "size_bytes": 8967
     },
     {
       "category": "smoke",
@@ -11653,12 +11527,6 @@
       "files": 22,
       "scope": "synbios_moe",
       "size_bytes": 1612850
-    },
-    {
-      "category": "validation",
-      "files": 5,
-      "scope": "test_reports",
-      "size_bytes": 49209
     }
   ],
   "results_root": "results",

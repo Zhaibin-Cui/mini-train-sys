@@ -81,7 +81,7 @@ server = [
 minitrain-check-server = "minitrain.runtime.server_check:main"
 
 [tool.setuptools.packages.find]
-include = ["minitrain*", "experiments*"]
+include = ["minitrain*", "experiments*", "benchmarks*"]
 
 [tool.setuptools.package-data]
 "minitrain.kernels.cuda_ext" = ["csrc/**/*"]

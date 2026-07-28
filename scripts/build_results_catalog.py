@@ -28,6 +28,11 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _write_utf8(path: Path, content: str) -> None:
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(content)
+
+
 def _human_bytes(value: int) -> str:
     units = ("B", "KiB", "MiB", "GiB", "TiB")
     size = float(value)
@@ -237,6 +242,24 @@ def build_retention_inventory(artifact_root: Path) -> dict[str, Any]:
     }
 
 
+def retained_inventory(results_root: Path, artifact_root: Path) -> dict[str, Any]:
+    """Refresh server retention when mounted, otherwise preserve the published inventory."""
+
+    if artifact_root.is_dir():
+        return build_retention_inventory(artifact_root)
+    published = results_root / "catalog" / "retention.json"
+    if published.is_file():
+        payload = json.loads(published.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict) or not isinstance(payload.get("groups"), list):
+            raise ValueError(f"invalid published retention inventory: {published}")
+        return payload
+    return {
+        "schema_version": 1,
+        "artifact_root": artifact_root.as_posix(),
+        "groups": [],
+    }
+
+
 def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
     totals: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
@@ -271,7 +294,7 @@ def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
                 }
             )
 
-    retention = build_retention_inventory(artifact_root)
+    retention = retained_inventory(results_root, artifact_root)
     payload = {
         "schema_version": 1,
         "results_root": results_root.name,
@@ -295,11 +318,13 @@ def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
     tensorboard_dir = results_root / "tensorboard"
     catalog_dir.mkdir(parents=True, exist_ok=True)
     tensorboard_dir.mkdir(parents=True, exist_ok=True)
-    (catalog_dir / "artifacts.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    _write_utf8(
+        catalog_dir / "artifacts.json",
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
     )
-    (catalog_dir / "retention.json").write_text(
-        json.dumps(retention, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    _write_utf8(
+        catalog_dir / "retention.json",
+        json.dumps(retention, indent=2, sort_keys=True) + "\n",
     )
     with (tensorboard_dir / "index.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
@@ -344,7 +369,7 @@ def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
             f"{_human_bytes(group['size_bytes'])} | `{group['logical_path']}` |"
         )
     lines.append("")
-    (catalog_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")
+    _write_utf8(catalog_dir / "summary.md", "\n".join(lines))
     return payload
 
 

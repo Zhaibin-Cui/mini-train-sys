@@ -34,7 +34,6 @@ pin memory 或 non-blocking 问题，优先读 `data_pipeline.md`。只有想理
 | [monitoring_and_recovery.md](../training/monitoring_and_recovery.md) | 当前手册 | loss、LR、token/s、ETA、显存、梯度范数和恢复训练 |
 | [mixed_precision_plan.md](../training/mixed_precision_plan.md) | 当前实现说明 | FP32/BF16/FP16、autocast、GradScaler、FSDP dtype |
 | [architecture.md](architecture.md) | 当前手册 | Trainer、TrainingRunner、EventLogger、ProgressReporter 的边界 |
-| [subsession_plan.md](../design-notes/subsession_plan.md) | 历史记录 | 早期训练子阶段规划，不作为当前启动说明 |
 
 虽然 `mixed_precision_plan.md` 文件名保留了 `plan`，其中相关章节已经用于解释当前实现；
 真正的运行参数仍以 typed config 和当前代码为准。
@@ -84,9 +83,6 @@ router。不要在主模型尚未学会 biography 时直接解释 probe 或 expe
 4. [flash_bwd_kernel_deep_dive.md](../kernels/flash_bwd_kernel_deep_dive.md)：backward kernel。
 5. [cuda_ext_run_commands.md](../kernels/cuda_ext_run_commands.md)：实际编译、运行和排错。
 
-[flash_attention_pretraining_plan.md](../design-notes/flash_attention_pretraining_plan.md) 是历史设计记录，不应取代
-当前代码阅读指南。
-
 ## 七、参考与历史材料
 
 以下文件用于查来源或理解决策演进，不应作为当前运行命令：
@@ -94,8 +90,6 @@ router。不要在主模型尚未学会 biography 时直接解释 probe 或 expe
 - [reference_map.md](../references/reference_map.md)：实现与外部参考的对应关系。
 - [references.md](../references/references.md)：参考资料清单。
 - [data_preprocessing_plan.md](../design-notes/data_preprocessing_plan.md)：数据预处理历史方案。
-- [flash_attention_pretraining_plan.md](../design-notes/flash_attention_pretraining_plan.md)：FlashAttention 接入历史方案。
-- [subsession_plan.md](../design-notes/subsession_plan.md)：早期训练阶段规划。
 
 如果历史 plan 与代码不一致，以当前代码、typed config 和当前手册为准。
 

@@ -53,6 +53,8 @@ docs/
 - [train](../minitrain/train/README.md)
 - [scripts](../scripts/README.md)
 - [tests](../tests/README.md)
+- [benchmarks](../benchmarks/README.md)
+- [examples](../examples/README.md)
 - [reports](../reports/README.md)
 
 ## 当前手册
@@ -71,8 +73,9 @@ docs/
 | [distributed_benchmark.md](benchmarks/distributed_benchmark.md) | 如何正确测 1/4/8 卡弱扩展和显存容量？ |
 | [cuda_ext_run_commands.md](kernels/cuda_ext_run_commands.md) | CUDA 扩展如何编译、验证和排错？ |
 
-配置字段以 [configs/README.md](../configs/README.md) 为准；notebook 入口以
-[tests/README.md](../tests/README.md) 为准。
+配置字段以 [configs/README.md](../configs/README.md) 为准；性能 notebook 见
+[benchmarks/README.md](../benchmarks/README.md)，小规模示例见
+[examples/README.md](../examples/README.md)。
 
 ## SynBioS 实验说明
 
@@ -106,13 +109,12 @@ RTX 3050 文档是历史硬件个案，不能替代 24 GB RTX 4090 的服务器 
 [kernel engineering](../reports/engineering/kernels.md) 与
 [distributed/end-to-end](../reports/engineering/distributed_training.md)。
 
-## 历史设计记录
+## 设计记录
 
-以下文件保留决策过程，但不作为当前运行手册：
+数据流水线仍保留一份实现演进记录；当前命令和行为以
+[`data/data_pipeline.md`](data/data_pipeline.md) 为准。
 
 - [data_preprocessing_plan.md](design-notes/data_preprocessing_plan.md)
-- [flash_attention_pretraining_plan.md](design-notes/flash_attention_pretraining_plan.md)
-- [subsession_plan.md](design-notes/subsession_plan.md)
 
 ## 参考资料
 

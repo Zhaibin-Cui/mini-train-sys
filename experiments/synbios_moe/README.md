@@ -8,7 +8,7 @@ MiniTrain dropless top-2 MoE。它是“机制复现 + 架构改造”，不是�
 
 ## 最小结构测试
 
-推荐运行 `tests/synbios_moe_end_to_end.ipynb`。命令行等价入口：
+推荐运行 `examples/notebooks/synbios_moe_walkthrough.ipynb`。命令行等价入口：
 
 ```bash
 python scripts/synbios_moe.py prepare \

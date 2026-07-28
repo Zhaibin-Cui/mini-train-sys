@@ -50,7 +50,7 @@ the retained run records                            append-only commands, lifecy
 
 ```bash
 bash scripts/bash/export_test_results.sh
-sha256sum --quiet -c results/MANIFEST.sha256
+python scripts/build_results_manifest.py --results results --check
 find results -type f -size +90M -print
 git diff --check
 ```

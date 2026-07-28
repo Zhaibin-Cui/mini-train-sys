@@ -5,28 +5,27 @@ This is the deterministic index of the Git-safe server snapshot. Paths are relat
 
 | Category | Scope | Files | Size |
 |---|---|---:|---:|
-| `benchmarks` | `distributed_training` | 370 | 2.32 MiB |
-| `benchmarks` | `kernels` | 219 | 8.73 MiB |
+| `benchmarks` | `distributed_training` | 370 | 2.71 MiB |
+| `benchmarks` | `kernels` | 224 | 8.99 MiB |
 | `benchmarks` | `probes` | 89 | 1.06 MiB |
 | `catalog` | `export_audit.json` | 1 | 791.00 B |
 | `datasets` | `README.md` | 1 | 445.00 B |
-| `datasets` | `synbios_moe` | 17 | 122.00 KiB |
-| `environment` | `inventory` | 1 | 2.65 KiB |
-| `formal_runs` | `synbios_moe` | 1,029 | 163.98 MiB |
-| `logs` | `README.md` | 1 | 672.00 B |
+| `datasets` | `synbios_moe` | 17 | 122.01 KiB |
+| `environment` | `inventory` | 1 | 2.63 KiB |
+| `formal_runs` | `synbios_moe` | 1,029 | 164.12 MiB |
+| `logs` | `README.md` | 1 | 684.00 B |
 | `logs` | `benchmarks` | 28 | 328.22 KiB |
-| `logs` | `experiments` | 76 | 5.04 MiB |
-| `logs` | `maintenance` | 28 | 318.32 KiB |
-| `logs` | `validation` | 18 | 272.34 KiB |
+| `logs` | `experiments` | 68 | 4.77 MiB |
+| `logs` | `maintenance` | 25 | 46.08 KiB |
+| `logs` | `validation` | 8 | 17.40 KiB |
 | `notebooks` | `executed_benchmarks` | 5 | 5.39 MiB |
-| `root` | `index` | 2 | 8.56 KiB |
+| `root` | `index` | 2 | 8.76 KiB |
 | `smoke` | `checkpoints` | 4 | 33.31 KiB |
 | `smoke` | `distributed_worker_fix.json` | 1 | 1.23 KiB |
 | `smoke` | `local_runs` | 2 | 6.15 KiB |
 | `smoke` | `single_worker.json` | 1 | 1.24 KiB |
 | `tensorboard` | `index` | 1 | 622.00 B |
 | `validation` | `synbios_moe` | 22 | 1.54 MiB |
-| `validation` | `test_reports` | 5 | 48.06 KiB |
 
 ## TensorBoard
 

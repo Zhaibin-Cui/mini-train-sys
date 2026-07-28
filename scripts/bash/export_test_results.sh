@@ -104,7 +104,7 @@ if [[ -d "$ROOT/artifacts/logs" ]]; then
 fi
 
 # Executed notebooks are compact, reproducible server evidence. Source
-# notebooks remain under tests/; only executed copies and their logs land here.
+# Source notebooks remain under benchmarks/ or examples/; only executed copies and logs land here.
 copy_tree "$ROOT/artifacts/notebooks" "$DEST/notebooks"
 # Preserve validation reports, event logs, runtime/RNG metadata, and COMMITTED
 # markers in Git. Multi-gigabyte DCP shards and model exports remain on the
@@ -221,11 +221,7 @@ python "$ROOT/scripts/build_results_catalog.py" \
   --artifacts "$ROOT/artifacts"
 
 # Hash every exported file so a Git snapshot can be checked independently of
-# the mounted artifact volume. Exclude the manifest itself to avoid recursion.
-find "$DEST" -type f ! -name MANIFEST.sha256 -print0 \
-  | sort -z \
-  | xargs -0 sha256sum \
-  | sed "s#$ROOT/##" \
-  > "$DEST/MANIFEST.sha256"
+# the mounted artifact volume.
+python "$ROOT/scripts/build_results_manifest.py" --results "$DEST"
 
 echo "Exported Git-trackable test results to $DEST"

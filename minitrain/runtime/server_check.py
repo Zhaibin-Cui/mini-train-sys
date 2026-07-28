@@ -129,7 +129,7 @@ def collect_server_status(
             checkout / "scripts" / "bash" / "synbios_moe.sh",
             checkout / "scripts" / "bash" / "synbios_probes.sh",
             checkout / "configs" / "synbios_moe" / "model.yaml",
-            checkout / "tests" / "distributed_server_benchmark.ipynb",
+            checkout / "benchmarks" / "distributed" / "distributed_server_benchmark.ipynb",
         )
         missing_paths = [str(path) for path in required_paths if not path.is_file()]
         if missing_paths:

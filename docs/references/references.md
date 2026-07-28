@@ -3,7 +3,7 @@
 - `../nanogpt`: minimal GPT training code reference.
 - `../nanochat`: modern small LLM training harness reference.
 - External Triton kernel references for RMSNorm, RoPE, SwiGLU, cross entropy, and fused loss.
-- Triton official fused attention tutorial: FlashAttention v2-style Triton implementation and the preferred starting point for `flash_attention_pretraining_plan.md`.
+- Triton official fused attention tutorial: FlashAttention v2-style implementation referenced by the kernel code-reading guides.
 - `../torchtitan`: PyTorch-native distributed training system reference.
 - `../Megatron-LM`: large-scale tensor, pipeline, data, expert, and context parallelism reference.
 - `../DeepSpeed`: runtime engine, ZeRO-style optimizer state partitioning, and CUDA extension reference.
