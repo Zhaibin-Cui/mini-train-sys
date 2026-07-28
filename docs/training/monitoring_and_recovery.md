@@ -199,5 +199,5 @@ torchrun --standalone --nproc_per_node=4 scripts/train.py \
 
 ## 5. 可执行验证入口
 
-- `tests/synbios_moe_end_to_end.ipynb`：数据准备、主训练、评估、单 probe、独立 validation、P/Q pipeline、事件落盘、router、结果汇总和继续训练；
-- `tests/distributed_server_benchmark.ipynb`：在目标 GPU 服务器验证真实 NCCL/FSDP 吞吐、显存和恢复流程。
+- `examples/notebooks/synbios_moe_walkthrough.ipynb`：数据准备、主训练、评估、单 probe、独立 validation、P/Q pipeline、事件落盘、router、结果汇总和继续训练；
+- `benchmarks/distributed/distributed_server_benchmark.ipynb`：在目标 GPU 服务器验证真实 NCCL/FSDP 吞吐、显存和恢复流程。

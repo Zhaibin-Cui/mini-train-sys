@@ -1,8 +1,8 @@
 # 单机多卡 benchmark 说明
 
 目标机器是一台主机、同一 CPU、1/4/8 张 24 GB RTX 4090。入口 notebook 是
-[`tests/distributed_server_benchmark.ipynb`](../../tests/distributed_server_benchmark.ipynb)，
-高层编排与可视化位于 `tests/distributed_bench_utils.py`，测量 worker 位于
+[`benchmarks/distributed/distributed_server_benchmark.ipynb`](../../benchmarks/distributed/distributed_server_benchmark.ipynb)，
+高层编排与可视化位于 `benchmarks/distributed/workflow.py`，测量 worker 位于
 `scripts/run_dist_bench.py`。Notebook 不再拼接长命令，而是使用与当前 kernel 相同的
 `sys.executable` 创建一个 `DistributedBenchmark` 会话。
 
@@ -11,7 +11,7 @@
 服务器上从项目根目录启动 Jupyter：
 
 ```bash
-jupyter notebook tests/distributed_server_benchmark.ipynb
+jupyter notebook benchmarks/distributed/distributed_server_benchmark.ipynb
 ```
 
 Notebook 只有四个实际阶段：

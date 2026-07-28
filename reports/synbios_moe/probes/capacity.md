@@ -29,13 +29,8 @@ and formal probe stages.
 
 ## Evidence
 
-- Initial execution failure:
-  `results/benchmarks/synbios_moe/probe_batch_benchmark/multi5_permute/20260723T060246Z/`
-- Complete conservative matrix:
-  `results/benchmarks/synbios_moe/probe_batch_benchmark/multi5_permute/20260723T060430Z/`
 - Formal expanded matrix and recommendation:
   `results/benchmarks/synbios_moe/probe_batch_benchmark/multi5_permute/20260723T060600Z/`
-- Commands, lifecycle, failure diagnosis, and correction: repository-root the retained run records.
 
 The conservative matrix verified paper-default P=50 and Q=200 training batches on both replicas.
 The expanded matrix begins at the earlier right boundary, so its
@@ -50,11 +45,8 @@ condition is used as the larger/worst data case. Smoke stages must still demonst
 correctness for both `single` and `multi5_permute`, and any change to model, checkpoint, cache,
 sequence construction, or GPU type invalidates reuse through the pipeline identity checks.
 
-## Next action
-
-Smoke and pilot P/Q training plus independent held-out validation completed for `single` and
-`multi5_permute` with the generated `recommended.env`. The formal duration decision retains these
-throughput-optimal batches and is recorded in `formal_training_decision.md`.
+Smoke, pilot, and formal P/Q training completed for both conditions with the generated
+`recommended.env`. The formal steps and ranks are recorded in [formal_protocol.md](formal_protocol.md).
 
 ## Ground-truth-`t1` fresh-whole extension (2026-07-25)
 
@@ -71,6 +63,6 @@ probe measurements.
 
 Both replicas passed. P validation batch 8,192 reached 98.53% reserved and was rejected, so the
 accepted recommendation is bracketed rather than a search boundary. Raw evidence is under
-`artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T094600Z/`; launch
-interpretation and the user-selected 4,000-step budget are documented in
-`ground_truth_first_training_decision.md`.
+`artifacts/synbios_moe/results/ground_truth_first_batch_benchmark/20260725T094600Z/`. Both
+conditions use rank 2, 4,000 steps, training batch 128, and validation batch 3,072; the completed
+results are linked from this directory's README.

@@ -97,9 +97,11 @@ was already 100%, and every fuzzy score was consequently 1.0.
 | Unterminated generations | 0 |
 | Four-GPU parallel wall time | 419.48 s |
 
-- Aggregate JSON: `artifacts/synbios_moe/results/single_cloze_eval/full_100k/summary.json`
-- Shards: `artifacts/synbios_moe/results/single_cloze_eval/full_100k/shard_{0,1,2,3}.json`
-- Pilot JSON: `artifacts/synbios_moe/results/single_cloze_eval/pilot_1000.json`
-- Exact checkpoint: `artifacts/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`
-- Full execution history, including rejected pilot/scoring attempts and duplicate-range protection:
-  the retained run records
+- Aggregate JSON:
+  `results/cloze/synbios_moe/single/full_100k/summary.json`
+- Shards:
+  `results/cloze/synbios_moe/single/full_100k/shard_{0,1,2,3}.json`
+- Exact checkpoint:
+  `results/pretraining/synbios_moe/checkpoints/synbios_moe_single_fsdp_4gpu/epoch_000540_step_000017280/`
+- Training events:
+  `results/pretraining/synbios_moe/runs/synbios_moe_single_fsdp_4gpu/20260721-045620/events.jsonl`

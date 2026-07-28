@@ -281,7 +281,7 @@ PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=formal NPROC=4 \
 PROBE_BATCH_ENV="$BENCH_DIR/recommended.env" PROBE_GPUS=4 STAGE=formal NPROC=4 \
   bash scripts/bash/synbios_probes.sh multi5_permute fsdp latest
 
-bash scripts/bash/export_test_results.sh
+bash scripts/bash/export_results.sh
 ```
 
 `formal` 完成后 Bash 会继续做六个 router analysis。最终比较使用两个 formal validation

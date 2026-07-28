@@ -15,7 +15,7 @@ CATALOG_RELATIVE_PATHS = {
     Path("catalog/artifacts.json"),
     Path("catalog/retention.json"),
     Path("catalog/summary.md"),
-    Path("tensorboard/index.csv"),
+    Path("catalog/tensorboard/index.csv"),
     Path("MANIFEST.sha256"),
 }
 
@@ -26,6 +26,11 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _write_utf8(path: Path, content: str) -> None:
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(content)
 
 
 def _human_bytes(value: int) -> str:
@@ -49,26 +54,24 @@ def _scope(relative: Path) -> tuple[str, str]:
             return category, "kernels"
         if name == "synbios_moe":
             return category, "probes"
+        if name == "notebooks":
+            return category, "executed_notebooks"
+        if name == "logs":
+            return category, "logs"
         return category, "distributed_training"
-    if category == "formal_runs":
-        return category, "synbios_moe"
-    if category == "logs":
-        return category, parts[1] if len(parts) > 1 else "uncategorized"
-    if category == "datasets":
+    if category in {"pretraining", "cloze", "probes"}:
+        if len(parts) == 2 and parts[1] == "README.md":
+            return category, "index"
         return category, parts[1] if len(parts) > 1 else "root"
-    if category == "notebooks":
-        return category, "executed_benchmarks"
     if category == "environment":
         return category, "inventory"
-    if category == "tensorboard":
-        return category, "index"
-    if category == "validation":
-        return category, "test_reports" if len(parts) == 2 else parts[1]
+    if category == "catalog":
+        return category, parts[1] if len(parts) > 1 else "index"
     return category, parts[1] if len(parts) > 1 else "root"
 
 
-def classify_log(name: str) -> str:
-    """Return the physical log category used by the export script."""
+def log_destination(name: str) -> Path | None:
+    """Return the destination for a mainline server log, if retained."""
     lowered = name.lower()
     if any(
         token in lowered
@@ -82,32 +85,18 @@ def classify_log(name: str) -> str:
             "cuda_build",
         )
     ):
-        return "benchmarks"
+        return Path("benchmarks/logs")
+    if "cloze_full" in lowered:
+        return Path("cloze/synbios_moe/logs")
     if any(
         token in lowered
         for token in (
-            "probe",
-            "cloze",
-            "synbios",
-            "ground_truth",
-            "tensorboard",
+            "prepare",
+            "fsdp4_formal",
         )
     ):
-        return "experiments"
-    if any(
-        token in lowered
-        for token in (
-            "test",
-            "regression",
-            "preflight",
-            "prepush",
-            "fidelity",
-            "validation",
-            "quality",
-        )
-    ):
-        return "validation"
-    return "maintenance"
+        return Path("pretraining/synbios_moe/logs")
+    return None
 
 
 def _tensorboard_scope(relative: Path) -> tuple[str, str, str]:
@@ -118,18 +107,18 @@ def _tensorboard_scope(relative: Path) -> tuple[str, str, str]:
     elif "single" in text:
         condition = "single"
 
-    if "/probe_pipeline/formal/" in text:
+    if text.startswith("benchmarks/"):
+        stage = "benchmark"
+    elif text.startswith("probes/") and "/formal/" in text:
         stage = "probe_formal"
-    elif "/probe_pipeline/pilot/" in text:
-        stage = "probe_pilot"
-    elif "/probe_pipeline/" in text:
-        stage = "probe_other"
-    elif "/runs/" in text and "synbios_moe" in text:
+    elif text.startswith("probes/"):
+        stage = "probe"
+    elif text.startswith("pretraining/") and "/preparation_logs/" in text:
+        stage = "preparation"
+    elif text.startswith("pretraining/") and "/runs/" in text:
         stage = "pretraining"
-    elif text.startswith("validation/"):
-        stage = "validation"
-    elif text.startswith("smoke/"):
-        stage = "smoke"
+    elif text.startswith("cloze/"):
+        stage = "cloze"
     else:
         stage = "other"
     return "tensorboard", condition, stage
@@ -195,12 +184,6 @@ def build_retention_inventory(artifact_root: Path) -> dict[str, Any]:
             "DCP/Adam shards and model.pt stay on /data; COMMITTED/runtime/RNG metadata is exported.",
         ),
         (
-            "validation_checkpoints",
-            artifact_root / "validation/synbios_moe/checkpoints",
-            None,
-            "Validation DCP tensor shards stay on /data; small recovery metadata is exported.",
-        ),
-        (
             "probe_weights_and_records",
             artifact_root / "synbios_moe/results",
             None,
@@ -234,6 +217,24 @@ def build_retention_inventory(artifact_root: Path) -> dict[str, Any]:
         "schema_version": 1,
         "artifact_root": artifact_root.as_posix(),
         "groups": groups,
+    }
+
+
+def retained_inventory(results_root: Path, artifact_root: Path) -> dict[str, Any]:
+    """Refresh server retention when mounted, otherwise preserve the published inventory."""
+
+    if artifact_root.is_dir():
+        return build_retention_inventory(artifact_root)
+    published = results_root / "catalog" / "retention.json"
+    if published.is_file():
+        payload = json.loads(published.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict) or not isinstance(payload.get("groups"), list):
+            raise ValueError(f"invalid published retention inventory: {published}")
+        return payload
+    return {
+        "schema_version": 1,
+        "artifact_root": artifact_root.as_posix(),
+        "groups": [],
     }
 
 
@@ -271,7 +272,7 @@ def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
                 }
             )
 
-    retention = build_retention_inventory(artifact_root)
+    retention = retained_inventory(results_root, artifact_root)
     payload = {
         "schema_version": 1,
         "results_root": results_root.name,
@@ -292,14 +293,16 @@ def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
     }
 
     catalog_dir = results_root / "catalog"
-    tensorboard_dir = results_root / "tensorboard"
+    tensorboard_dir = results_root / "catalog" / "tensorboard"
     catalog_dir.mkdir(parents=True, exist_ok=True)
     tensorboard_dir.mkdir(parents=True, exist_ok=True)
-    (catalog_dir / "artifacts.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    _write_utf8(
+        catalog_dir / "artifacts.json",
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
     )
-    (catalog_dir / "retention.json").write_text(
-        json.dumps(retention, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    _write_utf8(
+        catalog_dir / "retention.json",
+        json.dumps(retention, indent=2, sort_keys=True) + "\n",
     )
     with (tensorboard_dir / "index.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
@@ -330,7 +333,7 @@ def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
             "",
             f"- Event files: **{len(tensorboard_rows):,}**",
             f"- Total size: **{_human_bytes(sum(row['size_bytes'] for row in tensorboard_rows))}**",
-            "- Machine index: [`../tensorboard/index.csv`](../tensorboard/index.csv)",
+            "- Machine index: [`tensorboard/index.csv`](tensorboard/index.csv)",
             "",
             "## Server-only retention",
             "",
@@ -344,7 +347,7 @@ def build_catalog(results_root: Path, artifact_root: Path) -> dict[str, Any]:
             f"{_human_bytes(group['size_bytes'])} | `{group['logical_path']}` |"
         )
     lines.append("")
-    (catalog_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")
+    _write_utf8(catalog_dir / "summary.md", "\n".join(lines))
     return payload
 
 

@@ -77,15 +77,11 @@ profiles/
 !/results/**/runtime.pt
 !/results/**/rng_rank_*.pt
 
-# Tests, benchmark results, and reports are shareable.
-!tests/**
+# Benchmark results and reports are shareable.
 !reports/**
 # Machine-specific benchmark notebooks are local execution artifacts. Keep the
 # portable notebook variants tracked and regenerate these per target machine.
-tests/operator_bench_sm86_4gb.ipynb
-tests/moe_operator_bench_sm86_4gb.ipynb
-tests/**/__pycache__/
-tests/**/*.py[cod]
+benchmarks/operators/local/
 reports/**/__pycache__/
 reports/**/*.py[cod]
 
@@ -93,6 +89,5 @@ reports/**/*.py[cod]
 # .docs/
 
 # Local operating notes and run journal
-AGENT.md
-AGENTS.md
-HISTORY.md
+# AGENTS.md
+# HISTORY.md

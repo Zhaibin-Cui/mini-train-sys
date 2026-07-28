@@ -6,7 +6,7 @@ formal backbone 与 probe checkpoints，不训练或更新任何参数，并覆�
 P-whole P0–P5、原 Q-whole、oracle Q-whole 和 Allen-Zhu 参考值放在同一坐标中，route
 图则给出五属性 × 12 层的全部 contrast。
 
-![全量 whole 对比](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/complete_whole_comparison.png)
+![全量 whole 对比](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/figures/complete_whole_comparison.png)
 
 ## 核心结论
 
@@ -27,22 +27,21 @@ P-whole P0–P5、原 Q-whole、oracle Q-whole 和 Allen-Zhu 参考值放在同�
 - [Oracle true-first-token intervention](oracle_first_token.md)
 - [Bad-case MoE route branching](bad_case_routes.md)
 - [single vs multi5+permute formal 主报告](../formal_comparison.md)
-- [历史合并报告](../q_whole_moe_diagnostics.md)
 
 ## 规范结果结构
 
 - Machine summary：
-  [`summary.json`](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/summary.json)
+  [`summary.json`](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/summary.json)
 - 全量 formal whole 指标：
-  [`formal_whole_metrics.csv`](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/formal_whole_metrics.csv)
+  [`formal_whole_metrics.csv`](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/formal_whole_metrics.csv)
 - Oracle tidy metrics：
-  [`oracle_metrics.csv`](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/oracle_metrics.csv)
+  [`oracle_metrics.csv`](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/oracle_metrics.csv)
 - Route layer metrics：
-  [`route_layer_metrics.csv`](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/route_layer_metrics.csv)
+  [`route_layer_metrics.csv`](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/route_layer_metrics.csv)
 - Route attribute × layer metrics：
-  [`route_attribute_layer_metrics.csv`](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/route_attribute_layer_metrics.csv)
+  [`route_attribute_layer_metrics.csv`](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/route_attribute_layer_metrics.csv)
 - 完整图表：
-  [`figures/`](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/)
+  [`figures/`](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/figures/)
 
 大体积逐样本证据保留在 `/data` 下原 diagnostic 目录，Git 只保存其大小和 SHA256
 manifest，不复制原始样本或模型权重。

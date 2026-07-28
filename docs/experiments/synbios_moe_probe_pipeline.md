@@ -1,7 +1,7 @@
 # SynBioS Probe：缓存、分阶段训练、多卡调度与验证
 
 本文是 P/Q probe 的当前运行手册。它说明程序边界、正式命令、任意单机 GPU 数调度、独立 validation 和结果后处理。论文差异仍以
-[`synbios_moe_reproduction_plan.md`](synbios_moe_reproduction_plan.md) 为准。
+[`synbios_moe_protocol.md`](synbios_moe_protocol.md) 为准。
 
 ## 1. 不变的实验定义
 
@@ -19,24 +19,24 @@
 configs/synbios_moe/probe_pipeline.yaml
   └─ smoke/pilot/formal 的步数、任务和前置阶段
 
-experiments/synbios_moe/probe_data.py
+experiments/synbios_moe/probes/dataset.py
   ├─ 11 个论文任务定义
   ├─ 一次性 tokenizer/位置/标签缓存
   ├─ train/validation whole-label 覆盖检查
   └─ CachedProbeDataset（mmap，只读）
 
-experiments/synbios_moe/probes.py
+experiments/synbios_moe/probes/model.py
   ├─ P/Q 单任务 Dataset 的旧兼容路径
   ├─ rank embedding delta 与 AttributeProbe
   └─ 单任务训练、完整train/validation accuracy和健康指标
 
-experiments/synbios_moe/probe_checkpoint.py
+experiments/synbios_moe/probes/checkpoint.py
   └─ 不含backbone的原子恢复点与精确shuffle恢复
 
-experiments/synbios_moe/probe_benchmark.py
+experiments/synbios_moe/probes/batch_benchmark.py
   └─ 最长样本batch容量压测与跨GPU安全值汇总
 
-experiments/synbios_moe/probe_pipeline.py
+experiments/synbios_moe/probes/pipeline.py
   ├─ 任意设备列表解析
   ├─ 每卡一个进程的任务队列
   ├─ smoke/pilot/formal 任务计划
@@ -423,7 +423,7 @@ tensorboard --logdir artifacts/synbios_moe/results/<run>/probe_pipeline \
 通过 SSH 转发 `6606` 后在本机浏览器查看。不同分类器使用独立 run 目录，不会互相覆盖；
 父 pipeline 还会按 `phase/task` 汇集关键 worker 指标，方便比较四张卡的实时进度。
 
-端到端验证使用 `tests/synbios_moe_end_to_end.ipynb` 和专用的
+端到端验证使用 `examples/notebooks/synbios_moe_walkthrough.ipynb` 和专用的
 `configs/synbios_moe/probe_pipeline_notebook_smoke.yaml`。notebook 把单 probe 训练、独立
 `validate-probe`、两任务 pipeline、状态/事件检查和正式 smoke/pilot/formal 命令拆成不同
 单元格。该配置只有 3 steps，只验证调用与监控契约，不能替代正式预算。
@@ -431,7 +431,9 @@ tensorboard --logdir artifacts/synbios_moe/results/<run>/probe_pipeline \
 ## 11. Q-whole 的两个推理验证
 
 两个诊断都复用已经训练完成的 Q-first/Q-whole 分类头，不更新 backbone、embedding delta
-或分类头。实现集中在 `experiments/synbios_moe/probe_diagnostics.py`，与训练调度代码分离。
+或分类头。first-token intervention 与 route branching 分别位于
+`experiments/synbios_moe/mechanisms/first_token_intervention.py` 和
+`experiments/synbios_moe/mechanisms/token_routes.py`。
 
 ### 11.1 Oracle 首 token 干预
 

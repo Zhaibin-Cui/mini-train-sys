@@ -8,7 +8,6 @@
 - **当前手册**：描述现有代码，可以直接照着运行。
 - **实验说明**：描述某个实验的控制变量、产物和判断方式。
 - **深入材料**：阅读 kernel 或性能问题时使用，不是入门前置知识。
-- **历史设计记录**：解释实现为什么演变成现在这样；命令和 TODO 可能已经过期。
 
 ## 目录结构
 
@@ -21,7 +20,6 @@ docs/
 ├── benchmarks/     算子/分布式 benchmark 规范和硬件容量记录
 ├── model/          MoE 等模型专题
 ├── kernels/        CUDA/Triton 算子阅读、实现与排错
-├── design-notes/   历史设计方案，不作为当前运行手册
 └── references/     外部参考和实现映射
 ```
 
@@ -52,7 +50,8 @@ docs/
 - [runtime](../minitrain/runtime/README.md)
 - [train](../minitrain/train/README.md)
 - [scripts](../scripts/README.md)
-- [tests](../tests/README.md)
+- [benchmarks](../benchmarks/README.md)
+- [examples](../examples/README.md)
 - [reports](../reports/README.md)
 
 ## 当前手册
@@ -66,20 +65,21 @@ docs/
 | [monitoring_and_recovery.md](training/monitoring_and_recovery.md) | loss、吞吐、单卡/多卡显存怎样看，怎样完整恢复？ |
 | [artifact_layout.md](guides/artifact_layout.md) | 大文件、TensorBoard、日志、机器结果和结论怎样分层？ |
 | [synbios_moe_probe_pipeline.md](experiments/synbios_moe_probe_pipeline.md) | P/Q probe 怎样分阶段、多卡调度、监控和汇总？ |
-| [mixed_precision_plan.md](training/mixed_precision_plan.md) | FP32/BF16/FP16 各自保存和计算什么？ |
+| [mixed_precision.md](training/mixed_precision.md) | FP32/BF16/FP16 各自保存和计算什么？ |
 | [moe.md](model/moe.md) | Top-k router、expert 和 fused MoE 的数据流是什么？ |
 | [distributed_benchmark.md](benchmarks/distributed_benchmark.md) | 如何正确测 1/4/8 卡弱扩展和显存容量？ |
 | [cuda_ext_run_commands.md](kernels/cuda_ext_run_commands.md) | CUDA 扩展如何编译、验证和排错？ |
 
-配置字段以 [configs/README.md](../configs/README.md) 为准；notebook 入口以
-[tests/README.md](../tests/README.md) 为准。
+配置字段以 [configs/README.md](../configs/README.md) 为准；性能 notebook 见
+[benchmarks/README.md](../benchmarks/README.md)，小规模示例见
+[examples/README.md](../examples/README.md)。
 
 ## SynBioS 实验说明
 
 | 文档 | 定位 |
 |---|---|
 | [synbios_moe_training_flow.md](experiments/synbios_moe_training_flow.md) | 数据生成到 probe 的当前可执行流程 |
-| [synbios_moe_reproduction_plan.md](experiments/synbios_moe_reproduction_plan.md) | 与 Allen-Zhu 论文的 fidelity 差异清单 |
+| [synbios_moe_protocol.md](experiments/synbios_moe_protocol.md) | 与 Allen-Zhu 论文的 fidelity 差异清单 |
 | [synbios_moe_probe_pipeline.md](experiments/synbios_moe_probe_pipeline.md) | Probe 缓存、阶段门控、任意GPU数调度、validation与结果汇总 |
 | [experiments/synbios_moe/README.md](../experiments/synbios_moe/README.md) | 最短运行命令和产物路径 |
 
@@ -88,7 +88,7 @@ docs/
 先读 [minitrain/kernels/README.md](../minitrain/kernels/README.md) 理解 backend/fallback，
 再按需求选择：
 
-- [benchmark_plan.md](benchmarks/benchmark_plan.md)：所有算子 benchmark 的共同约定。
+- [benchmarking.md](benchmarks/benchmarking.md)：所有算子 benchmark 的共同约定。
 - [cuda_flash_attention_learning_report.md](kernels/cuda_flash_attention_learning_report.md)：
   本项目 CUDA FlashAttention 的总体设计与验证结果。
 - [cuda_flash_attention_code_reading_guide.md](kernels/cuda_flash_attention_code_reading_guide.md)：
@@ -106,17 +106,9 @@ RTX 3050 文档是历史硬件个案，不能替代 24 GB RTX 4090 的服务器 
 [kernel engineering](../reports/engineering/kernels.md) 与
 [distributed/end-to-end](../reports/engineering/distributed_training.md)。
 
-## 历史设计记录
-
-以下文件保留决策过程，但不作为当前运行手册：
-
-- [data_preprocessing_plan.md](design-notes/data_preprocessing_plan.md)
-- [flash_attention_pretraining_plan.md](design-notes/flash_attention_pretraining_plan.md)
-- [subsession_plan.md](design-notes/subsession_plan.md)
-
 ## 参考资料
 
 - [reference_map.md](references/reference_map.md)
 - [references.md](references/references.md)
 
-遇到 plan 与代码不一致时，以当前 typed config、测试和“当前手册”为准。
+遇到文档与代码不一致时，以当前 typed config、测试和“当前手册”为准。

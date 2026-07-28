@@ -126,5 +126,5 @@ D256 no-dropout 在 sm86 仍可使用；有足够共享内存的服务器 GPU �
 - 保留 `--ptxas-options=-v`，让新架构构建仍能看到资源数据；
 - 接受上游 kernel 的 spill/tile 权衡，不添加寄存器上限；
 - 不为短 sequence 增加性能分支或 fallback；
-- correctness 和性能都在 `tests/operator_bench.ipynb` 中按明确 shape 验证；
+- correctness 和性能都在 `benchmarks/operators/operator_bench.ipynb` 中按明确 shape 验证；
 - 将来升级 FlashAttention 版本时重新对比文件 hash、ptxas 数据和 notebook 结果。

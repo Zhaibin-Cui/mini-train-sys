@@ -217,7 +217,7 @@ MiniTrain 保留了上游 tile 和 register/shared-memory 权衡。看到 ptxas 
 
 ## 7. 验证入口
 
-`tests/operator_bench.ipynb` 是 CUDA correctness 与性能的统一入口。
+`benchmarks/operators/operator_bench.ipynb` 是 CUDA correctness 与性能的统一入口。
 
 notebook 的 CUDA correctness 固定使用 fp16，并遍历：
 
@@ -245,7 +245,7 @@ stride 透传与当前 stream 接线。性能部分继续使用 notebook 原有�
 - 增减编译矩阵：`build.py` 和 `generate_kernels.py`；
 - 改框架支持条件：`flash_attention.py`；
 - 改张量/API 适配：`flash_api_upstream.cpp`；
-- 加测试或 benchmark：`tests/operator_bench.ipynb`。
+- 加测试或 benchmark：`benchmarks/operators/operator_bench.ipynb`。
 
 除非明确进行独立的上游版本升级或架构调优，不要修改
 `csrc/third_party/flash_attn` 和 `csrc/third_party/cutlass`。这样可以继续用文件

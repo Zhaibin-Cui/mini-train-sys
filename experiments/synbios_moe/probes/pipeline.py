@@ -1,0 +1,675 @@
+"""Schedule P/Q jobs and reduce their results."""
+
+
+from datetime import datetime, timedelta
+import json
+import os
+import queue
+import subprocess
+import threading
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Iterable, Protocol
+
+import torch
+import yaml
+
+from experiments.synbios_moe.artifact_io import sha256_file, write_json_atomic
+from experiments.synbios_moe.probes.dataset import paper_probe_tasks
+from experiments.synbios_moe.probes.spec import (
+    JobCommand,
+    ProbeJob,
+    ProbeStepSchedule,
+    steps_for_job,
+)
+
+
+PIPELINE_PROTOCOL_VERSION = 4
+CLOZE_GATE_PROTOCOL = "progressive_original_biography_cloze_greedy"
+class PipelineEventLogger(Protocol):
+    def log_event(self, payload: dict[str, object]) -> None: ...
+
+
+@dataclass(frozen=True)
+class ProbeRuntimeConfig:
+    """Operational knobs kept separate from the scientific task matrix."""
+
+    p_batch_size: int = 50
+    q_batch_size: int = 200
+    p_validation_batch_size: int = 50
+    q_validation_batch_size: int = 200
+    log_interval_steps: int = 100
+    heartbeat_seconds: float = 10.0
+    checkpoint_interval_steps: int = 1000
+    evaluate_train: bool = True
+
+    def __post_init__(self) -> None:
+        numeric = (
+            self.p_batch_size,
+            self.q_batch_size,
+            self.p_validation_batch_size,
+            self.q_validation_batch_size,
+            self.log_interval_steps,
+            self.heartbeat_seconds,
+            self.checkpoint_interval_steps,
+        )
+        if any(value <= 0 for value in numeric):
+            raise ValueError("probe runtime numeric settings must be positive")
+
+    @classmethod
+    def from_config(cls, config: dict) -> "ProbeRuntimeConfig":
+        runtime = dict(config.get("runtime", {}))
+        training = dict(runtime.pop("training_batch_sizes", {}))
+        validation = dict(runtime.pop("validation_batch_sizes", {}))
+        unknown_training = sorted(set(training) - {"p", "q"})
+        unknown_validation = sorted(set(validation) - {"p", "q"})
+        if unknown_training or unknown_validation:
+            unknown = [
+                *(f"training_batch_sizes.{key}" for key in unknown_training),
+                *(f"validation_batch_sizes.{key}" for key in unknown_validation),
+            ]
+            raise ValueError("unknown probe runtime settings: " + ", ".join(unknown))
+        instance = cls(
+            p_batch_size=int(training.get("p", cls.p_batch_size)),
+            q_batch_size=int(training.get("q", cls.q_batch_size)),
+            p_validation_batch_size=int(validation.get("p", cls.p_validation_batch_size)),
+            q_validation_batch_size=int(validation.get("q", cls.q_validation_batch_size)),
+            log_interval_steps=int(runtime.pop("log_interval_steps", cls.log_interval_steps)),
+            heartbeat_seconds=float(runtime.pop("heartbeat_seconds", cls.heartbeat_seconds)),
+            checkpoint_interval_steps=int(
+                runtime.pop("checkpoint_interval_steps", cls.checkpoint_interval_steps)
+            ),
+            evaluate_train=bool(runtime.pop("evaluate_train", cls.evaluate_train)),
+        )
+        if runtime:
+            raise ValueError("unknown probe runtime settings: " + ", ".join(sorted(runtime)))
+        return instance
+
+    def with_overrides(self, **overrides: object) -> "ProbeRuntimeConfig":
+        values = {
+            name: getattr(self, name) if value is None else value
+            for name, value in overrides.items()
+        }
+        payload = {**self.__dict__, **values}
+        return type(self)(**payload)
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "training_batch_sizes": {"p": self.p_batch_size, "q": self.q_batch_size},
+            "validation_batch_sizes": {
+                "p": self.p_validation_batch_size,
+                "q": self.q_validation_batch_size,
+            },
+            "log_interval_steps": self.log_interval_steps,
+            "heartbeat_seconds": self.heartbeat_seconds,
+            "checkpoint_interval_steps": self.checkpoint_interval_steps,
+            "evaluate_train": self.evaluate_train,
+        }
+
+
+def all_probe_jobs() -> tuple[ProbeJob, ...]:
+    return tuple(
+        ProbeJob(kind, task.attribute, task.target)
+        for task in paper_probe_tasks()
+        for kind in ("p", "q")
+    )
+
+
+def load_pipeline_config(path: str | Path) -> dict:
+    payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not isinstance(payload.get("stages"), dict):
+        raise ValueError("probe pipeline config must contain a stages mapping")
+    return payload
+
+
+def _normalize_step_schedule(value: object) -> ProbeStepSchedule:
+    if isinstance(value, dict):
+        keys = set(value)
+        valid_key_sets = (
+            {"p", "q"},
+            {"p_first", "p_whole", "q_first", "q_whole"},
+        )
+        if keys not in valid_key_sets:
+            raise ValueError(
+                "stage steps mapping must contain exactly p/q or "
+                "p_first/p_whole/q_first/q_whole"
+            )
+        schedule = {str(key): int(value[key]) for key in value}
+        if any(steps <= 0 for steps in schedule.values()):
+            raise ValueError("stage steps must be positive")
+        return schedule
+    steps = int(value)
+    if steps <= 0:
+        raise ValueError("stage steps must be positive")
+    return steps
+
+
+def jobs_for_stage(
+    config: dict, stage: str
+) -> tuple[ProbeStepSchedule, tuple[ProbeJob, ...], str | None]:
+    try:
+        stage_cfg = config["stages"][stage]
+    except KeyError as exc:
+        raise ValueError(f"unknown probe stage: {stage}") from exc
+    steps = _normalize_step_schedule(stage_cfg["steps"])
+    selected = stage_cfg.get("tasks", "all")
+    if selected == "all":
+        jobs = all_probe_jobs()
+    else:
+        if not isinstance(selected, list):
+            raise ValueError("stage tasks must be 'all' or a list")
+        jobs = tuple(
+            ProbeJob(str(item["kind"]), str(item["attribute"]), str(item["target"]))
+            for item in selected
+        )
+    if not jobs:
+        raise ValueError("probe stage must contain at least one job")
+    keys = [job.key for job in jobs]
+    duplicates = sorted({key for key in keys if keys.count(key) > 1})
+    if duplicates:
+        raise ValueError("duplicate probe jobs in stage config: " + ", ".join(duplicates))
+    valid = {job.key for job in all_probe_jobs()}
+    invalid = [job.key for job in jobs if job.key not in valid]
+    if invalid:
+        raise ValueError("invalid probe jobs in stage config: " + ", ".join(invalid))
+    return steps, jobs, stage_cfg.get("requires")
+
+
+def build_pipeline_identity(
+    *,
+    stage: str,
+    steps: ProbeStepSchedule,
+    jobs: Iterable[ProbeJob],
+    seed: int,
+    data: str | Path,
+    cache: str | Path,
+    model_config: str | Path,
+    checkpoint: str | Path,
+    runtime: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """Fingerprint every input that changes durable probe outputs."""
+
+    data_root = Path(data).resolve()
+    cache_root = Path(cache).resolve()
+    model_path = Path(model_config).resolve()
+    checkpoint_path = Path(checkpoint).resolve()
+    model_export = checkpoint_path if checkpoint_path.is_file() else checkpoint_path / "model.pt"
+    required_files = {
+        "dataset manifest": data_root / "manifest.json",
+        "probe cache manifest": cache_root / "manifest.json",
+        "model config": model_path,
+        "checkpoint model export": model_export,
+    }
+    missing = [f"{name}: {path}" for name, path in required_files.items() if not path.is_file()]
+    if missing:
+        raise FileNotFoundError("missing pipeline input(s): " + "; ".join(missing))
+    identity = {
+        "protocol_version": PIPELINE_PROTOCOL_VERSION,
+        "stage": stage,
+        "steps": steps,
+        "jobs": [job.key for job in jobs],
+        "seed": int(seed),
+        "data": str(data_root),
+        "data_manifest_sha256": sha256_file(required_files["dataset manifest"]),
+        "probe_cache": str(cache_root),
+        "probe_cache_manifest_sha256": sha256_file(required_files["probe cache manifest"]),
+        "model_config": str(model_path),
+        "model_config_sha256": sha256_file(model_path),
+        "checkpoint": str(checkpoint_path),
+        "checkpoint_model_sha256": sha256_file(model_export),
+    }
+    if runtime is not None:
+        identity["runtime"] = runtime
+    return identity
+
+
+def common_pipeline_identity(identity: dict[str, object]) -> dict[str, object]:
+    """Return fields that must match across smoke, pilot, and formal stages."""
+
+    stage_fields = {"stage", "steps", "jobs"}
+    return {key: value for key, value in identity.items() if key not in stage_fields}
+
+
+def reusable_cloze_gate(candidate: dict[str, object], identity: dict[str, object]) -> bool:
+    """Return whether a cached gate uses the current strict generation protocol."""
+
+    return (
+        candidate.get("protocol") == CLOZE_GATE_PROTOCOL
+        and candidate.get("identity") == common_pipeline_identity(identity)
+        and isinstance(candidate.get("micro_field_accuracy"), (int, float))
+    )
+
+
+def require_matching_identity(
+    existing: dict[str, object], expected: dict[str, object], *, label: str
+) -> None:
+    actual = existing.get("identity")
+    if actual == expected:
+        return
+    if not isinstance(actual, dict):
+        raise ValueError(f"{label} predates pipeline identity tracking and cannot be reused")
+    mismatches = sorted(
+        key for key in set(actual) | set(expected) if actual.get(key) != expected.get(key)
+    )
+    raise ValueError(f"{label} does not match this run: " + ", ".join(mismatches))
+
+
+class ProbePipelineState:
+    """Own durable pipeline state and task-level monitoring in one place."""
+
+    def __init__(
+        self,
+        *,
+        pipeline_path: str | Path,
+        events_path: str | Path,
+        base_state: dict[str, object],
+        jobs: Iterable[ProbeJob],
+        logger: PipelineEventLogger,
+        phase_duration_estimates: dict[str, float] | None = None,
+    ) -> None:
+        self.pipeline_path = Path(pipeline_path)
+        self.events_path = Path(events_path)
+        self.base_state = dict(base_state)
+        self.jobs = tuple(jobs)
+        self.logger = logger
+        self.phase_duration_estimates = dict(phase_duration_estimates or {})
+
+    def write(self, status: str, **fields: object) -> None:
+        write_json_atomic(
+            self.pipeline_path,
+            {"status": status, **self.base_state, **fields},
+        )
+
+    def monitor_phase(
+        self, phase: str, *, extra_state: dict[str, object] | None = None
+    ) -> Callable[[dict[str, object]], None]:
+        started = time.monotonic()
+        task_status = {job.key: "queued" for job in self.jobs}
+        task_progress = {job.key: 0.0 for job in self.jobs}
+        task_eta = {job.key: None for job in self.jobs}
+        total = len(task_status)
+
+        def monitor(event: dict[str, object]) -> None:
+            job = str(event["job"])
+            action = str(event["action"])
+            if action == "started":
+                task_status[job] = "running"
+                task_progress[job] = 0.0
+            elif action == "heartbeat":
+                worker_progress = event.get("worker_progress_percent")
+                worker_event = event.get("worker_event")
+                if (
+                    isinstance(worker_progress, (int, float))
+                    and worker_event in {None, "probe_train", "probe_validation"}
+                ):
+                    task_progress[job] = max(0.0, min(100.0, float(worker_progress)))
+                worker_eta = event.get("worker_eta_seconds")
+                if isinstance(worker_eta, (int, float)) and worker_eta >= 0:
+                    task_eta[job] = float(worker_eta)
+            elif action == "finished":
+                task_status[job] = str(event["status"])
+                task_progress[job] = 100.0 if task_status[job] in {
+                    "completed",
+                    "failed",
+                    "skipped_existing",
+                } else task_progress[job]
+            completed = sum(
+                status in {"completed", "failed", "skipped_existing"}
+                for status in task_status.values()
+            )
+            running = sum(status == "running" for status in task_status.values())
+            failed = sum(status == "failed" for status in task_status.values())
+            elapsed = time.monotonic() - started
+            phase_units = sum(task_progress.values()) / 100.0
+            if completed:
+                # Once at least one task has completed, the observed task wall time is
+                # more stable than a near-zero fractional progress denominator.
+                eta = elapsed / completed * (total - completed)
+            else:
+                active_etas = [
+                    value
+                    for key, value in task_eta.items()
+                    if task_status[key] == "running" and value is not None
+                ]
+                # Before the first completion, estimate the queued work from the
+                # active-worker ETA and the known scheduler concurrency.
+                eta = (
+                    sum(active_etas) / len(active_etas) * total / max(running, 1)
+                    if active_etas
+                    else None
+                )
+            phase_offset = total if phase == "validation" else 0
+            pipeline_completed = phase_offset + phase_units
+            pipeline_total = total * 2
+            future_seconds = (
+                self.phase_duration_estimates.get("validation", 0.0)
+                if phase == "training"
+                else 0.0
+            )
+            pipeline_eta = eta + future_seconds if eta is not None else None
+            estimated_completion = (
+                (datetime.now().astimezone() + timedelta(seconds=pipeline_eta)).isoformat(
+                    timespec="seconds"
+                )
+                if pipeline_eta is not None
+                else None
+            )
+            payload = {
+                "event": "probe_pipeline",
+                "phase": phase,
+                "action": action,
+                "task": job,
+                "device": event.get("device"),
+                "status": event.get("status", "running"),
+                "step": completed,
+                "steps_total": total,
+                "tasks_running": running,
+                "tasks_queued": total - completed - running,
+                "tasks_failed": failed,
+                "elapsed_seconds": elapsed,
+                "eta_seconds": eta,
+                "phase_eta_seconds": eta,
+                "pipeline_eta_seconds": pipeline_eta,
+                "progress_percent": 100.0 * phase_units / max(total, 1),
+                "pipeline_step": pipeline_completed,
+                "pipeline_steps_total": pipeline_total,
+                "pipeline_progress_percent": 100.0
+                * pipeline_completed
+                / max(pipeline_total, 1),
+                "estimated_completion_local": estimated_completion,
+            }
+            payload.update(
+                {
+                    key: value
+                    for key, value in event.items()
+                    if key.startswith("worker_") and value is not None
+                }
+            )
+            self.logger.log_event(payload)
+            self.events_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.events_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({**payload, **event}, default=str) + "\n")
+            self.write(
+                "running",
+                **(extra_state or {}),
+                active_phase=phase,
+                task_status=task_status,
+                live=payload,
+            )
+
+        return monitor
+
+
+def resolve_devices(spec: str, num_gpus: int | None = None) -> tuple[str, ...]:
+    """Resolve auto/N-GPU or explicit device lists without changing task semantics."""
+
+    if spec == "auto":
+        available = torch.cuda.device_count()
+        if available == 0:
+            if num_gpus not in (None, 0):
+                raise ValueError(f"requested {num_gpus} GPUs, but CUDA is unavailable")
+            return ("cpu",)
+        count = available if num_gpus is None else num_gpus
+        if count <= 0 or count > available:
+            raise ValueError(f"num_gpus must be in [1, {available}], got {count}")
+        return tuple(f"cuda:{index}" for index in range(count))
+    if num_gpus is not None:
+        raise ValueError("--num-gpus is only valid with --devices auto")
+    devices = tuple(part.strip() for part in spec.split(",") if part.strip())
+    if not devices:
+        raise ValueError("device list is empty")
+    normalized = tuple(f"cuda:{item}" if item.isdigit() else item for item in devices)
+    for device in normalized:
+        torch.device(device)
+    return normalized
+
+
+def _run_one(
+    command: list[str],
+    log_path: Path,
+    *,
+    heartbeat_seconds: float = 30.0,
+    on_heartbeat: Callable[[float], None] | None = None,
+) -> tuple[int, float]:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
+    environment = {**os.environ, "PYTHONUNBUFFERED": "1"}
+    with log_path.open("w", encoding="utf-8") as log:
+        process = subprocess.Popen(
+            command,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            env=environment,
+        )
+        next_heartbeat = started + heartbeat_seconds
+        while process.poll() is None:
+            now = time.monotonic()
+            if on_heartbeat is not None and now >= next_heartbeat:
+                on_heartbeat(now - started)
+                next_heartbeat = now + heartbeat_seconds
+            time.sleep(min(0.5, heartbeat_seconds))
+    return process.returncode, time.monotonic() - started
+
+
+def _latest_worker_progress(events_root: Path | None, job_key: str) -> dict[str, object]:
+    """Read the newest structured worker event without coupling scheduling to training."""
+
+    if events_root is None or not events_root.is_dir():
+        return {}
+    candidates = list(events_root.glob(f"synbios_*_{job_key}/*/events.jsonl"))
+    if not candidates:
+        return {}
+    path = max(candidates, key=lambda item: item.stat().st_mtime_ns)
+    try:
+        with path.open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            size = handle.tell()
+            handle.seek(max(0, size - 64 * 1024))
+            lines = handle.read().splitlines()
+        for line in reversed(lines):
+            payload = json.loads(line)
+            if payload.get("event") not in {
+                "probe_train",
+                "probe_train_evaluation",
+                "probe_validation",
+                "probe_checkpoint",
+            }:
+                continue
+            fields: dict[str, object] = {
+                "worker_event": payload.get("event"),
+                "worker_step": payload.get("step"),
+                "worker_progress_percent": payload.get("progress_percent"),
+                "worker_eta_seconds": payload.get("eta_seconds"),
+            }
+            total = payload.get("steps_total", payload.get("batches_total"))
+            if total is not None:
+                fields["worker_steps_total"] = total
+            for name in (
+                "loss",
+                "accuracy",
+                "accuracy_running",
+                "lr",
+                "grad_norm",
+                "items_per_sec",
+                "gpu_peak_memory_allocated_mb_max",
+                "gpu_memory_capacity_mb_max",
+                "gpu_compute_utilization_percent_local_mean",
+            ):
+                if name in payload:
+                    fields[f"worker_{name}"] = payload[name]
+            return fields
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {}
+    return {}
+
+
+def schedule_jobs(
+    jobs: Iterable[ProbeJob],
+    devices: tuple[str, ...],
+    command_builder: Callable[[ProbeJob, str], JobCommand],
+    *,
+    on_event: Callable[[dict[str, object]], None] | None = None,
+    heartbeat_seconds: float = 30.0,
+    reuse_existing: bool = True,
+) -> list[dict[str, object]]:
+    """Run at most one independent probe process per configured device."""
+
+    if heartbeat_seconds <= 0:
+        raise ValueError("heartbeat_seconds must be positive")
+
+    pending: queue.Queue[ProbeJob] = queue.Queue()
+    for job in jobs:
+        pending.put(job)
+    results: list[dict[str, object]] = []
+    result_lock = threading.Lock()
+
+    def worker(device: str) -> None:
+        while True:
+            try:
+                job = pending.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                spec = command_builder(job, device)
+                with result_lock:
+                    if on_event is not None:
+                        on_event({"action": "started", "job": job.key, "device": device})
+                is_current = (
+                    reuse_existing
+                    and spec.output.is_file()
+                    and all(
+                        dependency.is_file()
+                        and spec.output.stat().st_mtime_ns >= dependency.stat().st_mtime_ns
+                        for dependency in spec.dependencies
+                    )
+                )
+                if is_current:
+                    record = {
+                        "job": job.key,
+                        "device": device,
+                        "status": "skipped_existing",
+                        "output": str(spec.output),
+                        "seconds": 0.0,
+                    }
+                else:
+                    previous_output_mtime = (
+                        spec.output.stat().st_mtime_ns if spec.output.is_file() else None
+                    )
+                    missing_dependencies = [
+                        str(dependency)
+                        for dependency in spec.dependencies
+                        if not dependency.is_file()
+                    ]
+                    if missing_dependencies:
+                        raise FileNotFoundError(
+                            "missing job dependencies: " + ", ".join(missing_dependencies)
+                        )
+
+                    def heartbeat(elapsed: float) -> None:
+                        with result_lock:
+                            if on_event is not None:
+                                on_event(
+                                    {
+                                        "action": "heartbeat",
+                                        "job": job.key,
+                                        "device": device,
+                                        "seconds": elapsed,
+                                        "log": str(spec.log),
+                                        **_latest_worker_progress(spec.events_root, job.key),
+                                    }
+                                )
+
+                    returncode, seconds = _run_one(
+                        spec.command,
+                        spec.log,
+                        heartbeat_seconds=heartbeat_seconds,
+                        on_heartbeat=heartbeat,
+                    )
+                    status = "completed" if returncode == 0 else "failed"
+                    error = None
+                    if returncode == 0 and not spec.output.is_file():
+                        status = "failed"
+                        error = "process exited successfully but did not create its output marker"
+                    elif (
+                        returncode == 0
+                        and previous_output_mtime is not None
+                        and spec.output.stat().st_mtime_ns <= previous_output_mtime
+                    ):
+                        status = "failed"
+                        error = "process exited successfully but did not refresh its output marker"
+                    record = {
+                        "job": job.key,
+                        "device": device,
+                        "status": status,
+                        "returncode": returncode,
+                        "output": str(spec.output),
+                        "log": str(spec.log),
+                        "seconds": seconds,
+                    }
+                    if error is not None:
+                        record["error"] = error
+            except Exception as exc:
+                record = {
+                    "job": job.key,
+                    "device": device,
+                    "status": "failed",
+                    "error": f"{type(exc).__name__}: {exc}",
+                    "seconds": 0.0,
+                }
+            finally:
+                with result_lock:
+                    results.append(record)
+                    if on_event is not None:
+                        on_event({"action": "finished", **record})
+                pending.task_done()
+
+    threads = [threading.Thread(target=worker, args=(device,)) for device in devices]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    return sorted(results, key=lambda item: str(item["job"]))
+
+
+def estimate_phase_durations(
+    previous: dict[str, object] | None,
+    jobs: Iterable[ProbeJob],
+    steps: ProbeStepSchedule,
+    *,
+    device_count: int,
+) -> dict[str, float]:
+    """Estimate formal phase wall times from a complete prerequisite stage."""
+
+    if not previous or device_count <= 0:
+        return {}
+    expected = {job.key: job for job in jobs}
+    previous_identity = previous.get("identity")
+    if not isinstance(previous_identity, dict):
+        return {}
+    try:
+        previous_steps = _normalize_step_schedule(previous_identity["steps"])
+    except (KeyError, TypeError, ValueError):
+        return {}
+    estimates: dict[str, float] = {}
+    for phase in ("training", "validation"):
+        records = previous.get(phase)
+        if not isinstance(records, list):
+            continue
+        by_job = {
+            str(record.get("job")): record
+            for record in records
+            if isinstance(record, dict)
+            and record.get("status") in {"completed", "skipped_existing"}
+            and isinstance(record.get("seconds"), (int, float))
+        }
+        if set(by_job) != set(expected):
+            continue
+        worker_seconds = 0.0
+        for key, job in expected.items():
+            seconds = float(by_job[key]["seconds"])
+            if phase == "training":
+                seconds *= steps_for_job(steps, job) / steps_for_job(previous_steps, job)
+            worker_seconds += seconds
+        estimates[phase] = worker_seconds / device_count
+    return estimates

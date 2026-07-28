@@ -34,7 +34,7 @@ the user-selected 4,000-step pilot budget, batch 128, and held-out batch 3,072.
 ## Supporting artifacts
 
 - Git-safe result root:
-  `results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`
+  `results/probes/synbios_moe/multi5_permute/formal/diagnostics/ground_truth_first_whole_rank_matched_pilot4000_20260725T100100Z/`
 - Machine aggregate: `summary.json`; position table: `summary.csv`.
 - P heatmap: `figures/ground_truth_first_p_overview.png`.
 - Individual P task JSON/PT, recovery states, and logs are retained with the mounted result root.

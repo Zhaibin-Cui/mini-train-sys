@@ -49,7 +49,7 @@ macro 从 45.28% 提升到 96.38%，P0 从 32.59% 提升到 95.62%。
 
 ## Supporting artifacts
 
-- [三栏对比图](../../../results/formal_runs/synbios_moe/results/single_fsdp_4gpu/probe_pipeline/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
+- [三栏对比图](../../../results/probes/synbios_moe/single/formal/diagnostics/ground_truth_first_whole_p_pilot4000_20260726T033800Z/figures/ground_truth_first_p_overview.png)
 - Machine-readable aggregate: run root `summary.json`
 - Position-level table: run root `summary.csv`
 - Five task JSON/PT files、loss curves、recovery checkpoints 和 operation logs：同一 run root

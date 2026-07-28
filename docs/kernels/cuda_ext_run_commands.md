@@ -148,7 +148,7 @@ JIT 扩展 cache key，因此切换配置不会误加载旧 DLL。
 先编译 notebook 需要的 profile，再启动：
 
 ```powershell
-jupyter lab tests/operator_bench.ipynb
+jupyter lab benchmarks/operators/operator_bench.ipynb
 ```
 
 attention 区域完成四类 fp16 验证：

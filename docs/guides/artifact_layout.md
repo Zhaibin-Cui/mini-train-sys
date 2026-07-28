@@ -9,7 +9,6 @@ run provenance. A result should never be copied ad hoc between these layers.
 ├── notebooks/                        executed server notebooks
 ├── operator_benchmark/               kernel raw scans
 ├── distributed_benchmark/            FSDP/backend raw scans
-├── validation/                       correctness and recovery artifacts
 └── synbios_moe/
     ├── single|multi5_permute/         datasets, token shards, probe cache
     ├── checkpoints/                   model + DCP/Adam shards
@@ -17,21 +16,19 @@ run provenance. A result should never be copied ad hoc between these layers.
     └── results/                       cloze, probes, diagnostics
 
 results/                              Git-safe machine evidence
-├── catalog/                          complete inventory + server-only retention
-├── benchmarks/                       raw/aggregate kernel and training measurements
-├── datasets/                         manifests, lineage, hashes, compact statistics
-├── formal_runs/                      formal events and aggregate experiment outputs
-├── logs/{benchmarks,experiments,validation,maintenance}/
-├── notebooks/                        executed benchmark notebooks
-├── tensorboard/index.csv             discovery index; events remain with owner
-├── validation/                       JUnit and correctness evidence
+├── pretraining/                      datasets, training events, checkpoint metadata
+├── cloze/                            source-recall evaluation
+├── benchmarks/                       kernels, scaling, capacity, executed notebooks
+├── probes/                           caches, P/Q runs, diagnostics, comparisons
+├── catalog/                          study indexes, export audit, retention, TensorBoard index
+├── environment/                      server hardware/software inventory
 └── MANIFEST.sha256                   snapshot integrity
 
 reports/                              selected human conclusions
 ├── engineering/                      kernels and distributed/end-to-end performance
 └── synbios_moe/                      Allen-Zhu-style reproduction and diagnostics
 
-the retained run records                            append-only commands, lifecycle, failures, provenance
+HISTORY.md                            local concise command notes (gitignored)
 ```
 
 ## Path rules
@@ -39,18 +36,18 @@ the retained run records                            append-only commands, lifecy
 1. Raw data, weights, DCP tensor shards, caches, and large per-example records never enter Git.
 2. Dataset/cache manifests identify parents, split semantics, counts, and SHA256.
 3. TensorBoard events stay beside the exact run; the central index only points to them.
-4. Published historical result paths remain stable. New indexes organize them without destroying
-   provenance.
-5. `reports/` contains interpretation; `results/` contains machine evidence; the retained run records contains
-   commands and lifecycle.
-6. Run `bash scripts/bash/export_test_results.sh` after every benchmark or validation cycle. It
+4. Move a published path only when every code, command, and documentation reference is updated in
+   the same change.
+5. `reports/` contains interpretation; `results/` contains machine evidence; formal experiment
+   links belong in a machine-readable study index.
+6. Run `bash scripts/bash/export_results.sh` after every formal run or benchmark. It
    categorizes logs, exports notebooks, rebuilds the catalog, and refreshes all hashes.
 
 ## Push readiness
 
 ```bash
-bash scripts/bash/export_test_results.sh
-sha256sum --quiet -c results/MANIFEST.sha256
+bash scripts/bash/export_results.sh
+python scripts/build_results_manifest.py --results results --check
 find results -type f -size +90M -print
 git diff --check
 ```

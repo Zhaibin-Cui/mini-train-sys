@@ -24,8 +24,9 @@ keep as the notebook maximum.
 The machine-specific notebooks were executed locally on 2026-07-16; they are
 not versioned because their cell outputs are large, hardware-bound artifacts.
 The reusable notebook templates are
-`tests/operator_bench.ipynb` and `tests/moe_operator_bench.ipynb`. The raw
-measurements below remain versioned under `tests/benchmark_results/`.
+`benchmarks/operators/operator_bench.ipynb` and
+`benchmarks/operators/moe_operator_bench.ipynb`. The retained raw measurements are under
+`results/benchmarks/operator_benchmark/sm86_4gb/raw/`.
 
 Representative largest-case measurements are below. `full delta` is the
 PyTorch allocated-memory increase measured by the harness; it excludes the
@@ -80,5 +81,5 @@ for the target GPU before executing them. The 4 GiB sweep sizes above are a
 recorded calibration, not a portable default.
 
 Raw immutable datasets and Nsight reports are under
-`tests/benchmark_results/sm86-nvidia-geforce-rtx-3050-laptop-gpu/`; figures are
+`results/benchmarks/operator_benchmark/sm86_4gb/raw/`; figures are
 under `reports/figures/`.

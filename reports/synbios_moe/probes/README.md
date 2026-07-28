@@ -2,7 +2,7 @@
 
 The cross-stage interpretation is in the project
 [README](../../../README.md#model-interpretability). This directory retains the formal report,
-mechanism analyses, exact protocols, and historical budget decisions.
+mechanism analyses, and exact protocols.
 
 ## Canonical evidence
 
@@ -29,17 +29,6 @@ mechanism analyses, exact protocols, and historical budget decisions.
 > **First-token augmentation is reproduced; whole-value readability is path-dependent on the
 > MoE and does not numerically reproduce the dense-paper endpoint before true `t1`.**
 
-## Historical provenance
-
-The following are retained because they document decisions or superseded milestones, but they
-must not be used as headline sources:
-
-- `pilot_analysis.md`, `pilot_comparison.md`
-- `formal_training_decision.md`, `ground_truth_first_training_decision.md`
-- `ground_truth_first_single_training_decision.md`
-- `single_formal.md`
-- `q_whole_moe_diagnostics.md` (compatibility pointer)
-
 ## Terminology
 
 - **Training-text recall:** exact recovery of biographies used for backbone training.
@@ -50,4 +39,4 @@ must not be used as headline sources:
 - The 100% true-`t1` panel checks supplied-input identity; it is not whole accuracy.
 
 Canonical machine data:
-[`results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/`](../../../results/formal_runs/synbios_moe/results/formal_probe_comparison_20260724/).
+[`results/probes/synbios_moe/comparisons/formal_20260724/`](../../../results/probes/synbios_moe/comparisons/formal_20260724/).

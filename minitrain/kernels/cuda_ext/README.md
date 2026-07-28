@@ -106,7 +106,7 @@ Windows 编译默认包含以下兼容参数：
 python minitrain/kernels/cuda_ext/generate_kernels.py --check
 ```
 
-`tests/operator_bench.ipynb` 是 CUDA correctness 和性能的统一验证入口。attention
+`benchmarks/operators/operator_bench.ipynb` 是 CUDA correctness 和性能的统一验证入口。attention
 单元统一使用 fp16，包含：
 
 - Torch、Triton、CUDA 的 forward/backward 延迟和显存 benchmark；

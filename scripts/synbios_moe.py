@@ -19,55 +19,48 @@ import yaml
 from torch.utils.data import DataLoader
 from torch.torch_version import TorchVersion
 
-from experiments.synbios_moe.data import ATTRIBUTES, write_dataset
-from experiments.synbios_moe.cloze_evaluation import (
-    evaluate_progressive_biography_cloze,
-    summarize_progressive_cloze_results,
+from experiments.synbios_moe.artifact_io import write_json_atomic
+from experiments.synbios_moe.audit import build_repository_audit
+from experiments.synbios_moe.cli import CommandHandler, build_parser
+from experiments.synbios_moe.mechanisms.comparison_report import (
+    build_diagnostic_report_artifacts,
 )
-from experiments.synbios_moe.evaluation import evaluate_attribute_tokens
-from experiments.synbios_moe.diagnostic_report import build_diagnostic_report_artifacts
-from experiments.synbios_moe.formal_report import build_formal_report_artifacts
-from experiments.synbios_moe.probe_data import (
-    CachedProbeDataset,
-    build_probe_cache,
-    validate_probe_cache,
+from experiments.synbios_moe.mechanisms.intervention_report import (
+    summarize_ground_truth_first_whole,
 )
-from experiments.synbios_moe.probe_diagnostics import (
-    WHOLE_ATTRIBUTES,
-    bad_case_route_validation,
-    oracle_first_token_validation,
+from experiments.synbios_moe.mechanisms.routing import analyze_batch
+from experiments.synbios_moe.mechanisms.first_token_intervention import (
     prepare_ground_truth_first_whole_data,
     train_ground_truth_first_whole_probe,
 )
-from experiments.synbios_moe.repository_audit import build_repository_audit
-from experiments.synbios_moe.probe_checkpoint import save_probe_result
-from experiments.synbios_moe.ground_truth_first_report import (
-    summarize_ground_truth_first_whole,
+from experiments.synbios_moe.mechanisms.oracle_first_token import (
+    oracle_first_token_validation,
 )
-from experiments.synbios_moe.probe_benchmark import (
+from experiments.synbios_moe.mechanisms.token_routes import bad_case_route_validation
+from experiments.synbios_moe.pretraining.attribute_recall import evaluate_attribute_tokens
+from experiments.synbios_moe.pretraining.cloze import (
+    evaluate_progressive_biography_cloze,
+    summarize_progressive_cloze_results,
+)
+from experiments.synbios_moe.pretraining.dataset import WHOLE_ATTRIBUTES, write_dataset
+from experiments.synbios_moe.probes.batch_benchmark import (
     benchmark_probe_batches,
     parse_batch_sizes,
     probe_batch_environment,
     summarize_probe_benchmarks,
 )
-from experiments.synbios_moe.probe_pipeline import (
-    ProbePipelineState,
-    ProbeRuntimeConfig,
-    build_pipeline_identity,
-    common_pipeline_identity,
-    estimate_phase_durations,
-    jobs_for_stage,
-    load_pipeline_config,
+from experiments.synbios_moe.probes.checkpoint import save_probe_result
+from experiments.synbios_moe.probes.commands import (
     probe_train_command_builder,
     probe_validation_command_builder,
-    reusable_cloze_gate,
-    require_matching_identity,
-    resolve_devices,
-    schedule_jobs,
-    summarize_probe_results,
-    write_json_atomic,
 )
-from experiments.synbios_moe.probes import (
+from experiments.synbios_moe.probes.comparison_report import build_formal_report_artifacts
+from experiments.synbios_moe.probes.dataset import (
+    CachedProbeDataset,
+    build_probe_cache,
+    validate_probe_cache,
+)
+from experiments.synbios_moe.probes.model import (
     AttributeProbe,
     PProbeDataset,
     QProbeDataset,
@@ -76,7 +69,20 @@ from experiments.synbios_moe.probes import (
     evaluate as evaluate_probe,
     train_probe,
 )
-from experiments.synbios_moe.router_analysis import analyze_batch
+from experiments.synbios_moe.probes.pipeline import (
+    ProbePipelineState,
+    ProbeRuntimeConfig,
+    build_pipeline_identity,
+    common_pipeline_identity,
+    estimate_phase_durations,
+    jobs_for_stage,
+    load_pipeline_config,
+    reusable_cloze_gate,
+    require_matching_identity,
+    resolve_devices,
+    schedule_jobs,
+)
+from experiments.synbios_moe.probes.results import summarize_probe_results
 from minitrain.data.documents import CleaningConfig
 from minitrain.data.preprocess import prepare_token_shards
 from minitrain.data.tokenizer import TiktokenTokenizer
@@ -1102,312 +1108,50 @@ def command_summarize_cloze(args: argparse.Namespace) -> None:
     print(json.dumps({"biographies": result["biographies"], "fields": result["fields"]}))
 
 
-def build_parser() -> argparse.ArgumentParser:
-    def add_monitoring_arguments(command: argparse.ArgumentParser) -> None:
-        command.add_argument("--log-dir")
-        command.add_argument("--log-interval", type=int, default=10)
-        command.add_argument(
-            "--tensorboard",
-            action=argparse.BooleanOptionalAction,
-            default=True,
-        )
-        command.add_argument("--quiet", action="store_true")
+def command_handlers() -> dict[str, CommandHandler]:
+    """Bind public command names to their implementation functions."""
 
-    parser = argparse.ArgumentParser()
-    commands = parser.add_subparsers(dest="command", required=True)
-    prepare = commands.add_parser("prepare")
-    prepare.add_argument("--output", required=True)
-    prepare.add_argument(
-        "--variant",
-        default="single",
-        choices=(
-            "single",
-            "single+fullname",
-            "single+permute1",
-            "single+permute5",
-            "multi2",
-            "multi5",
-            "multi2+permute",
-            "multi5+permute",
-            "multi5+permute+fullname",
+    return {
+        "prepare": command_prepare,
+        "cache-probes": command_cache_probes,
+        "validate-probe-cache": command_validate_cache,
+        "probe": command_probe,
+        "analyze": command_analyze,
+        "evaluate": command_evaluate,
+        "validate-probe": command_validate_probe,
+        "train-ground-truth-first-whole": command_train_ground_truth_first_whole,
+        "summarize-ground-truth-first-whole": command_summarize_ground_truth_first_whole,
+        "benchmark-ground-truth-first-whole-batches": (
+            command_benchmark_ground_truth_first_whole
         ),
+        "validate-probe-oracle-first-token": command_validate_probe_oracle_first_token,
+        "validate-probe-bad-case-routes": command_validate_probe_bad_case_routes,
+        "benchmark-probe-batches": command_probe_benchmark,
+        "summarize-probe-benchmarks": command_summarize_probe_benchmarks,
+        "cloze-evaluate": command_cloze_evaluate,
+        "summarize-cloze": command_summarize_cloze,
+        "probe-pipeline": command_probe_pipeline,
+        "summarize-probes": command_summarize_probes,
+        "report-formal-study": command_report_formal_study,
+        "report-probe-diagnostics": command_report_probe_diagnostics,
+        "audit-synbios-repository": command_audit_synbios_repository,
+    }
+
+
+def main() -> None:
+    parser = build_parser(
+        project_root=ROOT,
+        handlers=command_handlers(),
+        default_device="cuda" if torch.cuda.is_available() else "cpu",
     )
-    prepare.add_argument("--num-people", type=int, default=100_000)
-    prepare.add_argument("--seed", type=int, default=1337)
-    prepare.add_argument("--max-shard-tokens", type=int, default=10_000_000)
-    add_monitoring_arguments(prepare)
-    prepare.set_defaults(func=command_prepare)
-
-    cache = commands.add_parser("cache-probes")
-    cache.add_argument("--data", required=True)
-    cache.add_argument("--output", required=True)
-    cache.add_argument("--force", action="store_true")
-    cache.add_argument("--require-coverage", action="store_true")
-    cache.set_defaults(func=command_cache_probes)
-
-    validate_cache = commands.add_parser("validate-probe-cache")
-    validate_cache.add_argument("--probe-cache", required=True)
-    validate_cache.add_argument("--data")
-    validate_cache.set_defaults(func=command_validate_cache)
-
-    for name, function in (
-        ("probe", command_probe),
-        ("analyze", command_analyze),
-        ("evaluate", command_evaluate),
-    ):
-        command = commands.add_parser(name)
-        command.add_argument("--data", required=True)
-        command.add_argument("--model-config", required=True)
-        command.add_argument("--checkpoint", required=True)
-        if name != "evaluate":
-            command.add_argument("--attribute", choices=ATTRIBUTES, required=True)
-            command.add_argument("--target", choices=("first", "whole"), default="first")
-        command.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-        command.add_argument("--output", required=True)
-        add_monitoring_arguments(command)
-        if name == "probe":
-            command.add_argument("--probe-cache")
-            command.add_argument("--kind", choices=("p", "q"), required=True)
-            command.add_argument("--rank", type=int)
-            command.add_argument("--checkpoint-model-sha256", help=argparse.SUPPRESS)
-            command.add_argument("--batch-size", type=int)
-            command.add_argument("--evaluation-batch-size", type=int)
-            command.add_argument("--steps", type=int, default=30_000)
-            command.add_argument("--seed", type=int, default=1337)
-            command.add_argument("--recovery-checkpoint")
-            command.add_argument("--checkpoint-interval-steps", type=int)
-            command.add_argument(
-                "--resume-probe",
-                action=argparse.BooleanOptionalAction,
-                default=True,
-            )
-            command.add_argument("--evaluate-train", action="store_true")
-            command.add_argument("--skip-final-validation", action="store_true")
-        elif name == "analyze":
-            command.add_argument("--probe-cache")
-            command.add_argument("--examples", type=int, default=1024)
-        else:
-            command.add_argument("--examples", type=int, default=10_000)
-            command.add_argument("--batch-size", type=int, default=8)
-        command.set_defaults(func=function)
-
-    validate_probe = commands.add_parser("validate-probe")
-    validate_probe.add_argument("--data", required=True)
-    validate_probe.add_argument("--probe-cache")
-    validate_probe.add_argument("--model-config", required=True)
-    validate_probe.add_argument("--checkpoint", required=True)
-    validate_probe.add_argument("--probe-checkpoint", required=True)
-    validate_probe.add_argument("--batch-size", type=int)
-    validate_probe.add_argument("--allow-checkpoint-mismatch", action="store_true")
-    validate_probe.add_argument("--checkpoint-model-sha256", help=argparse.SUPPRESS)
-    validate_probe.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-    validate_probe.add_argument("--output", required=True)
-    add_monitoring_arguments(validate_probe)
-    validate_probe.set_defaults(func=command_validate_probe)
-
-    ground_truth_first_whole = commands.add_parser("train-ground-truth-first-whole")
-    ground_truth_first_whole.add_argument("--data", required=True)
-    ground_truth_first_whole.add_argument("--probe-cache", required=True)
-    ground_truth_first_whole.add_argument("--probe-dir", required=True)
-    ground_truth_first_whole.add_argument("--model-config", required=True)
-    ground_truth_first_whole.add_argument("--checkpoint", required=True)
-    ground_truth_first_whole.add_argument("--attribute", choices=WHOLE_ATTRIBUTES, required=True)
-    ground_truth_first_whole.add_argument("--steps", type=int, default=3_000)
-    ground_truth_first_whole.add_argument("--batch-size", type=int)
-    ground_truth_first_whole.add_argument("--evaluation-batch-size", type=int)
-    ground_truth_first_whole.add_argument(
-        "--max-validation-examples",
-        type=int,
-        help="deterministic prefix limit for smoke tests; formal runs omit this option",
-    )
-    ground_truth_first_whole.add_argument("--seed", type=int, default=1337)
-    ground_truth_first_whole.add_argument("--recovery-checkpoint")
-    ground_truth_first_whole.add_argument(
-        "--checkpoint-interval-steps", type=int, default=1_000
-    )
-    ground_truth_first_whole.add_argument(
-        "--resume-probe",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-    )
-    ground_truth_first_whole.add_argument("--evaluate-train", action="store_true")
-    ground_truth_first_whole.add_argument(
-        "--device", default="cuda" if torch.cuda.is_available() else "cpu"
-    )
-    ground_truth_first_whole.add_argument("--output", required=True)
-    add_monitoring_arguments(ground_truth_first_whole)
-    ground_truth_first_whole.set_defaults(func=command_train_ground_truth_first_whole)
-
-    ground_truth_summary = commands.add_parser("summarize-ground-truth-first-whole")
-    ground_truth_summary.add_argument("--run", required=True)
-    ground_truth_summary.set_defaults(func=command_summarize_ground_truth_first_whole)
-
-    ground_truth_benchmark = commands.add_parser(
-        "benchmark-ground-truth-first-whole-batches"
-    )
-    ground_truth_benchmark.add_argument("--data", required=True)
-    ground_truth_benchmark.add_argument("--probe-cache", required=True)
-    ground_truth_benchmark.add_argument("--probe-dir", required=True)
-    ground_truth_benchmark.add_argument("--model-config", required=True)
-    ground_truth_benchmark.add_argument("--checkpoint", required=True)
-    ground_truth_benchmark.add_argument(
-        "--attribute", choices=WHOLE_ATTRIBUTES, default="university"
-    )
-    ground_truth_benchmark.add_argument(
-        "--mode", choices=("training", "validation"), default="training"
-    )
-    ground_truth_benchmark.add_argument("--batch-sizes", required=True)
-    ground_truth_benchmark.add_argument("--warmup-steps", type=int, default=3)
-    ground_truth_benchmark.add_argument("--measure-steps", type=int, default=10)
-    ground_truth_benchmark.add_argument("--memory-limit-percent", type=float, default=92.0)
-    ground_truth_benchmark.add_argument(
-        "--device", default="cuda" if torch.cuda.is_available() else "cpu"
-    )
-    ground_truth_benchmark.add_argument("--output", required=True)
-    add_monitoring_arguments(ground_truth_benchmark)
-    ground_truth_benchmark.set_defaults(func=command_benchmark_ground_truth_first_whole)
-
-    for name, function in (
-        ("validate-probe-oracle-first-token", command_validate_probe_oracle_first_token),
-        ("validate-probe-bad-case-routes", command_validate_probe_bad_case_routes),
-    ):
-        diagnostic = commands.add_parser(name)
-        diagnostic.add_argument("--data", required=True)
-        diagnostic.add_argument("--probe-cache", required=True)
-        diagnostic.add_argument("--probe-dir", required=True)
-        diagnostic.add_argument("--model-config", required=True)
-        diagnostic.add_argument("--checkpoint", required=True)
-        diagnostic.add_argument(
-            "--attribute",
-            action="append",
-            choices=WHOLE_ATTRIBUTES,
-            help="repeat to select attributes; defaults to all five whole-value tasks",
-        )
-        diagnostic.add_argument("--batch-size", type=int, default=512)
-        diagnostic.add_argument("--max-examples", type=int)
-        diagnostic.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-        diagnostic.add_argument("--output", required=True)
-        if name == "validate-probe-bad-case-routes":
-            diagnostic.add_argument("--pair-limit", type=int, default=2000)
-        add_monitoring_arguments(diagnostic)
-        diagnostic.set_defaults(func=function)
-
-    benchmark_probe = commands.add_parser("benchmark-probe-batches")
-    benchmark_probe.add_argument("--data", required=True)
-    benchmark_probe.add_argument("--probe-cache", required=True)
-    benchmark_probe.add_argument("--model-config", required=True)
-    benchmark_probe.add_argument("--checkpoint", required=True)
-    benchmark_probe.add_argument("--kind", choices=("p", "q"), required=True)
-    benchmark_probe.add_argument("--mode", choices=("training", "validation"), default="training")
-    benchmark_probe.add_argument("--attribute", choices=ATTRIBUTES, default="university")
-    benchmark_probe.add_argument("--target", choices=("first", "whole"), default="whole")
-    benchmark_probe.add_argument("--rank", type=int)
-    benchmark_probe.add_argument("--batch-sizes", required=True)
-    benchmark_probe.add_argument("--warmup-steps", type=int, default=3)
-    benchmark_probe.add_argument("--measure-steps", type=int, default=10)
-    benchmark_probe.add_argument("--memory-limit-percent", type=float, default=92.0)
-    benchmark_probe.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-    benchmark_probe.add_argument("--output", required=True)
-    add_monitoring_arguments(benchmark_probe)
-    benchmark_probe.set_defaults(func=command_probe_benchmark)
-
-    summarize_benchmarks = commands.add_parser("summarize-probe-benchmarks")
-    summarize_benchmarks.add_argument("--run", action="append", required=True)
-    summarize_benchmarks.add_argument("--output", required=True)
-    summarize_benchmarks.add_argument("--env-output")
-    summarize_benchmarks.add_argument("--require-complete-search", action="store_true")
-    summarize_benchmarks.set_defaults(func=command_summarize_probe_benchmarks)
-
-    cloze = commands.add_parser("cloze-evaluate")
-    cloze.add_argument("--data", required=True)
-    cloze.add_argument("--model-config", required=True)
-    cloze.add_argument("--checkpoint", required=True)
-    cloze.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-    cloze.add_argument("--output", required=True)
-    cloze.add_argument("--examples", type=int, default=1_000)
-    cloze.add_argument("--start-index", type=int, default=0)
-    cloze.add_argument("--batch-size", type=int, default=16)
-    cloze.add_argument("--max-new-tokens", type=int, default=16)
-    cloze.add_argument("--sample-biographies", type=int, default=12)
-    add_monitoring_arguments(cloze)
-    cloze.set_defaults(func=command_cloze_evaluate)
-
-    summarize_cloze = commands.add_parser("summarize-cloze")
-    summarize_cloze.add_argument("--run", action="append", required=True)
-    summarize_cloze.add_argument("--output", required=True)
-    summarize_cloze.set_defaults(func=command_summarize_cloze)
-
-    pipeline = commands.add_parser("probe-pipeline")
-    pipeline.add_argument("--data", required=True)
-    pipeline.add_argument("--probe-cache", required=True)
-    pipeline.add_argument("--model-config", required=True)
-    pipeline.add_argument("--checkpoint", required=True)
-    pipeline.add_argument("--output", required=True)
-    pipeline.add_argument(
-        "--pipeline-config",
-        default=str(ROOT / "configs" / "synbios_moe" / "probe_pipeline.yaml"),
-    )
-    pipeline.add_argument("--stage", choices=("smoke", "pilot", "formal"), required=True)
-    pipeline.add_argument("--devices", default="auto")
-    pipeline.add_argument("--num-gpus", type=int)
-    pipeline.add_argument("--seed", type=int, default=1337)
-    pipeline.add_argument("--gate-threshold", type=float)
-    pipeline.add_argument("--skip-gate", action="store_true")
-    pipeline.add_argument("--force-gate", action="store_true")
-    pipeline.add_argument("--ignore-prerequisite", action="store_true")
-    pipeline.add_argument("--require-coverage", action="store_true")
-    pipeline.add_argument("--quiet-workers", action="store_true")
-    pipeline.add_argument("--heartbeat-seconds", type=float)
-    pipeline.add_argument("--p-batch-size", type=int)
-    pipeline.add_argument("--q-batch-size", type=int)
-    pipeline.add_argument("--p-validation-batch-size", type=int)
-    pipeline.add_argument("--q-validation-batch-size", type=int)
-    pipeline.add_argument("--checkpoint-interval-steps", type=int)
-    pipeline.add_argument(
-        "--evaluate-train",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-    )
-    add_monitoring_arguments(pipeline)
-    pipeline.set_defaults(func=command_probe_pipeline, log_interval=None)
-
-    summarize = commands.add_parser("summarize-probes")
-    summarize.add_argument("--run", action="append", required=True)
-    summarize.add_argument("--output", required=True)
-    summarize.set_defaults(func=command_summarize_probes)
-
-    formal_report = commands.add_parser("report-formal-study")
-    formal_report.add_argument("--single", required=True, help="single formal stage directory")
-    formal_report.add_argument(
-        "--multi5-permute",
-        required=True,
-        help="multi5_permute formal stage directory",
-    )
-    formal_report.add_argument("--single-cloze", required=True)
-    formal_report.add_argument("--multi5-permute-cloze", required=True)
-    formal_report.add_argument("--output", required=True)
-    formal_report.set_defaults(func=command_report_formal_study)
-
-    diagnostic_report = commands.add_parser("report-probe-diagnostics")
-    diagnostic_report.add_argument("--single-formal", required=True)
-    diagnostic_report.add_argument("--multi5-permute-formal", required=True)
-    diagnostic_report.add_argument("--diagnostics", required=True)
-    diagnostic_report.add_argument("--output", required=True)
-    diagnostic_report.set_defaults(func=command_report_probe_diagnostics)
-
-    repository_audit = commands.add_parser("audit-synbios-repository")
-    repository_audit.add_argument("--repo-root", default=str(ROOT))
-    repository_audit.add_argument("--output", required=True)
-    repository_audit.set_defaults(func=command_audit_synbios_repository)
-    return parser
-
-
-if __name__ == "__main__":
-    arguments = build_parser().parse_args()
+    arguments = parser.parse_args()
     if (
         getattr(arguments, "attribute", None) == "birth_date"
         and getattr(arguments, "target", None) == "whole"
     ):
         raise SystemExit("whole birth-date classification is not part of the paper protocol")
     arguments.func(arguments)
-    (require_matching_identity,)
+
+
+if __name__ == "__main__":
+    main()

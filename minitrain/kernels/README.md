@@ -42,5 +42,5 @@ scatter、grouped expert SwiGLU 和加权聚合；expert parallel 尚未实现�
 5. warmup、CUDA synchronize 后报告 P50/P95 和峰值显存；
 6. 保存机器可读 raw JSON，不只保留截图。
 
-Notebook 和结果路径见 [`tests/README.md`](../../tests/README.md)，CUDA 扩展编译见
+Notebook 和结果路径见 [`benchmarks/README.md`](../../benchmarks/README.md)，CUDA 扩展编译见
 [`docs/kernels/cuda_ext_run_commands.md`](../../docs/kernels/cuda_ext_run_commands.md)。

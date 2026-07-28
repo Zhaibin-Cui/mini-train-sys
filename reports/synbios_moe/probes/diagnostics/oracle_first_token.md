@@ -33,7 +33,7 @@ formal float32 值在 `1e-7` 内一致。
 
 ## 主要指标
 
-![Oracle 彩色结果表](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/oracle_intervention_table.png)
+![Oracle 彩色结果表](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/figures/oracle_intervention_table.png)
 
 | 属性 | name-only | + true `t1` | Δ | 基线错误恢复 | 基线正确受损 |
 |---|---:|---:|---:|---:|---:|
@@ -50,7 +50,7 @@ attribute heterogeneity，不能只看 micro 平均值。
 
 ## 与全部原 whole 结果的关系
 
-![完整 whole 对比](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/complete_whole_comparison.png)
+![完整 whole 对比](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/figures/complete_whole_comparison.png)
 
 该图同时呈现：
 
@@ -65,8 +65,8 @@ token + 复用原线性头”解释的简单缺 key 问题。
 
 ## 支持证据
 
-- [Machine summary](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/summary.json)
-- [Oracle tidy metrics](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/oracle_metrics.csv)
+- [Machine summary](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/summary.json)
+- [Oracle tidy metrics](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/oracle_metrics.csv)
 - `/data` raw records：
   `.../formal/diagnostics/oracle_first_token/records.csv`，41,919,710 bytes，
   SHA256 `7b72f4b46e1e8ed841395eebbecdd52a327d22953c494a9c81afb5fdcac74095`。

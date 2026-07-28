@@ -147,15 +147,15 @@ so isolated peak-memory reduction is only 5.3%.
 - Performance is one 4×RTX 4090 PCIe server, not a claim about all GPUs or model dimensions.
 - CUDA facade operators other than attention may fall back to Triton/Torch; reports record actual
   dispatch and never label the whole stack as handwritten CUDA.
-- Benchmark speed is not correctness evidence; the test suite and Torch-vs-Triton gradient checks
+- Benchmark speed is not correctness evidence; direct Torch-vs-Triton output and gradient checks
   are separate release gates.
 
 ## 5. Reproduction and evidence
 
 - Executed dense notebook:
-  [`operator_bench_linux_server_executed_20260725_162544.ipynb`](../../results/notebooks/operator_bench_linux_server_executed_20260725_162544.ipynb)
+  [`operator_bench_linux_server_executed_20260725_162544.ipynb`](../../results/benchmarks/notebooks/operator_bench_linux_server_executed_20260725_162544.ipynb)
 - Executed MoE notebook:
-  [`moe_operator_bench_linux_server_executed_20260725_163846.ipynb`](../../results/notebooks/moe_operator_bench_linux_server_executed_20260725_163846.ipynb)
+  [`moe_operator_bench_linux_server_executed_20260725_163846.ipynb`](../../results/benchmarks/notebooks/moe_operator_bench_linux_server_executed_20260725_163846.ipynb)
 - Aggregate JSON/CSV/figure:
   [`results/benchmarks/operator_benchmark/resume_summary/`](../../results/benchmarks/operator_benchmark/resume_summary/)
 - Implementation:

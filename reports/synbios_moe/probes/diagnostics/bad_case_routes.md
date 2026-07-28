@@ -47,7 +47,7 @@ descriptive effect size，不给伪精确的独立样本显著性。
 
 ## 全属性、全层结果
 
-![属性×层 DiD](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png)
+![属性×层 DiD](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/figures/route_attribute_layer_did_heatmap.png)
 
 按 layer 汇总的 difference-in-differences 为：
 
@@ -59,9 +59,9 @@ descriptive effect size，不给伪精确的独立样本显著性。
 
 ## 支持证据
 
-- [Machine summary](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/summary.json)
-- [Layer aggregates](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/route_layer_metrics.csv)
-- [Attribute × layer matrix](../../../../results/formal_runs/synbios_moe/results/multi5_permute_fsdp_4gpu/probe_pipeline/formal/diagnostics/report/route_attribute_layer_metrics.csv)
+- [Machine summary](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/summary.json)
+- [Layer aggregates](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/route_layer_metrics.csv)
+- [Attribute × layer matrix](../../../../results/probes/synbios_moe/multi5_permute/formal/diagnostics/report/route_attribute_layer_metrics.csv)
 - `/data` bad cases：35,427,725 bytes，SHA256
   `49704099549787560dfe4805d69f1e44aef4d2e5f8cb1c80dc2bf0640c97ad7f`。
 - `/data` route records：113,662,982 bytes，SHA256
