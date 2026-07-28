@@ -9,7 +9,7 @@ from typing import Callable, Sequence
 import torch
 
 from experiments.synbios_moe.artifact_io import write_csv_atomic, write_json_atomic
-from experiments.synbios_moe.mechanisms.first_token_intervention import (
+from experiments.synbios_moe.mechanisms.q_readout import (
     collect_q_predictions,
     prediction_row,
 )

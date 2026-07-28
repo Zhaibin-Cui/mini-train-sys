@@ -30,9 +30,11 @@ from experiments.synbios_moe.mechanisms.intervention_report import (
 )
 from experiments.synbios_moe.mechanisms.routing import analyze_batch
 from experiments.synbios_moe.mechanisms.first_token_intervention import (
-    oracle_first_token_validation,
     prepare_ground_truth_first_whole_data,
     train_ground_truth_first_whole_probe,
+)
+from experiments.synbios_moe.mechanisms.oracle_first_token import (
+    oracle_first_token_validation,
 )
 from experiments.synbios_moe.mechanisms.token_routes import bad_case_route_validation
 from experiments.synbios_moe.pretraining.attribute_recall import evaluate_attribute_tokens
